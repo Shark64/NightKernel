@@ -3,16 +3,11 @@
 
 ; Kernel.asm is a part of the Night DOS Kernel
 
-; The Night DOS Kernel is free software: you can redistribute it and/or modify it under the terms of the
-; GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or
-; (at your option) any later version.
+; The Night DOS Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-; The Night DOS Kernel is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-; the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-; for more details.
+; The Night DOS Kernel is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-; You should have received a copy of the GNU General Public License along with the Night DOS Kernel.
-; If not, see <http://www.gnu.org/licenses/>.
+; You should have received a copy of the GNU General Public License along with the Night DOS Kernel. If not, see <http://www.gnu.org/licenses/>.
 
 ; See the included file <GPL License.txt> for the complete text of the GPL License by which this program is covered.
 
@@ -23,21 +18,11 @@
 org 0x0600                             ; set origin point to where the
                                        ; FreeDOS bootloader loads this code
 
-; Note: Any call to a kernel (or system library) function may destroy the
-; contents of ax, bx, cx, dx and si.
+; Note: Any call to a kernel (or system library) function may destroy the contents of ax, bx, cx, dx and si.
 
 ; A word about the JMP below...
-; I've seen a number of ways to adjust CS after entering protected mode.
-; Some folks do a far jump to a selector:label combo, others manualy adjust
-; CS themselves or use a call or something... I figured a novel approach
-; would be to prepare CS while still in real mode. The JMP line below this
-; massive comment does just that - simply jumps to the very next line, but
-; it is now specified by segment 0x08 and offset 0x0555 instead of the usual
-; 0x0060 segment at which the FreeDOS bootloader sets up code. We're
-; essentially referring to the _exact_ same location, except by a different
-; segment:offset pair. The segment used here (0x08) happens to be the code
-; selector which will be set up later in the GDT. We just got the processor
-; prepared early. :)
+; I've seen a number of ways to adjust CS after entering protected mode. Some folks do a far jump to a selector:label combo, others manualy adjust CS themselves or use a call or something... I figured a novel approach would be to prepare CS while still in real mode. The JMP line below this massive comment does just that - simply jumps to the very next line, but it is now specified by segment 0x08 and offset 0x0555 instead of the usual 0x0060 segment at which the FreeDOS bootloader sets up code. We're essentially referring to the _exact_ same location, except by a different segment:offset pair. The segment used here (0x08) happens to be the code selector which will be set up later in the GDT. We just got the processor prepared early. :)
+
 
 jmp 0x0008:0x0555                      ; jump to the very next line to
                                        ; alter the CS register
