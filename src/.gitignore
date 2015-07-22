@@ -4,6 +4,7 @@
 # Miscellaneous files
 *.bak
 *.tmp
+*.err
 tmp/**
 tmp/**/*
 
