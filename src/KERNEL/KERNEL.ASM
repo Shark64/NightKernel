@@ -1,4 +1,4 @@
-; Night DOS Kernel (kernel.asm) version 0.02
+; Night DOS Kernel (kernel.asm) version 0.03
 ; Copyright 1995-2015 by mercury0x000d
 
 ; Kernel.asm is a part of the Night DOS Kernel
@@ -111,7 +111,6 @@ cli
 
 push kCopyright
 push 0x07
-push 0x01
 call print
 
 
@@ -139,8 +138,9 @@ inc eax
 mov ebx, 0x6f
 mov [eax], ebx
 
-infiniteLoop:
-jmp infiniteLoop
+oneBigInfiniteLoop:
+; nowhere near Cupertino...
+jmp oneBigInfiniteLoop
 
 
 
@@ -150,20 +150,20 @@ print:
  ; Prints an ASCIIZ string to the screen. Assumes text mode already set.
  ;  input:
  ;   address of string to print
- ;   color of text
- ;   color of background
+ ;   color attribute
  ;
  ;  output:
  ;   n/a
 
  pop edx                   ; get return address for end ret
- pop ebx
- pop ecx
- pop eax
+ pop ebx                   ; get color attribute
+ pop eax                   ; get string address
  push edx                  ; push return address back onto the stack
 
+ ; set up color attribute
+
  mov esi, eax
- mov edi, 0xb8000          ; load edi with video memory address
+ mov edi, [gVideoMem]      ; load edi with video memory address
 
  .loopBegin:
  mov al, [esi]
@@ -174,7 +174,7 @@ print:
 
  mov byte[edi], al
  inc edi
- mov byte[edi], 0x07
+ mov byte[edi], bl
  inc edi
  jmp .loopBegin
  .end:
@@ -183,7 +183,7 @@ ret
 
 
 Reboot:
- ; Performs a warm reboot of the PC
+ ; Performs a warm reboot of the PC (need to convert to 32 bit)
  ;  input:
  ;   n/a
  ;
@@ -200,8 +200,7 @@ ret
 
 
 ; vars
-kCopyright           db     'Night DOS Kernel     2015 by Mercury0x000d, Maarten Vermeulen', 0
-kCRLF                db     0x0d, 0x0a, 0x00
+kCopyright           db     'Night DOS Kernel     2015 by Mercury0x000d, Maarten Vermeulen', 0x00
 kNull                db     0
 gVideoMem            dd     0x000B8000
 
