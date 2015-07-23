@@ -14,7 +14,7 @@ The kernel team is currently fairly small but new members are always welcome. If
 
 For the summary of the ideas, bugs, problems and solutions, see the Night Kernel Tech Reference on GitHub: github.com/mercury0x000d/NightDOSKernel
 
-Email any complaints to Maarten at netraam70@gmail.com and we will do our best to find a solution.
+Email any complaints to maarten at netraam70@gmail.com and we will do our best to find a solution.
 
 This project was launched on June 24, 2015 by mercury0x000d.
 
@@ -25,6 +25,9 @@ The Night DOS Kernel team,
 Antony Gordon
 Chelson Aitcheson
 Jayden Charbonneau
-Maarten / netraam70
+Maarten Vermeulen
 mercury0x000d
+
+
+For information about Night DOS and help mail to nightdos.info@gmail.com you can basicly contact about everything (assuming it has something to do with Night DOS). :)
 
