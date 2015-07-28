@@ -1,9 +1,18 @@
-Any structures used in real mode prior to mode switch to protected are invalid once kernel enters protected mode.
-This map is representative of the post-mode switch ONLY.
+Start			End					Size						Description
 
-0x00000000 - 0x000005FF			empty
-0x00000600 - 0x000105FF			kernel (loaded at 0x600 by FreeDOS bootloader, not to exceed 64K)
-0x00010600 - 0x000FFFFF			unspecified
-0x00100000 - 0xFFFFFFFF			application use (should be probed to determine size upon boot)
-
-More to come!
+0x00000000		0x000003FF			1 KB						interrupt vector table
+0x00000400		0x000004FF			256 bytes					BIOS data area (remapped here from CMOS)
+0x00000500		0x000005FF			256 bytes					empty
+0x00000600		0x00007BFF			30207 bytes (29.49 KB)		kernel space (kernel is loaded here by freeDOS bootloader)
+0x00007C00		0x00007DFF			512 bytes					bootloader (copied here by BIOS, can be overwritten)
+0x00007E00		0x00007FFF			512 bytes					available, unused
+0x00008000		0x00017FFF			64 KB						IDT
+0x00018000		0x00027FFF			64 KB						GDT
+0x00028000		0x0009FBFF			490495 bytes (478.99 KB)	available
+0x0009FC00		0x0009FFFF			1 KB						extended BIOS data area
+0x000A0000		0x000FFFFF			64 KB						video buffer for EGA/VGA graphics modes
+0x000B0000		0x000B7FFF			32 KB						video buffer for EGA/VGA graphics modes
+0x000B8000		0x000BFFFF			32 KB						video buffer for color text and CGA graphics
+0x000C0000		0x000DFFFF			128 KB						device-mounted ROMs
+0x000E0000		0x000FFFFF			128 KB						BIOS ROM
+0x00100000		0xFFFFFFFF			application use 			(should be probed to determine size upon boot)
