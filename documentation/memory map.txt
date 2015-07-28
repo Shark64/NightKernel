@@ -15,4 +15,4 @@ Start			End					Size						Description
 0x000B8000		0x000BFFFF			32 KB						video buffer for color text and CGA graphics
 0x000C0000		0x000DFFFF			128 KB						device-mounted ROMs
 0x000E0000		0x000FFFFF			128 KB						BIOS ROM
-0x00100000		0xFFFFFFFF			application use 			(should be probed to determine size upon boot)
+0x00100000		0xFFFFFFFF			?							application use, should be probed to determine size upon boot
