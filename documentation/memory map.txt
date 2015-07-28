@@ -1,0 +1,9 @@
+Any structures used in real mode prior to mode switch to protected are invalid once kernel enters protected mode.
+This map is representative of the post-mode switch ONLY.
+
+0x00000000 - 0x000005FF			empty
+0x00000600 - 0x000105FF			kernel (loaded at 0x600 by FreeDOS bootloader, not to exceed 64K)
+0x00010600 - 0x000FFFFF			unspecified
+0x00100000 - 0xFFFFFFFF			application use (should be probed to determine size upon boot)
+
+More to come!
