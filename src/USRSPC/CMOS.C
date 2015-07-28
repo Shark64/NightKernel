@@ -1,6 +1,6 @@
 /*
 
-	DOS PM
+	NightDOS
 	Version 1.0
 
 	FILENAME: CMOS.C
@@ -26,18 +26,18 @@
 
 */
 
-unsigned char GetCMOS( char i )
+uint8_t GetCMOS( int8_t i )
 
 /* reads value from a cell */
 
 {
-	unsigned char result;
+	uint8_t result;
 	outportb( 0x70, i );
 	result = inportb( 0x71 );
 	return result;
 }
 
-void PutCMOS( char i, char v )
+void PutCMOS( int8_t i, int8_t v )
 
 /* writes value v to cell i */
 

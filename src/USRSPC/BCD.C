@@ -9,12 +9,12 @@
 
 */
 
-#include "const.h"
+#include <bcd.h>
 
 
-WORD BCD_ASC ( UBYTE bcd )
+uint16_t BCD_ASC ( uint8_t bcd )
 {
-  WORD retval;
+  uint16_t retval;
 
         asm xor ah, ah;
         asm mov al, bcd;
@@ -27,9 +27,9 @@ WORD BCD_ASC ( UBYTE bcd )
         return (retval);
 }
 
-WORD BCD_Bin ( UBYTE bcd )
+uint16_t BCD_Bin ( uint8_t bcd )
 {
-  WORD retval;
+  uint16_t retval;
 
         asm xor ah, ah;
         asm mov al, bcd;
@@ -45,9 +45,9 @@ WORD BCD_Bin ( UBYTE bcd )
         return (retval);
 }
 
-WORD ASC_BCD ( UBYTE hi, UBYTE lo)
+uint16_t ASC_BCD ( uint8_t hi, uint8_t lo)
 {
-   WORD retval;
+   uint16_t retval;
 
         asm mov ah, hi;                  /* convert to unpacked BCD */
         asm mov al, lo;
@@ -59,9 +59,9 @@ WORD ASC_BCD ( UBYTE hi, UBYTE lo)
         return (retval);
 }
 
-WORD Bin_BCD ( UBYTE bin )
+uint16_t Bin_BCD ( uint8_t bin )
 {
-  WORD retval;
+  uint16_t retval;
 
         asm mov al, bin;                /* convert to unpacked BCD */
         asm aam;
