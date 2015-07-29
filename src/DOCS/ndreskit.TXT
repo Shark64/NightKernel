@@ -6,7 +6,7 @@ Resource Kit
 Overview
 ---------
 
-NightDOS is a 32-bit kernel replacement for the NightDOS operating system.
+NightDOS is a 32-bit kernel replacement for the FreeDOS operating system.
 
 NightDOS Structure
 -----------------
@@ -14,48 +14,48 @@ NightDOS Structure
 The following diagram shows how the various layers of NightDOS are connected:
 
 +-----------------+ +-----------------+ +-------------------+
-|				  | |				  | |					|
+|		  | |                 | |		    |
 | 16-bit DOS	  | | 32-bit NightDOS | | Win32 Console     |
 | Application     | | Application     | | Application       |
-|				  | |				  | |					|
+|		  | |		      | |		    |
 +-----------------+ +-----------------+ +-------------------+
-		|					|					 |
-		|					|					 |
-		|		+------------------------+       |
-		|		|						 |		 |
-		|		|	Virtual Machine		 |		 |
-		+-------|	Manager				 |-------+
-				|						 |
-				+------------------------+
+		|	    |				 |
+		|	    |				 |
+		|	+------------------------+       |
+		|	|			 |	 |
+		|	|	Virtual Machine	 |	 |
+		+-------|	Manager		 |-------+
+			|			 |
+			+------------------------+
 					|
 					|
 					|   	+-------------------------+
-					|		|						  |
-					|		|	File System Manager   |
-					|		|						  |
-					|		+-------------------------+
-					|			|		|		|
-					|			|		|		|
+					|	|			  |
+					|	|   File System Manager   |-----+
+					|	|			  |	|
+					|	+-------------------------+	|
+					|	      |		|		|
+					|	      |		|		|
 					|	+-------------+ |	+---------------+
-					|	|			  | |	|				|
-					|	| FAT32		  |	|	|  CDFS			|
-					|	|			  |	|	|				|
+					|	|	      | |	|		|
+					|	| FAT32	      |	|	|  CDFS		|
+					|	|	      |	|	|		|
 					|	+-------------+	|	+---------------+
-					|					|
-					|					|
+					|			|
+					|			|
 	+-------------------------------------------------------+
-	|														|
-	|														|
-	|	NightDOS 32-bit kernel / IO Supervisor				|
-	|														|
-	|														|
+	|							|
+	|							|
+	|	NightDOS 32-bit kernel / IO Supervisor		|
+	|							|
+	|							|
 	+-------------------------------------------------------+
-							|
-							|
+				|
+				|
 	+-------------------------------------------------------+
-	|														|
-	|			Hardware devices							|
-	|														|
+	|							|
+	|			Hardware devices		|
+	|							|
 	+-------------------------------------------------------+
 
 
