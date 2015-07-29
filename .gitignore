@@ -40,3 +40,4 @@ tmp/**/*
 
 # Debug files
 *.dSYM/
+*.SYS
