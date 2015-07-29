@@ -34,7 +34,14 @@ bits 16
 org 0x0600                             ; set origin point to where the
                                        ; FreeDOS bootloader loads this code
 
-jmp skipDescriptorTables
+;--------------------------------------------------------------------
+;	Include files
+;--------------------------------------------------------------------
+
+
+%include "gdt.inc"
+									   
+jmp main
 
 idt:
      dd       0x00                     ; int 0 handler descriptor
@@ -43,37 +50,10 @@ idt:
      dd       010001110b
      dd       0x00
 
-gdt_start:
-     dd 0
-     dd 0
-     
-     dw 0xffff
-     dw 0 
-     db 0
-     db 10011010b
-     db 11001111b
-     db 0 
-     
-     dw 0xffff
-     dw 0 
-     db 0
-     db 10010010b
-     db 11001111b
-     db 0 
-gdt_end:
-
-GDTHeader:
-dw gdt_end - gdt_start - 1
-dd gdt_start
 
 
-load_GDT:
-pusha
-lgdt [GDTHeader]
-popa
-ret
 
-skipDescriptorTables:
+main:
 cli
 mov ax, 0x0000                         ; init the stack segment 
 mov ss, ax
@@ -138,9 +118,8 @@ inc eax
 mov ebx, 0x6f
 mov [eax], ebx
 
-oneBigInfiniteLoop:
-; nowhere near Cupertino...
-jmp oneBigInfiniteLoop
+infiniteLoop:
+jmp infiniteLoop
 
 
 
@@ -183,7 +162,7 @@ ret
 
 
 Reboot:
- ; Performs a warm reboot of the PC (need to convert to 32 bit)
+ ; Performs a warm reboot of the PC
  ;  input:
  ;   n/a
  ;
@@ -201,6 +180,7 @@ ret
 
 ; vars
 kCopyright           db     'Night DOS Kernel     2015 by Mercury0x000d, Maarten Vermeulen', 0x00
+kCRLF                db     0x0d, 0x0a, 0x00
 kNull                db     0
 gVideoMem            dd     0x000B8000
 
