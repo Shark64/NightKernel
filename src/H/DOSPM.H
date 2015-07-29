@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 	DOSPM.H -       DOS PM functions, types and definitions
 			
