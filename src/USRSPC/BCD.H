@@ -10,7 +10,7 @@
 
 #ifndef BCD_UTL_
 #define BCD_UTL_
-#include <stdint.h>
+#include "../h/stdint.h"
 
 uint16_t BCD_ASC ( uint8_t bcd );
 uint16_t BCD_Bin ( uint8_t bcd );
