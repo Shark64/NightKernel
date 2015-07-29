@@ -1,4 +1,5 @@
 // Used for creating GDT segment descriptors in 64-bit integer form.
+// Retrieved from wiki.osdev.org/GDT_Tutorial
  
 #include <stdio.h>
 #include <stdint.h>

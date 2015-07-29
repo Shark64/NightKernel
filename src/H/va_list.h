@@ -14,17 +14,18 @@
 //============================================================================
 
 #ifdef __cplusplus
-extern "C"
+extern "C" 
 {
-#endif
-
-/* va list parameter list */
-typedef unsigned char *va_list;
-
+  
+#endif	/*  */
+  
+/* va list parameter list */ 
+  typedef unsigned char *va_list;
+   
 #ifdef __cplusplus
-}
-#endif
-
+} 
+#endif	/*  */
+ 
 //============================================================================
 //    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
 //============================================================================
@@ -48,5 +49,5 @@ typedef unsigned char *va_list;
 //**    END va_list.h
 //**
 //****************************************************************************
-
-#endif
+ 
+#endif	/*  */
