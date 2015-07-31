@@ -33,15 +33,15 @@ bits 16
 
 org 0x0600                             ; set origin point to where the
                                        ; FreeDOS bootloader loads this code
+jmp main
 
 ;--------------------------------------------------------------------
-;	Include files
+;  Include files
 ;--------------------------------------------------------------------
-
 
 %include "gdt.inc"
-									   
-jmp main
+
+
 
 idt:
      dd       0x00                     ; int 0 handler descriptor

@@ -68,7 +68,7 @@ db 0 							; base high
 ;----------------------------------------------------------
 ; User Space data (Offset 0x20)
 ;----------------------------------------------------------
-dw 0xFFFF 						; limit low
+dw 0xffff 						; limit low
 dw 0		 					; base low
 db 0 							; base middle
 db 11110010b 					; access
