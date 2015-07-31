@@ -86,37 +86,19 @@ mov es, ax
 mov ss, ax
 mov esp, 0x00090000
 
+push 0x07                               ; print splash message
+push 1
+push 1
+push kCopyright1
+call Print
 
-cli
-
-push kCopyright
 push 0x07
-call print
+push 2
+push 1
+push kCopyright2
+call Print
 
-
-
-; as proof we're in protected mode and addressing with 32 bits, let's write a
-; "hello" greeeting at the 16MB mark!
-
-mov eax, 0x01000000
-mov ebx, 0x48
-mov [eax], ebx
-
-inc eax
-mov ebx, 0x65
-mov [eax], ebx
-
-inc eax
-mov ebx, 0x6c
-mov [eax], ebx
-
-inc eax
-mov ebx, 0x6c
-mov [eax], ebx
-
-inc eax
-mov ebx, 0x6f
-mov [eax], ebx
+call PICInit                            ; remap both PICs
 
 infiniteLoop:
 jmp infiniteLoop
@@ -125,24 +107,87 @@ jmp infiniteLoop
 
 ; There are functions in the basement, Arthur O.O
 
-print:
+PICInit:
+ ; Init & remap both PICs to use int numbers 0x20 - 0x2f
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ mov dx, [kPIC1CmdPort]    ; set up PIC 1
+ mov al, 0x11              ; set ICW1
+ out dx, al
+
+ mov dx, [kPIC1DataPort]
+ mov al, 0x20              ; set base interrupt number to 0x20 (ICW2)
+ out dx, al
+
+ mov al, 0x04              ; set ICW3 to cascade PICs together
+ out dx, al
+
+ mov al, 0x01              ; set both PICs to x86 mode with ICW4
+ out dx, al
+
+ mov dx, [kPIC2CmdPort]    ; set up PIC 2
+ mov al, 0x11              ; set ICW1
+ out dx, al
+
+ mov dx, [kPIC2DataPort]
+ mov al, 0x28              ; set base interrupt number to 0x28 (ICW2)
+ out dx, al
+
+ mov al, 0x02              ; set ICW3 to cascade PICs together
+ out dx, al
+
+ mov al, 0x01              ; set both PICs to x86 mode with ICW4
+ out dx, al
+
+ret
+
+
+
+PICMaskAll:
+ ; Masks all interrupts
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ret
+
+
+
+Print:
  ; Prints an ASCIIZ string to the screen. Assumes text mode already set.
  ;  input:
  ;   address of string to print
+ ;   horizontal position
+ ;   vertical position
  ;   color attribute
  ;
  ;  output:
  ;   n/a
 
- pop edx                   ; get return address for end ret
+ pop eax                   ; get return address for end ret
+ pop esi                   ; get string address
+ pop ecx                   ; get horizontal position
+ pop edx                   ; get vertical position
  pop ebx                   ; get color attribute
- pop eax                   ; get string address
- push edx                  ; push return address back onto the stack
+ push eax                  ; push return address back onto the stack
 
- ; set up color attribute
+ mov edi, [kVideoMem]      ; load edi with video memory address
 
- mov esi, eax
- mov edi, [gVideoMem]      ; load edi with video memory address
+ dec edx                   ; calculate text position offset
+ mov eax, 160
+ mul edx
+ add edi, eax              ; alter edi for vertical text position
+
+ dec ecx
+ mov eax, 2
+ mul ecx
+ add edi, eax              ; alter edi for horizontal text position
 
  .loopBegin:
  mov al, [esi]
@@ -168,19 +213,29 @@ Reboot:
  ;
  ;  output:
  ;   n/a
- 
- mov ax, 0
- mov gs, ax
- mov ax, 0x1234
- mov [gs:0x02c8], ax
- jmp 0xffff:0000
+
+ mov dx, 0x92
+ in al, dx
+ or al, 00000001b
+ out dx, al
+
+ ; and now, for the return we'll never reach...
 ret
 
 
 
-; vars
-kCopyright           db     'Night DOS Kernel     2015 by Mercury0x000d, Maarten Vermeulen', 0x00
+; vars 'n' such
+kCopyright1          db     'Night DOS Kernel     A 32-bit protected mode replacement for the FreeDOS kernel', 0x00
+kCopyright2          db     'version 0.03         2015 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
 kCRLF                db     0x0d, 0x0a, 0x00
 kNull                db     0
-gVideoMem            dd     0x000B8000
+kGDTDS               dd     0x00000500
+kGDTPtr              dd     0x00008000
+kIDTPtr              dd     0x00018000
+kVideoMem            dd     0x000b8000
+kPIC1CmdPort         db     0x20
+kPIC1DataPort        db     0x21
+kPIC2CmdPort         db     0xa0
+kPIC2DataPort        db     0xa1
+
 
