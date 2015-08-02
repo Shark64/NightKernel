@@ -31,31 +31,19 @@
 
 bits 16
 
-org 0x0600                             ; set origin point to where the
-                                       ; FreeDOS bootloader loads this code
+org 0x0600                        ; set origin point to where the
+                                  ; FreeDOS bootloader loads this code
 jmp main
 
-;--------------------------------------------------------------------
+;----------------------------------------------------------------------------
 ;  Include files
-;--------------------------------------------------------------------
+;----------------------------------------------------------------------------
 
 %include "gdt.inc"
 
-
-
-idt:
-     dd       0x00                     ; int 0 handler descriptor
-     dd       0x08
-     dd       0x00
-     dd       010001110b
-     dd       0x00
-
-
-
-
 main:
 cli
-mov ax, 0x0000                         ; init the stack segment 
+mov ax, 0x0000                    ; init the stack segment 
 mov ss, ax
 mov sp, 0xffff
 
@@ -67,26 +55,50 @@ mov gs, ax
 
 call load_GDT
 
-mov eax, cr0                           ; enter protected mode. YAY!
+mov eax, cr0                      ; enter protected mode. YAY!
 or eax, 00000001b
 mov cr0, eax
 
-jmp 0x08:load_kernel
+jmp 0x08:kernel_start
 
 
 
 bits 32
 
 
+idtStructure:
+.limit  dw 2047
+.base   dd 0x18000
 
-load_kernel:
+
+kernel_start:
 mov ax, 0x0010
 mov ds, ax
 mov es, ax
 mov ss, ax
 mov esp, 0x00090000
 
-push 0x07                               ; print splash message
+
+
+mov eax, 0
+doItAgain:
+push eax
+push 0x8e                         ; init IDT
+push ISR
+push 0x08
+push eax
+call IDTWrite
+pop eax
+inc eax
+cmp eax, 0x00000100
+jz endIDTLoop
+jmp doItAgain
+endIDTLoop:
+lidt [idtStructure]
+sti
+
+
+push 0x07                         ; print splash message
 push 1
 push 1
 push kCopyright1
@@ -98,14 +110,72 @@ push 1
 push kCopyright2
 call Print
 
-call PICInit                            ; remap both PICs
+call PICInit                      ; remap both PICs
+call PICMaskAll
+
 
 infiniteLoop:
+int 0xff
 jmp infiniteLoop
 
 
 
+ISR:
+inc dword [0x00000500]
+iret
+
+
+
 ; There are functions in the basement, Arthur O.O
+
+IDTWrite:
+ ; Formats the passed data and writes it to the IDT in the slot specified
+ ;  input:
+ ;   IDT index 
+ ;   ISR selector
+ ;   ISR base address
+ ;   flags
+ ;
+ ;  output:
+ ;   n/a
+
+ pop esi                          ; save ret address
+ pop ebx                          ; get destination IDT index
+ mov eax, 8                       ; calc the destination offset into the IDT
+ mul ebx
+ mov edi, [kIDTPtr]               ; get IDT's base address
+ add edi, eax                     ; calc the actual write address
+
+ pop ebx                          ; get ISR selector
+ 
+ pop ecx                          ; get ISR base address
+ 
+ mov eax, 0x0000ffff
+ and eax, ecx                     ; get low word of base address in eax
+ mov word [edi], ax               ; write low word
+ add edi, 2                       ; adjust the destination pointer
+ 
+ mov word [edi], bx               ; write selector
+ add edi, 2                       ; adjust the destination pointer again
+
+ mov al, 0x00
+ mov byte [edi], al               ; write null (reserved byte)
+ inc edi                          ; adjust the destination pointer again
+ 
+ pop edx                          ; get the flags
+ mov byte [edi], dl               ; and write those flags!
+ inc edi                          ; guess what we're doing here :D
+ 
+ shr ecx, 16                      ; shift base address right 16 bits to
+                                  ; get high word in position
+ mov eax, 0x0000ffff
+ and eax, ecx                     ; get high word of base address in eax
+ mov word [edi], ax               ; write high word
+
+ push esi                         ; restore ret address
+ret
+
+
 
 PICInit:
  ; Init & remap both PICs to use int numbers 0x20 - 0x2f
@@ -115,32 +185,32 @@ PICInit:
  ;  output:
  ;   n/a
 
- mov dx, [kPIC1CmdPort]    ; set up PIC 1
- mov al, 0x11              ; set ICW1
+ mov dx, [kPIC1CmdPort]           ; set up PIC 1
+ mov al, 0x11                     ; set ICW1
  out dx, al
 
  mov dx, [kPIC1DataPort]
- mov al, 0x20              ; set base interrupt number to 0x20 (ICW2)
+ mov al, 0x20                     ; set base interrupt to 0x20 (ICW2)
  out dx, al
 
- mov al, 0x04              ; set ICW3 to cascade PICs together
+ mov al, 0x04                     ; set ICW3 to cascade PICs together
  out dx, al
 
- mov al, 0x01              ; set both PICs to x86 mode with ICW4
+ mov al, 0x01                     ; set both PICs to x86 mode with ICW4
  out dx, al
 
- mov dx, [kPIC2CmdPort]    ; set up PIC 2
- mov al, 0x11              ; set ICW1
+ mov dx, [kPIC2CmdPort]           ; set up PIC 2
+ mov al, 0x11                     ; set ICW1
  out dx, al
 
  mov dx, [kPIC2DataPort]
- mov al, 0x28              ; set base interrupt number to 0x28 (ICW2)
+ mov al, 0x28                     ; set base interrupt to 0x28 (ICW2)
  out dx, al
 
- mov al, 0x02              ; set ICW3 to cascade PICs together
+ mov al, 0x02                     ; set ICW3 to cascade PICs together
  out dx, al
 
- mov al, 0x01              ; set both PICs to x86 mode with ICW4
+ mov al, 0x01                     ; set both PICs to x86 mode with ICW4
  out dx, al
 
 ret
@@ -154,6 +224,38 @@ PICMaskAll:
  ;
  ;  output:
  ;   n/a
+
+ mov dx, [kPIC1DataPort]
+ in al, dx
+ and al, 0xff
+ out dx, al
+
+ mov dx, [kPIC2DataPort]
+ in al, dx
+ and al, 0xff
+ out dx, al
+
+ret
+
+
+
+PICUnmaskAll:
+ ; Masks all interrupts
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ mov dx, [kPIC1DataPort]
+ in al, dx
+ and al, 0x00
+ out dx, al
+
+ mov dx, [kPIC2DataPort]
+ in al, dx
+ and al, 0x00
+ out dx, al
 
 ret
 
@@ -170,31 +272,31 @@ Print:
  ;  output:
  ;   n/a
 
- pop eax                   ; get return address for end ret
- pop esi                   ; get string address
- pop ecx                   ; get horizontal position
- pop edx                   ; get vertical position
- pop ebx                   ; get color attribute
- push eax                  ; push return address back onto the stack
+ pop eax                          ; get return address for end ret
+ pop esi                          ; get string address
+ pop ecx                          ; get horizontal position
+ pop edx                          ; get vertical position
+ pop ebx                          ; get color attribute
+ push eax                         ; push return address back on the stack
 
- mov edi, [kVideoMem]      ; load edi with video memory address
+ mov edi, [kVideoMem]             ; load edi with video memory address
 
- dec edx                   ; calculate text position offset
+ dec edx                          ; calculate text position offset
  mov eax, 160
  mul edx
- add edi, eax              ; alter edi for vertical text position
+ add edi, eax                     ; alter edi for vertical text position
 
  dec ecx
  mov eax, 2
  mul ecx
- add edi, eax              ; alter edi for horizontal text position
+ add edi, eax                     ; alter edi for horizontal text position
 
  .loopBegin:
  mov al, [esi]
  inc esi
 
- cmp al, [kNull]           ; have we reached the string end?
- jz .end                   ; if yes, jump to end of routine
+ cmp al, [kNull]                  ; have we reached the string end?
+ jz .end                          ; if yes, jump to end of routine
 
  mov byte[edi], al
  inc edi
