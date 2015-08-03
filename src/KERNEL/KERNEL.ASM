@@ -80,10 +80,10 @@ mov esp, 0x00090000
 
 
 
-mov eax, 0
-doItAgain:
+mov eax, 0                        ; loop to init IDT
+setupOneVector:
 push eax
-push 0x8e                         ; init IDT
+push 0x8e
 push ISR
 push 0x08
 push eax
@@ -91,11 +91,312 @@ call IDTWrite
 pop eax
 inc eax
 cmp eax, 0x00000100
-jz endIDTLoop
-jmp doItAgain
-endIDTLoop:
+jz endIDTSetupLoop
+jmp setupOneVector
+endIDTSetupLoop:
 lidt [idtStructure]
-sti
+
+
+
+push 0x8e
+push ISR00
+push 0x08
+push 0x00
+call IDTWrite
+
+push 0x8e
+push ISR01
+push 0x08
+push 0x01
+call IDTWrite
+
+push 0x8e
+push ISR02
+push 0x08
+push 0x02
+call IDTWrite
+
+push 0x8e
+push ISR03
+push 0x08
+push 0x03
+call IDTWrite
+
+push 0x8e
+push ISR04
+push 0x08
+push 0x04
+call IDTWrite
+
+push 0x8e
+push ISR05
+push 0x08
+push 0x05
+call IDTWrite
+
+push 0x8e
+push ISR06
+push 0x08
+push 0x06
+call IDTWrite
+
+push 0x8e
+push ISR07
+push 0x08
+push 0x07
+call IDTWrite
+
+push 0x8e
+push ISR08
+push 0x08
+push 0x08
+call IDTWrite
+
+push 0x8e
+push ISR09
+push 0x08
+push 0x09
+call IDTWrite
+
+push 0x8e
+push ISR0A
+push 0x08
+push 0x0A
+call IDTWrite
+
+push 0x8e
+push ISR0B
+push 0x08
+push 0x0B
+call IDTWrite
+
+push 0x8e
+push ISR0C
+push 0x08
+push 0x0C
+call IDTWrite
+
+push 0x8e
+push ISR0D
+push 0x08
+push 0x0D
+call IDTWrite
+
+push 0x8e
+push ISR0E
+push 0x08
+push 0x0E
+call IDTWrite
+
+push 0x8e
+push ISR0F
+push 0x08
+push 0x0F
+call IDTWrite
+
+push 0x8e
+push ISR10
+push 0x08
+push 0x10
+call IDTWrite
+
+push 0x8e
+push ISR11
+push 0x08
+push 0x11
+call IDTWrite
+
+push 0x8e
+push ISR12
+push 0x08
+push 0x12
+call IDTWrite
+
+push 0x8e
+push ISR13
+push 0x08
+push 0x13
+call IDTWrite
+
+push 0x8e
+push ISR14
+push 0x08
+push 0x14
+call IDTWrite
+
+push 0x8e
+push ISR15
+push 0x08
+push 0x15
+call IDTWrite
+
+push 0x8e
+push ISR16
+push 0x08
+push 0x16
+call IDTWrite
+
+push 0x8e
+push ISR17
+push 0x08
+push 0x17
+call IDTWrite
+
+push 0x8e
+push ISR18
+push 0x08
+push 0x18
+call IDTWrite
+
+push 0x8e
+push ISR19
+push 0x08
+push 0x19
+call IDTWrite
+
+push 0x8e
+push ISR1A
+push 0x08
+push 0x1A
+call IDTWrite
+
+push 0x8e
+push ISR1B
+push 0x08
+push 0x1B
+call IDTWrite
+
+push 0x8e
+push ISR1C
+push 0x08
+push 0x1C
+call IDTWrite
+
+push 0x8e
+push ISR1D
+push 0x08
+push 0x1D
+call IDTWrite
+
+push 0x8e
+push ISR1E
+push 0x08
+push 0x1E
+call IDTWrite
+
+push 0x8e
+push ISR1F
+push 0x08
+push 0x1F
+call IDTWrite
+
+push 0x8e
+push ISR20
+push 0x08
+push 0x20
+call IDTWrite
+
+push 0x8e
+push ISR21
+push 0x08
+push 0x21
+call IDTWrite
+
+push 0x8e
+push ISR22
+push 0x08
+push 0x22
+call IDTWrite
+
+push 0x8e
+push ISR23
+push 0x08
+push 0x23
+call IDTWrite
+
+push 0x8e
+push ISR24
+push 0x08
+push 0x24
+call IDTWrite
+
+push 0x8e
+push ISR25
+push 0x08
+push 0x25
+call IDTWrite
+
+push 0x8e
+push ISR26
+push 0x08
+push 0x26
+call IDTWrite
+
+push 0x8e
+push ISR27
+push 0x08
+push 0x27
+call IDTWrite
+
+push 0x8e
+push ISR28
+push 0x08
+push 0x28
+call IDTWrite
+
+push 0x8e
+push ISR29
+push 0x08
+push 0x29
+call IDTWrite
+
+push 0x8e
+push ISR2A
+push 0x08
+push 0x2A
+call IDTWrite
+
+push 0x8e
+push ISR2B
+push 0x08
+push 0x2B
+call IDTWrite
+
+push 0x8e
+push ISR2C
+push 0x08
+push 0x2C
+call IDTWrite
+
+push 0x8e
+push ISR2D
+push 0x08
+push 0x2D
+call IDTWrite
+
+push 0x8e
+push ISR2E
+push 0x08
+push 0x2E
+call IDTWrite
+
+push 0x8e
+push ISR2F
+push 0x08
+push 0x2F
+call IDTWrite
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 push 0x07                         ; print splash message
@@ -111,17 +412,356 @@ push kCopyright2
 call Print
 
 call PICInit                      ; remap both PICs
-call PICMaskAll
+call PICUnmaskAll
 
+sti
 
 infiniteLoop:
-int 0xff
 jmp infiniteLoop
 
 
 
 ISR:
-inc dword [0x00000500]
+;cli
+inc dword [0x00000550]
+call PICIntComplete
+;sti
+iret
+
+ISR00:
+;cli
+inc byte [0x00000500]
+call PICIntComplete
+;sti
+iret
+
+ISR01:
+;cli
+inc byte [0x00000501]
+call PICIntComplete
+;sti
+iret
+
+ISR02:
+;cli
+inc byte [0x00000502]
+call PICIntComplete
+;sti
+iret
+
+ISR03:
+;cli
+inc byte [0x00000503]
+call PICIntComplete
+;sti
+iret
+
+ISR04:
+;cli
+inc byte [0x00000504]
+call PICIntComplete
+;sti
+iret
+
+ISR05:
+;cli
+inc byte [0x00000505]
+call PICIntComplete
+;sti
+iret
+
+ISR06:
+;cli
+inc byte [0x00000506]
+call PICIntComplete
+;sti
+iret
+
+ISR07:
+;cli
+inc byte [0x00000507]
+call PICIntComplete
+;sti
+iret
+
+ISR08:
+;cli
+inc byte [0x00000508]
+call PICIntComplete
+;sti
+iret
+
+ISR09:
+;cli
+inc byte [0x00000509]
+call PICIntComplete
+;sti
+iret
+
+ISR0A:
+;cli
+inc byte [0x0000050A]
+call PICIntComplete
+;sti
+iret
+
+ISR0B:
+;cli
+inc byte [0x0000050B]
+call PICIntComplete
+;sti
+iret
+
+ISR0C:
+;cli
+inc byte [0x0000050C]
+call PICIntComplete
+;sti
+iret
+
+ISR0D:
+;cli
+inc byte [0x0000050D]
+call PICIntComplete
+;sti
+iret
+
+ISR0E:
+;cli
+inc byte [0x0000050E]
+call PICIntComplete
+;sti
+iret
+
+ISR0F:
+;cli
+inc byte [0x0000050F]
+call PICIntComplete
+;sti
+iret
+
+ISR10:
+;cli
+inc byte [0x00000510]
+call PICIntComplete
+;sti
+iret
+
+ISR11:
+;cli
+inc byte [0x00000511]
+call PICIntComplete
+;sti
+iret
+
+ISR12:
+;cli
+inc byte [0x00000512]
+call PICIntComplete
+;sti
+iret
+
+ISR13:
+;cli
+inc byte [0x00000513]
+call PICIntComplete
+;sti
+iret
+
+ISR14:
+;cli
+inc byte [0x00000514]
+call PICIntComplete
+;sti
+iret
+
+ISR15:
+;cli
+inc byte [0x00000515]
+call PICIntComplete
+;sti
+iret
+
+ISR16:
+;cli
+inc byte [0x00000516]
+call PICIntComplete
+;sti
+iret
+
+ISR17:
+;cli
+inc byte [0x00000517]
+call PICIntComplete
+;sti
+iret
+
+ISR18:
+;cli
+inc byte [0x00000518]
+call PICIntComplete
+;sti
+iret
+
+ISR19:
+;cli
+inc byte [0x00000519]
+call PICIntComplete
+;sti
+iret
+
+ISR1A:
+;cli
+inc byte [0x0000051A]
+call PICIntComplete
+;sti
+iret
+
+ISR1B:
+;cli
+inc byte [0x0000051B]
+call PICIntComplete
+;sti
+iret
+
+ISR1C:
+;cli
+inc byte [0x0000051C]
+call PICIntComplete
+;sti
+iret
+
+ISR1D:
+;cli
+inc byte [0x0000051D]
+call PICIntComplete
+;sti
+iret
+
+ISR1E:
+;cli
+inc byte [0x0000051E]
+call PICIntComplete
+;sti
+iret
+
+ISR1F:
+;cli
+inc byte [0x0000051F]
+call PICIntComplete
+;sti
+iret
+
+ISR20:
+;cli
+inc byte [0x00000520]
+call PICIntComplete
+;sti
+iret
+
+ISR21:
+;cli
+inc byte [0x00000521]
+call PICIntComplete
+;sti
+iret
+
+ISR22:
+;cli
+inc byte [0x00000522]
+call PICIntComplete
+;sti
+iret
+
+ISR23:
+;cli
+inc byte [0x00000523]
+call PICIntComplete
+;sti
+iret
+
+ISR24:
+;cli
+inc byte [0x00000524]
+call PICIntComplete
+;sti
+iret
+
+ISR25:
+;cli
+inc byte [0x00000525]
+call PICIntComplete
+;sti
+iret
+
+ISR26:
+;cli
+inc byte [0x00000526]
+call PICIntComplete
+;sti
+iret
+
+ISR27:
+;cli
+inc byte [0x00000527]
+call PICIntComplete
+;sti
+iret
+
+ISR28:
+;cli
+inc byte [0x00000528]
+call PICIntComplete
+;sti
+iret
+
+ISR29:
+;cli
+inc byte [0x00000529]
+call PICIntComplete
+;sti
+iret
+
+ISR2A:
+;cli
+inc byte [0x0000052A]
+call PICIntComplete
+;sti
+iret
+
+ISR2B:
+;cli
+inc byte [0x0000052B]
+call PICIntComplete
+;sti
+iret
+
+ISR2C:
+;cli
+inc byte [0x0000052C]
+call PICIntComplete
+;sti
+iret
+
+ISR2D:
+;cli
+inc byte [0x0000052D]
+call PICIntComplete
+;sti
+iret
+
+ISR2E:
+;cli
+inc byte [0x0000052E]
+call PICIntComplete
+;sti
+iret
+
+ISR2F:
+;cli
+inc byte [0x0000052F]
+call PICIntComplete
+;sti
 iret
 
 
@@ -185,39 +825,84 @@ PICInit:
  ;  output:
  ;   n/a
 
- mov dx, [kPIC1CmdPort]           ; set up PIC 1
  mov al, 0x11                     ; set ICW1
+ mov dx, [kPIC1CmdPort]           ; set up PIC 1
+ out dx, al
+ mov dx, [kPIC2CmdPort]           ; set up PIC 2
  out dx, al
 
- mov dx, [kPIC1DataPort]
  mov al, 0x20                     ; set base interrupt to 0x20 (ICW2)
+ mov dx, [kPIC1DataPort]
+ out dx, al
+ 
+ mov al, 0x28                     ; set base interrupt to 0x28 (ICW2)
+ mov dx, [kPIC2DataPort]
  out dx, al
 
  mov al, 0x04                     ; set ICW3 to cascade PICs together
+ mov dx, [kPIC1DataPort]
  out dx, al
-
- mov al, 0x01                     ; set both PICs to x86 mode with ICW4
- out dx, al
-
- mov dx, [kPIC2CmdPort]           ; set up PIC 2
- mov al, 0x11                     ; set ICW1
- out dx, al
-
- mov dx, [kPIC2DataPort]
- mov al, 0x28                     ; set base interrupt to 0x28 (ICW2)
- out dx, al
-
  mov al, 0x02                     ; set ICW3 to cascade PICs together
+ mov dx, [kPIC2DataPort]
  out dx, al
-
- mov al, 0x01                     ; set both PICs to x86 mode with ICW4
+ 
+ mov al, 0x01                     ; set PIC 1 to x86 mode with ICW4
+ mov dx, [kPIC1DataPort]
+ out dx, al
+ mov dx, [kPIC2DataPort]
+ out dx, al
+ 
+ mov al, 0                        ; zero the data register
+ mov dx, [kPIC1DataPort]
+ out dx, al
+ mov dx, [kPIC2DataPort]
  out dx, al
 
 ret
 
 
 
+PICIntComplete:
+ ; Tells both PICs the interrupt has been handled
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ mov al, 0x20                     ; sets the interrupt complete bit
+ mov dx, [kPIC1CmdPort]           ; write bit to PIC 1
+ out dx, al
+ ;mov dx, [kPIC2CmdPort]           ; write bit to PIC 2
+ ;out dx, al
+ 
+ret
+
+
+
 PICMaskAll:
+ ; Masks all interrupts
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ mov dx, [kPIC1DataPort]
+ in al, dx
+ and al, 0xff
+ out dx, al
+
+ mov dx, [kPIC2DataPort]
+ in al, dx
+ and al, 0xff
+ out dx, al
+
+ret
+
+
+
+PICMaskSet:
  ; Masks all interrupts
  ;  input:
  ;   n/a
