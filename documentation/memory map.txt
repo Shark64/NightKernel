@@ -3,7 +3,7 @@ Start			End				Size						Description
 0x00000000		0x000003FF		1 KB						interrupt vector table
 0x00000400		0x000004FF		256 bytes					BIOS data area (remapped here from CMOS)
 0x00000500		0x00000500		1 byte						timer tick value - increments 128 times per second then resets to 0
-0x00000501		0x00000504		4 bytes						seconds since boot - increments once per second
+0x00000501		0x00000504		4 bytes						seconds since boot - increments when timer tick value resets to 0
 0x00000505		0x000005FF		251 bytes					empty
 0x00000600		0x00007BFF		30207 bytes (29.49 KB)		kernel space (kernel is loaded here by freeDOS bootloader)
 0x00007C00		0x00007DFF		512 bytes					bootloader (copied here by BIOS, can be overwritten)
