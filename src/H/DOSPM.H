@@ -11,6 +11,8 @@
 #ifndef  __DOSPM_H                      	/* to prevent multiple includes */
 #define  __DOSPM_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {                                /* Assume C declarations for C++ */
 #endif
@@ -86,14 +88,14 @@ typedef unsigned short          WORD;
 typedef unsigned long           DWORD;
 typedef unsigned int            UINT;
 
-typedef signed char             int8_t;
-typedef unsigned char           uint8_t;
-typedef short                   int16_t;
-typedef unsigned short          uint16_t;
-typedef int                     int32_t;
-typedef unsigned                uint32_t;
-typedef long long               int64_t;
-typedef unsigned long long      uint64_t;
+//typedef signed char             int8_t;
+//typedef unsigned char           uint8_t;
+//typedef short                   int16_t;
+//typedef unsigned short          uint16_t;
+//typedef int                     int32_t;
+//typedef unsigned                uint32_t;
+//typedef long long               int64_t;
+//typedef unsigned long long      uint64_t;
 
 /* define our basic pointer types */
 typedef VOID* PVOID;
@@ -104,21 +106,21 @@ typedef CHAR* LPCH;
 typedef CHAR* PCH;
 /* typedef VOID* LPVOID; */
 
-typedef char NEAR*      PSTR;
-typedef char NEAR*      NPSTR;
-typedef char FAR*       LPSTR;
-typedef const char FAR* LPCSTR;
-typedef BYTE NEAR*      PBYTE;
-typedef BYTE FAR*       LPBYTE;
-typedef int NEAR*       PINT;
-typedef int FAR*        LPINT;
-typedef WORD NEAR*      PWORD;
-typedef WORD FAR*       LPWORD;
-typedef long NEAR*      PLONG;
-typedef long FAR*       LPLONG;
-typedef DWORD NEAR*     PDWORD;
-typedef DWORD FAR*      LPDWORD;
-typedef void FAR*       LPVOID;
+//typedef char NEAR*      PSTR;
+//typedef char NEAR*      NPSTR;
+//typedef char FAR*       LPSTR;
+//typedef const char FAR* LPCSTR;
+//typedef BYTE NEAR*      PBYTE;
+//typedef BYTE FAR*       LPBYTE;
+//typedef int NEAR*       PINT;
+//typedef int FAR*        LPINT;
+//typedef WORD NEAR*      PWORD;
+//typedef WORD FAR*       LPWORD;
+//typedef long NEAR*      PLONG;
+//typedef long FAR*       LPLONG;
+//typedef DWORD NEAR*     PDWORD;
+//typedef DWORD FAR*      LPDWORD;
+//typedef void FAR*       LPVOID;
 
 
 /* now for the derived types */
