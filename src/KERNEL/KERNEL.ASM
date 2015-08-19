@@ -129,9 +129,10 @@ call PITInit
 sti
 
 infiniteLoop:
+call keyboard
 jmp infiniteLoop
 
-
+keyboard:
 
 %include "inthandl.inc"
 
