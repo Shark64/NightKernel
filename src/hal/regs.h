@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRC_HAL_REGS_H_
-#define SRC_HAL_REGS_H_
+#ifndef __REGS_H
+#define __REGS_H
 
 #include <stdint.h>
 
@@ -65,4 +65,4 @@ union _INTR32 {
  *
  */
 
-#endif /* SRC_HAL_REGS_H_ */
+#endif /* __REGS_H */

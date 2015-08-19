@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef SRC_KERNEL_HAL_H_
-#define SRC_KERNEL_HAL_H_
+#ifndef __HAL_H
+#define __HAL_H
 
 /**
  *
@@ -64,4 +64,4 @@ extern int		__cdecl geninterrupt(int n);
  * End of hal.h
  *
  */
-#endif /* SRC_KERNEL_HAL_H_ */
+#endif /* __HAL_H */
