@@ -1,13 +1,17 @@
 #ifndef _SIZE_T_H
 #define _SIZE_T_H
 
-//************************************************************************
-//
-// 			size_t.h
-//
-//			NIGHTDOS - 32-bit kernel
-//
-//************************************************************************
+/***
+ *
+ * NightDOS Kernel
+ *
+ * 			size_t.h
+ *
+ * 			NightDOS C Runtime Library component
+ *
+ *
+ */
+
 
 #ifdef __cplusplus
 extern "C"

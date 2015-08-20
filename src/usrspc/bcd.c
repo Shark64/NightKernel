@@ -9,7 +9,7 @@
 
 */
 
-#include <bcd.h>
+#include "bcd.h"
 
 
 uint16_t BCD_ASC ( uint8_t bcd )

@@ -1,8 +1,9 @@
 /*
  *  BCDTEST.C - demo BCD decoding action
  */
-#include <stdio.h>
 #include "bcd.h"
+
+#include <stdio.h>
 
 void main( void )
 { int i, j;
