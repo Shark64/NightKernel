@@ -55,7 +55,7 @@ struct gdt_descriptor {
 extern void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t access, uint8_t grand);
 
 /* returns descriptor */
-extern gdt_descriptor* gdt_get_descriptor (int i);
+extern struct gdt_descriptor* gdt_get_descriptor (int i);
 
 /* initializes gdt */
 extern	int gdt_initialize ();

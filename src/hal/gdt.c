@@ -23,12 +23,14 @@ static struct gdtr				_gdtr;
 static void gdt_install();
 
 static void gdt_install() {
-	__asm__("lgdt [_gdtr]\n\t");
+	__asm__(".intel_syntax noprefix\n\t"
+         "lgdt [_gdtr]\n\t"
+         ".att_syntax prefix");
 }
 
 void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t access, uint8_t grand) {
 	/* null out the descriptor */
-	memset ((void *)&_gdt[i], 0, sizeof(gdt_descriptor));
+	memset ((void *)&_gdt[i], 0, sizeof(struct gdt_descriptor));
 
 	_gdt[i].baseLo = uint16_t(base & 0xffff);
 	_gdt[i].baseMid = uint8_t((base >> 16) & 0xff);
@@ -42,7 +44,7 @@ void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t acces
 
 }
 
-gdt_descriptor* i86_gdt_get_descriptor (int i) {
+struct gdt_descriptor* i86_gdt_get_descriptor (int i) {
 
 	if (i > MAX_DESCRIPTORS)
 		return 0;

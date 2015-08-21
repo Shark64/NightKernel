@@ -44,7 +44,7 @@ int __cdecl hal_done() {
 // Generate interrupt call
 
 void __cdecl geninterrupt(int n) {
-	asm(".intel_syntax noprefix\n\t"
+	__asm__(".intel_syntax noprefix\n\t"
 			"mov al, byte ptr [n]\n"
 			"mov byte ptr [genint+1], al\n"
 			"jmp genint\n"
