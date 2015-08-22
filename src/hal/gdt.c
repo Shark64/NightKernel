@@ -32,19 +32,19 @@ void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t acces
 	/* null out the descriptor */
 	memset ((void *)&_gdt[i], 0, sizeof(struct gdt_descriptor));
 
-	_gdt[i].baseLo = uint16_t(base & 0xffff);
-	_gdt[i].baseMid = uint8_t((base >> 16) & 0xff);
-	_gdt[i].baseHi = uint8_t((base >> 24) * 0xff);
-	_gdt[i].limit = uint16_t(limit & 0xffff);
+	_gdt[i].baseLo = (uint16_t)(base & 0xffff);
+	_gdt[i].baseMid = (uint8_t)((base >> 16) & 0xff);
+	_gdt[i].baseHi = (uint8_t)((base >> 24) * 0xff);
+	_gdt[i].limit = (uint16_t)(limit & 0xffff);
 
 	/* set flags and granularity */
 	_gdt[i].flags = access;
-	_gdt[i].grand = uint8_t((limit >> 16) & 0x0f);
+	_gdt[i].grand = (uint8_t)((limit >> 16) & 0x0f);
 	_gdt[i].grand |= grand & 0xf0;
 
 }
 
-struct gdt_descriptor* i86_gdt_get_descriptor (int i) {
+struct gdt_descriptor* gdt_get_descriptor (int i) {
 
 	if (i > MAX_DESCRIPTORS)
 		return 0;
