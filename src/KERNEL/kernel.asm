@@ -131,24 +131,9 @@ jmp infiniteLoop
 
 %include "inthandl.asm"           ; interrupt handlers
 %include "idt.asm"                ; Interrupt Descriptor Table 
-%include "pic.asm"                ; Programmable Interrupt Controller code
+
 %include "console.asm"            ; text console printing
 %include "hardware.asm"           ; hardware routines
-%include "globals.asm"            ; global variable setup
+%include "pic.asm"                ; Programmable Interrupt Controller code
 
-; vars 'n' such
-kCopyright1          db     'Night DOS Kernel     A 32-bit protected mode replacement for the FreeDOS kernel', 0x00
-kCopyright2          db     'version 0.03         2015 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
-kCRLF                db     0x0d, 0x0a, 0x00
-kNull                db     0
-kGDTDS               dd     0x00000500
-kGDTPtr              dd     0x00008000
-kIDTPtr              dd     0x00018000
-kVideoMem            dd     0x000b8000
-kPIC1CmdPort         dw     0x0020
-kPIC1DataPort        dw     0x0021
-kPIC2CmdPort         dw     0x00a0
-kPIC2DataPort        dw     0x00a1
-kPITPort             dw     0x0040
-kHexDigits           db     '0123456789ABCDEF'
-kUnsupportedInt      db     'An unsupported interrupt has been called'
+%include "globals.asm"            ; global variable setup
