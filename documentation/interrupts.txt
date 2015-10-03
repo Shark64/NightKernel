@@ -138,7 +138,7 @@ The complete interrupt table employed by the Night DOS Kernel. Interrupt handler
 
 0x24		Serial port 1
 
-0x25		Parallel port (PC AT) or reserved (PS/2)
+0x25		Reserved
 
 0x26		Diskette drive
 
@@ -152,7 +152,7 @@ The complete interrupt table employed by the Night DOS Kernel. Interrupt handler
 
 0x2B		Reserved
 
-0x2C		Reserved (AT) or auxiliary device (PS/2)
+0x2C		Auxiliary device (mouse)
 
 0x2D		FPU
 
