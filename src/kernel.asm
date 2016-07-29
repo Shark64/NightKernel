@@ -36,6 +36,8 @@ org 0x0600                        ; set origin point to where the
 cli
 jmp main
 
+%include "include/memdetect.asm"
+call starte820
 %include "gdt.asm"
 
 main:
