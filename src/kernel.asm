@@ -53,10 +53,8 @@ mov gs, ax
 
 call load_GDT
 
-jmp memdetect
-%include "memdetect.asm"			 ;memory detection?
 
-done16:
+
 mov eax, cr0                      ; enter protected mode. YAY!
 or eax, 00000001b
 mov cr0, eax
@@ -104,14 +102,6 @@ lidt [idtStructure]
 
 
 
-splash:
-pop dx
-push 0x07
-push 5
-push 1
-push dx
-call PrintHex
-
 push 0x07                         ; print splash message
 push 1
 push 1
@@ -123,6 +113,12 @@ push 2
 push 1
 push kCopyright2
 call PrintString
+
+push 0x07                         ; print number of int 15h entries
+push 3
+push 1
+push memmap_ent
+call PrintHex
 
 
 
@@ -142,7 +138,7 @@ jmp infiniteLoop
 
 %include "inthandl.asm"           ; interrupt handlers
 %include "idt.asm"                ; Interrupt Descriptor Table 
-;%include "memdetect.asm"		  ; Everything needed for memory detection
+
 %include "console.asm"            ; text console printing
 %include "hardware.asm"           ; hardware routines
 %include "pic.asm"                ; Programmable Interrupt Controller code
