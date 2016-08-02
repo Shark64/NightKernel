@@ -27,7 +27,7 @@ mov edx, 0x0534D4150 ;repair the trashed register
 jcxz .skipentry		;skip the entry which are 0 long
 cmp cl, 20			;did we got a 24 byte ACPI response
 jbe short .notext
-test byte [es:di + 20], 1 ;if that's true is the ignore data bit clear
+test byte [es:di + 20], DWORD 1 ;if that's true is the ignore data bit clear
 je short .skipentry
 
 .notext:
