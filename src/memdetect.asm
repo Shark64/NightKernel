@@ -1,6 +1,4 @@
 
-
-
 starte820:
 xor ebx, ebx 	;ebx needs to be set to 0
 xor bp, bp      ;an entry count..........
@@ -48,6 +46,25 @@ ret
 
 .failed:		;function unsupported
 stc
+push 0x07                         ; print failed to run kernel message
+push 1
+push 1
+push kFailed
+call PrintString
+
+push 0x07                         ; print function unsupported message
+push 1
+push 2
+push kMeme820unsup
+call PrintString
+
+push 0x07                         ; print reboot message
+push 1
+push 1
+push kCopyright1
+call PrintString
+
+call Reboot
 ret
 
 memmap_ent db 0
