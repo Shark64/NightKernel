@@ -1,4 +1,4 @@
-;yes used a bit, but I am still learning ;)
+
 
 
 starte820:
