@@ -37,3 +37,6 @@ kPIC2DataPort        dw     0x00a1
 kPITPort             dw     0x0040
 kHexDigits           db     '0123456789ABCDEF'
 kUnsupportedInt      db     'An unsupported interrupt has been called'
+kMeme820unsup        db     'Could not detect memory, function unsupported'
+kFailed              db     'Failed to run kernel succesfully, see below.'
+kRebootMSG           db     'Rebooting...'
