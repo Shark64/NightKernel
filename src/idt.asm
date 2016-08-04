@@ -1,5 +1,5 @@
 ; Night DOS Kernel (kernel.asm) version 0.03
-; Copyright 1995-2015 by mercury0x000d
+; Copyright 1995-2016 by mercury0x000d
 
 ; idt.asm is a part of the Night DOS Kernel
 
