@@ -1,20 +1,19 @@
-; Night DOS Kernel (kernel.asm) version 0.03
-; Copyright 1995-2016 by mercury0x000d
+; Night Kernel version 0.04
+; Copyright 1995 - 2016 by mercury0x000d
+; globals.asm is a part of the Night Kernel
 
-; globals.asm is a part of the Night DOS Kernel
-
-; The Night DOS Kernel is free software: you can redistribute it and/or
+; The Night Kernel is free software: you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License as published
 ; by the Free Software Foundation, either version 3 of the License, or (at
 ; your option) any later version.
 
-; The Night DOS Kernel is distributed in the hope that it will be useful, but
+; The Night Kernel is distributed in the hope that it will be useful, but
 ; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 ; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 ; for more details.
 
 ; You should have received a copy of the GNU General Public License along
-; with the Night DOS Kernel. If not, see <http://www.gnu.org/licenses/>.
+; with the Night Kernel. If not, see <http://www.gnu.org/licenses/>.
 
 ; See the included file <GPL License.txt> for the complete text of the
 ; GPL License by which this program is covered.
@@ -29,9 +28,10 @@ SystemInfo:
  .VESAVersionMajor					db 0x00
  .VESAVersionMinor					db 0x00
  .VESAOEMStringPointer				dd 0x00000000
- .VESACapabilities					db 0x00
- .VESAModeListPointer				dd 0x00000000
- .VESAMode							dw 0x0000
+ .VESACapabilities					dd 0x00000000
+ .VESAWidth							dw 0x0000
+ .VESAHeight						dw 0x0000
+ .VESAColorDepth					db 0x00
  .VESAVideoRAMKB					dd 0x00000000 
  .VESAOEMSoftwareRevision			dw 0x0000
  .VESAOEMVendorNamePointer			dd 0x00000000
@@ -42,7 +42,7 @@ SystemInfo:
  .CPUIDVendorString					times 16 db 0x00
  .CPUIDBrandString					times 64 db 0x00
  .CPUIDLargestBasicQuery			dd 0x00000000
- .CPUIDLargestExtandedQuery			dd 0x00000000
+ .CPUIDLargestExtendedQuery			dd 0x00000000
  .APMVersionMajor					db 0x00
  .APMVersionMinor					db 0x00
  .APMFeatures						dw 0x0000
@@ -55,23 +55,24 @@ SystemInfo:
  .PCISupport						db 0x00
 
 VESAInfoBlock:
- .VbeSignature						db 'VBE2'
- .VbeVersion						dw 0x0000
- .OemStringOffset					dw 0x0000
- .OemStringSegment					dw 0x0000
+ .VBESignature						db 'VBE2'
+ .VBEVersionMinor					db 0x00
+ .VBEVersionMajor					db 0x00
+ .OEMStringOffset					dw 0x0000
+ .OEMStringSegment					dw 0x0000
  .Capabilities						times 4 db 0x00
  .VideoModeListOffset				dw 0x0000
  .VideoModeListSegment				dw 0x0000
  .TotalMemory						dw 0x0000
- .OemSoftwareRev					dw 0x0000
- .OemVendorNameOffset				dw 0x0000
- .OemVendorNameSegment				dw 0x0000
- .OemProductNameOffset				dw 0x0000
- .OemProductNameSegment				dw 0x0000
- .OemProductRevOffset				dw 0x0000
- .OemProductRevSegment				dw 0x0000
+ .OEMSoftwareRev					dw 0x0000
+ .OEMVendorNameOffset				dw 0x0000
+ .OEMVendorNameSegment				dw 0x0000
+ .OEMProductNameOffset				dw 0x0000
+ .OEMProductNameSegment				dw 0x0000
+ .OEMProductRevOffset				dw 0x0000
+ .OEMProductRevSegment				dw 0x0000
  .Reserved							times 222 db 0
- .OemData							times 256 db 0
+ .OEMData							times 256 db 0
 
  VESAModeInfo:
  .ModeAttributes					dw 0

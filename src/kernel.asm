@@ -1,20 +1,19 @@
-; Night DOS Kernel (kernel.asm) version 0.03
-; Copyright 1995-2016 by mercury0x000d
+; Night Kernel version 0.04
+; Copyright 1995 - 2016 by mercury0x000d
+; Kernel.asm is a part of the Night Kernel
 
-; Kernel.asm is a part of the Night DOS Kernel
-
-; The Night DOS Kernel is free software: you can redistribute it and/or
+; The Night Kernel is free software: you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License as published
 ; by the Free Software Foundation, either version 3 of the License, or (at
 ; your option) any later version.
 
-; The Night DOS Kernel is distributed in the hope that it will be useful, but
+; The Night Kernel is distributed in the hope that it will be useful, but
 ; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 ; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 ; for more details.
 
 ; You should have received a copy of the GNU General Public License along
-; with the Night DOS Kernel. If not, see <http://www.gnu.org/licenses/>.
+; with the Night Kernel. If not, see <http://www.gnu.org/licenses/>.
 
 ; See the included file <GPL License.txt> for the complete text of the
 ; GPL License by which this program is covered.
@@ -206,12 +205,80 @@ mov [esi], edx
 add esi, 4
 mov [esi], ecx
 
+; set VESA information into the SystemInfo structure
+mov byte dl, [VESAInfoBlock.VBEVersionMajor]
+mov byte [SystemInfo.VESAVersionMajor], dl
+
+mov byte dl, [VESAInfoBlock.VBEVersionMinor]
+mov byte [SystemInfo.VESAVersionMinor], dl
+
+mov eax, 0x00000000
+mov word ax, [VESAInfoBlock.OEMStringSegment]
+shl eax, 4
+mov ebx, 0x00000000
+mov bx, [VESAInfoBlock.OEMStringOffset]
+add eax, ebx
+mov dword [SystemInfo.VESAOEMStringPointer], eax
+
+mov dword edx, [VESAInfoBlock.Capabilities]
+mov dword [SystemInfo.VESACapabilities], edx
+
+mov word dx, [VESAModeInfo.XResolution]
+mov word [SystemInfo.VESAWidth], dx
+
+mov word dx, [VESAModeInfo.YResolution]
+mov word [SystemInfo.VESAHeight], dx
+
+mov byte dl, [VESAModeInfo.BitsPerPixel]
+mov byte [SystemInfo.VESAColorDepth], dl
+
+mov eax, 0x00000000
+mov word ax, [VESAInfoBlock.TotalMemory]
+mov ebx, 0x00010000
+mul ebx
+mov ebx, 0x00000400
+div ebx
+mov dword [SystemInfo.VESAVideoRAMKB], eax
+
+mov word dx, [VESAInfoBlock.OEMSoftwareRev]
+mov word [SystemInfo.VESAOEMSoftwareRevision], dx
+
+mov eax, 0x00000000
+mov word ax, [VESAInfoBlock.OEMVendorNameSegment]
+shl eax, 4
+mov ebx, 0x00000000
+mov bx, [VESAInfoBlock.OEMVendorNameOffset]
+add eax, ebx
+mov [SystemInfo.VESAOEMVendorNamePointer], eax
+
+mov eax, 0x00000000
+mov word ax, [VESAInfoBlock.OEMProductNameSegment]
+shl eax, 4
+mov ebx, 0x00000000
+mov bx, [VESAInfoBlock.OEMProductNameOffset]
+add eax, ebx
+mov [SystemInfo.VESAOEMProductNamePointer], eax
+
+mov eax, 0x00000000
+mov word ax, [VESAInfoBlock.OEMProductRevSegment]
+shl eax, 4
+mov ebx, 0x00000000
+mov bx, [VESAInfoBlock.OEMProductRevOffset]
+add eax, ebx
+mov [SystemInfo.VESAOEMProductRevisionPointer], eax
+
+mov eax, VESAInfoBlock.OEMData
+mov [SystemInfo.VESAOEMDataStringsPointer], eax
+
+mov dword edx, [VESAModeInfo.PhysBasePtr]
+mov dword [SystemInfo.VESALFBAddress], edx
+
 ; probe CPUID for processor brand string
 mov eax, 0x80000000
 cpuid
 cmp eax, 0x80000004
 jnae CPUIDDoneProbing
-mov [SystemInfo.CPUIDLargestExtandedQuery], eax
+mov [SystemInfo.CPUIDLargestExtendedQuery], eax
 mov eax, 0x80000002
 cpuid
 mov esi, SystemInfo.CPUIDBrandString
