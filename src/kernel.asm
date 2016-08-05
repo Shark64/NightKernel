@@ -319,7 +319,7 @@ push 2
 call VESAPrintString
 
 ; print number of int 15h entries
-;push memmap_ent
+push memmap_ent
 push 0xB018BEEF
 push 0x07
 push 18
