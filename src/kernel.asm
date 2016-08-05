@@ -345,8 +345,4 @@ jmp Hang
 %include "idt.asm"                ; Interrupt Descriptor Table
 %include "hardware.asm"           ; hardware routines
 %include "globals.asm"            ; global variable setup
-<<<<<<< HEAD
 %include "memory.asm"             ; memory manager
-=======
-;%include "memory.asm"             ; memory manager
->>>>>>> origin/Development

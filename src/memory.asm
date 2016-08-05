@@ -59,11 +59,7 @@ MemoryInit:
  jcxz .skipentry		;skip the entry which are 0 long
  cmp cl, 20			;did we got a 24 byte ACPI response
  jbe short .notext
-<<<<<<< HEAD
  test [es:di + 20], DWORD 1 ;if that's true is the ignore data bit clear
-=======
- test byte [es:di + 20], DWORD 1 ;if that's true is the ignore data bit clear
->>>>>>> origin/Development
  je short .skipentry
  
  .notext:
@@ -96,13 +92,8 @@ MemoryInit:
  
  push 0x07							; print reboot message
  push 1
-<<<<<<< HEAD
  push 3
  push kRebootMSG
-=======
- push 1
- push kCopyright1
->>>>>>> origin/Development
  call VESAPrintString
  
  call Reboot
