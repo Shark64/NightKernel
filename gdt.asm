@@ -27,7 +27,7 @@
 %ifndef __GDT_INC
 %define __GDT_INC
 
-bits  16
+bits 16
 
 load_GDT:
 ; loads our GDT

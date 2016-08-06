@@ -107,30 +107,29 @@ VESAInfoBlock:
  .PhysBasePtr						dd 0
  .OffScreenMemOffset				dd 0
  .OffScreenMemSize					dw 0
- .ReservedB							times 206 db 0
+ .ReservedB							times 206 db 0x00
 
 
 
 ; vars 'n' such
-kCRLF					db		0x0d, 0x0a, 0x00
-kNull					db		0
-kGDTDS					dd		0x00000500
-kGDTPtr					dd		0x00008000
-kIDTPtr					dd		0x00018000
-kVideoMem				dd		0x0000b800
-kPIC1CmdPort			dw		0x0020
-kPIC1DataPort			dw		0x0021
-kPIC2CmdPort			dw		0x00a0
-kPIC2DataPort			dw		0x00a1
-kPITPort				dw		0x0040
-kConfigBitsHint			dd		'ConfigBits'
-kConfigBits				dd		0x00000000
-kHexDigits				db		'0123456789ABCDEF'
-kUnsupportedInt			db		'An unsupported interrupt has been called', 0x00
-kFastA20Fail			db		'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
-kMeme820unsup			db		'Could not detect memory, function unsupported', 0x00
-kFailed					db		'Failed to run kernel succesfully, see below.', 0x00
-kRebootMSG				db		'Rebooting...', 0x00
+kCRLF								db 0x0d, 0x0a, 0x00
+kGDTDS								dd 0x00000500
+kGDTPtr								dd 0x00008000
+kIDTPtr								dd 0x00018000
+kPIC1CmdPort						dw 0x0020
+kPIC1DataPort						dw 0x0021
+kPIC2CmdPort						dw 0x00a0
+kPIC2DataPort						dw 0x00a1
+kPITPort							dw 0x0040
+kConfigBitsHint						dd 'ConfigBits'
+kConfigBits							dd 0x00000000
+kHexDigits							db '0123456789ABCDEF'
+kPrintString						times 256 db 0x00
+kUnsupportedInt						db 'An unsupported interrupt has been called', 0x00
+kFastA20Fail						db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
+kMeme820unsup						db 'Could not detect memory, function unsupported', 0x00
+kFailed								db 'Failed to run kernel succesfully, see below.', 0x00
+kRebootMSG							db 'Rebooting...', 0x00
 
 
 kernelFont:

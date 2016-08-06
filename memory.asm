@@ -20,6 +20,10 @@
 
 
 
+bits 16
+
+
+
 MemoryInit:
  ; Sets up all data structures which will be used by the memory manager
  ;  input:
@@ -32,6 +36,7 @@ MemoryInit:
 
  ; write memory manager globals
  .starte820:
+
  xor ebx, ebx 	;ebx needs to be set to 0
  xor bp, bp      ;an entry count..........
  mov edx, 0x0534D4150 ;smap needs to be set into edx
@@ -78,28 +83,16 @@ MemoryInit:
  
  .failed:		;function unsupported
  stc
- push 0xff777777					; print failed to run kernel message
- push 1
- push 1
- push kFailed
- call VESAPrintString
- 
- push 0x07							; print function unsupported message
- push 1
- push 2
  push kMeme820unsup
- call VESAPrintString
- 
- push 0x07							; print reboot message
- push 1
- push 3
- push kRebootMSG
- call VESAPrintString
- 
- call Reboot
- ret
+ call PrintFail
+ jmp InfiniteLoop
+
  memmap_ent db 0
 ret
+
+
+
+bits 32
 
 
 

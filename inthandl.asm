@@ -27,7 +27,7 @@ push kUnsupportedInt
 push 0xff777777
 push 2
 push 2
-call VESAPrintString
+call VESAPrint
 call PICIntComplete
 popa
 sti

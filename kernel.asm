@@ -34,7 +34,7 @@ bits 16
 org 0x0600
 
 ; turn off interrupts and skip the GDT in a jump to our main routine
-cli
+cli	
 jmp main
 
 %include "gdt.asm"
@@ -43,13 +43,16 @@ main:
 ; init the stack segment
 mov ax, 0x0000
 mov ss, ax
-mov sp, 0xffff
+mov sp, 0x05FF
 
 mov ax, 0x0000
 mov ds, ax
 mov es, ax
 mov fs, ax
 mov gs, ax
+
+; init and probe RAM
+call MemoryInit
 
 ; get video controller info
 mov ax, 0x4F00
@@ -59,7 +62,7 @@ int 0x10
 cli
 cmp ax, 0x004F
 je GetModes
-jmp Hang
+jmp InfiniteLoop
 
 GetModes:
 ; step through the VESA modes available and find the best one available
@@ -172,9 +175,6 @@ lidt [idtStructure]
 ; set interrupt handler addresses
 %include "setints.asm"
 
-; init and probe RAM
-;call MemoryInit
-
 ; Fast A20 enable
 in al, 0x92
 or al, 0x02
@@ -190,8 +190,8 @@ push kFastA20Fail
 push 0xff777777
 push 2
 push 2
-call VESAPrintString
-jmp Hang
+call VESAPrint
+jmp InfiniteLoop
 kernelInitFastA20Success:
 
 ; probe CPUID for vendor ID
@@ -316,15 +316,19 @@ push SystemInfo.kernelCopyright
 push 0xff777777
 push 2
 push 2
-call VESAPrintString
+call VESAPrint
+
+; testing number to string code
+push kPrintString
+push memmap_ent
+call ConvertHexToString
 
 ; print number of int 15h entries
-push memmap_ent
-push 0xB018BEEF
-push 0x07
+push kPrintString
+push 0xff777777
 push 18
-push 1
-call VESAPrintHex
+push 2
+call VESAPrint
 
 ; setup and remap both PICs, enable ints
 call PICInit
@@ -333,16 +337,14 @@ call PICUnmaskAll
 call PITInit
 ; sti
 
-infiniteLoop:
-jmp infiniteLoop
-
-Hang:
-jmp Hang
+InfiniteLoop:
+jmp InfiniteLoop
 
 
 
-%include "inthandl.asm"           ; interrupt handlers
-%include "idt.asm"                ; Interrupt Descriptor Table
-%include "hardware.asm"           ; hardware routines
-%include "globals.asm"            ; global variable setup
-%include "memory.asm"             ; memory manager
+%include "inthandl.asm"						; interrupt handlers
+%include "idt.asm"							; Interrupt Descriptor Table
+%include "hardware.asm"						; hardware routines
+%include "memory.asm"						; memory manager
+%include "api.asm"							; memory manager
+%include "globals.asm"						; global variable setup

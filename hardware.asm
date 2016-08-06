@@ -20,164 +20,59 @@
 
 
 
-ConsolePrintHex:
- ; Prints a hex value to the screen. Assumes text mode already set.
- ;  input:
- ;   value to print
- ;   horizontal position
- ;   vertical position
- ;   color attribute
- ;
- ;  output:
- ;   n/a
-
- pop eax                          ; get return address for end ret
- pop esi                          ; get hex value
- pop ecx                          ; get horizontal position
- pop edx                          ; get vertical position
- pop ebx                          ; get color attribute
- push eax                         ; push return address back on the stack
-
- mov edi, [kVideoMem]             ; load edi with video memory address
-
- dec edx                          ; calculate text position offset
- mov eax, 160
- mul edx
- add edi, eax                     ; alter edi for vertical text position
-
- dec ecx
- mov eax, 2
- mul ecx
- add edi, eax                     ; alter edi for horizontal text position
-
- mov ecx, 0xF0000000
- and ecx, esi
- shr ecx, 28
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x0F000000
- and ecx, esi
- shr ecx, 24
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x00F00000
- and ecx, esi
- shr ecx, 20
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x000F0000
- and ecx, esi
- shr ecx, 16
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x0000F000
- and ecx, esi
- shr ecx, 12
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x00000F00
- and ecx, esi
- shr ecx, 8
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x000000F0
- and ecx, esi
- shr ecx, 4
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
- mov ecx, 0x0000000F
- and ecx, esi
- add ecx, kHexDigits
- mov al, [ecx]
- mov byte[edi], al
- inc edi
- mov byte[edi], bl
- inc edi
-
-ret
+bits 16
 
 
 
-ConsolePrintString:
- ; Prints an ASCIIZ string to the screen. Assumes text mode already set.
+PrintFail:
+ ; Prints an ASCIIZ failure message directly to the screen.
+ ; Note: Uses text mode (assumed already set) not VESA.
+ ; Note: For use in Real Mode only.
  ;  input:
  ;   address of string to print
- ;   horizontal position
- ;   vertical position
- ;   color attribute
  ;
  ;  output:
  ;   n/a
 
- pop ax                          ; get return address for end ret
- pop cx                          ; get horizontal position
- pop dx                          ; get vertical position
- pop bx                          ; get color attribute
- pop si                          ; get string address
- push ax                         ; push return address back on the stack
+ ; set the proper mode
+ mov ah, 0x00
+ mov al, 0x03
+ sti
+ int 0x10
+ cli
+ 
+ pop ax
+ pop si
+ push ax
 
- mov di, [kVideoMem]             ; load edi with video memory address
-
- dec dx                          ; calculate text position offset
- mov ax, 160
- mul dx
- add di, ax                     ; alter edi for vertical text position
-
- dec cx
- mov ax, 2
- mul cx
- add di, ax                     ; alter edi for horizontal text position
-
+ ; write the string
+ mov bl, 0x04
+ mov ax, 0xB800
+ mov ds, ax
+ mov di, 0x0000
+ mov ax, 0x0000
+ mov es, ax
+ 
  .loopBegin:
- mov al, [si]
- inc si
+ mov al, [es:si]
 
  ; have we reached the string end? if yes, exit the loop
- cmp al, [kNull]       
- jz .end                          
+ cmp al, 0x00
+ je .end
 
- mov byte[di], al
+ mov byte[ds:di], al
  inc di
- mov byte[di], bl
+ mov byte[ds:di], bl
  inc di
+ inc si
  jmp .loopBegin
  .end:
+ 
 ret
+
+
+
+bits 32
 
 
 
@@ -211,11 +106,11 @@ PICInit:
  out dx, al
  mov dx, [kPIC2CmdPort]           ; set up PIC 2
  out dx, al
- 
+
  mov al, 0x20                     ; set base interrupt to 0x20 (ICW2)
  mov dx, [kPIC1DataPort]
  out dx, al
- 
+
  mov al, 0x28                     ; set base interrupt to 0x28 (ICW2)
  mov dx, [kPIC2DataPort]
  out dx, al
@@ -226,7 +121,7 @@ PICInit:
  mov al, 0x02                     ; set ICW3 to cascade PICs together
  mov dx, [kPIC2DataPort]
  out dx, al
- 
+
  mov al, 0x05                     ; set PIC 1 to x86 mode with ICW4
  mov dx, [kPIC1DataPort]
  out dx, al
@@ -234,13 +129,13 @@ PICInit:
  mov al, 0x01                     ; set PIC 2 to x86 mode with ICW4
  mov dx, [kPIC2DataPort]
  out dx, al
- 
+
  mov al, 0                        ; zero the data register
  mov dx, [kPIC1DataPort]
  out dx, al
  mov dx, [kPIC2DataPort]
  out dx, al
- 
+
  mov al, 0xFD
  mov dx, [kPIC1DataPort]
  out dx, al
@@ -263,10 +158,10 @@ PICIntComplete:
  mov al, 0x20                     ; sets the interrupt complete bit
  mov dx, [kPIC1CmdPort]           ; write bit to PIC 1
  out dx, al
- 
+
  mov dx, [kPIC2CmdPort]           ; write bit to PIC 2
  out dx, al
- 
+
 ret
 
 
@@ -305,12 +200,12 @@ PICMaskSet:
  in al, dx
  and al, 0xff
  out dx, al
- 
+
  mov dx, [kPIC2DataPort]
  in al, dx
  and al, 0xff
  out dx, al
- 
+
 ret
 
 
@@ -368,7 +263,7 @@ Reboot:
  or al, 00000001b
  out dx, al
 
- ; and now, for the return we'll never reach... 
+ ; and now, for the return we'll never reach...
 ret
 
 
@@ -403,21 +298,7 @@ ret
 
 
 
-VESAPrintHex:
- ; Prints a hex value directly to the VESA linear framebuffer
- ;  input:
- ;   horizontal position
- ;   vertical position
- ;   color attribute
- ;   value to print
- ;
- ;  output:
- ;   n/a
-ret
-
-
-
-VESAPrintString:
+VESAPrint:
  ; Prints an ASCIIZ string directly to the framebuffer
  ;  input:
  ;   horizontal position
@@ -442,7 +323,7 @@ VESAPrintString:
  add ax, bx
  mov edx, 4
  mul edx
- add eax, [VESAModeInfo.PhysBasePtr] 
+ add eax, [VESAModeInfo.PhysBasePtr]
  mov edi, eax
  push edi
 
@@ -454,11 +335,11 @@ VESAPrintString:
  .StringDrawLoop:
  ; put the first character of the string into bl
  mov byte bl, [esi]
- 
+
  ; see if the char we just got is null - if so, we exit
  cmp bl, 0x00
  jz .End
- 
+
  ; it wasn't, so we need to calculate the beginning of the data for this char in the font table into eax
  mov eax, 0
  mov al, bl
@@ -471,7 +352,7 @@ VESAPrintString:
  push edx
  mov byte dl, [eax]
  mov byte dh, dl
- 
+
  ; plot accordingly
  and dl, 10000000b
  cmp dl, 0
@@ -481,7 +362,7 @@ VESAPrintString:
  .PointSkipA:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 01000000b
  cmp dl, 0
@@ -491,7 +372,7 @@ VESAPrintString:
  .PointSkipB:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 00100000b
  cmp dl, 0
@@ -501,7 +382,7 @@ VESAPrintString:
  .PointSkipC:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 00010000b
  cmp dl, 0
@@ -511,7 +392,7 @@ VESAPrintString:
  .PointSkipD:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 00001000b
  cmp dl, 0
@@ -521,7 +402,7 @@ VESAPrintString:
  .PointSkipE:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 00000100b
  cmp dl, 0
@@ -531,7 +412,7 @@ VESAPrintString:
  .PointSkipF:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 00000010b
  cmp dl, 0
@@ -541,7 +422,7 @@ VESAPrintString:
  .PointSkipG:
  add edi, 4
  mov byte dl, dh
- 
+
  ; plot accordingly
  and dl, 00000001b
  cmp dl, 0
@@ -550,8 +431,8 @@ VESAPrintString:
  mov [edi], ecx
  .PointSkipH:
  add edi, 4
- mov byte dl, dh 
- 
+ mov byte dl, dh
+
  ; increment the font pointer
  inc eax
 
@@ -559,24 +440,24 @@ VESAPrintString:
  sub edi, 32
  pop edx
  add edi, edx
- 
+
  dec bh
  cmp bh, 0
  jne .FontBytesLoop
- 
- 
+
+
  ; increment the string pointer
  inc esi
- 
+
  ;restore the framebuffer pointer to its original value, save a copy adjusted for the next loop
  pop edi
  add edi, 32
  push edi
- 
+
  jmp .StringDrawLoop
- 
+
  .End:
- 
+
  ;get rid of that extra saved value
  pop edi
 ret
