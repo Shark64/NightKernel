@@ -76,6 +76,47 @@ bits 32
 
 
 
+KeyGet:
+ ; Returns the oldest key in the key buffer, or null if it's empty
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   key pressed in lowest byte of 32-bit value
+ 
+ ; clear the necesary registers
+ mov eax, 0x00000000
+ mov ecx, 0x00000000
+ mov edx, 0x00000000
+ 
+ ; load the buffer positions
+ mov cl, [kKeyBufferRead]
+ mov dl, [kKeyBufferWrite]
+
+ ; if the read position is the same as the write position, the buffer is empty and we can exit
+ cmp dl, cl
+ je .done
+
+ ; calculate the read address into esi
+ mov esi, kKeyBuffer
+ add esi, ecx
+
+ ; get the byte to return into al
+ mov byte al, [esi]
+ 
+ ; update the read position
+ inc cl
+ mov byte [kKeyBufferRead], cl
+ 
+ .done:
+ ; push the data we got onto the stack and exit
+ pop ebx
+ push eax
+ push ebx
+ret 
+
+
+
 PICDisableIRQs:
  ; Disables all IRQ lines across both PICs
  ;  input:
@@ -268,7 +309,44 @@ ret
 
 
 
-VESAPlot:
+VESAPlot24:
+ ; Draws a pixel directly to the VESA linear framebuffer
+ ;  input:
+ ;   horizontal position
+ ;   vertical position
+ ;   color attribute
+ ;
+ ;  output:
+ ;   n/a
+
+ pop esi                          ; get return address for end ret
+ pop ebx                          ; get horizontal position
+ pop eax                          ; get vertical position
+ pop ecx                          ; get color attribute
+ push esi                         ; push return address back on the stack
+
+ ; calculate write position
+ mov dx, [VESAModeInfo.XResolution]
+ mul edx
+ add ax, bx
+ mov edx, 3
+ mul edx
+ add eax, [VESAModeInfo.PhysBasePtr]
+
+ ; do the write
+ mov byte [eax], cl
+ inc eax
+ ror ecx, 8
+ mov byte [eax], cl
+ inc eax
+ ror ecx, 8
+ mov byte [eax], cl
+ ror ecx, 16
+ret
+
+
+
+VESAPlot32:
  ; Draws a pixel directly to the VESA linear framebuffer
  ;  input:
  ;   horizontal position
@@ -293,13 +371,259 @@ VESAPlot:
  add eax, [VESAModeInfo.PhysBasePtr]
 
  ; do the write
- mov [eax], ecx
+ mov dword [eax], ecx
 ret
 
 
 
-VESAPrint:
- ; Prints an ASCIIZ string directly to the framebuffer
+VESAPrint24:
+ ; Prints an ASCIIZ string directly to the VESA framebuffer in 24 bit color modes
+ ;  input:
+ ;   horizontal position
+ ;   vertical position
+ ;   color attribute
+ ;   address of string to print
+ ;
+ ;  output:
+ ;   n/a
+ pop edx                          ; get return address for end ret
+ pop ebx                          ; get horizontal position
+ pop eax                          ; get vertical position
+ pop ecx                          ; get color attribute
+ pop esi                          ; get string address
+ push edx                         ; push return address back on the stack
+
+ ; calculate write position into edi and save to the stack
+ mov edx, 0
+ mov dx, [VESAModeInfo.XResolution] ; can probably be optimized to use bytes per scanline field to eliminate doing multiply
+ mul edx
+ add ax, bx
+ mov edx, 3
+ mul edx
+ add eax, [VESAModeInfo.PhysBasePtr]
+ mov edi, eax
+ push edi
+
+ ; keep the number of bytes in a scanline handy in edx for later
+ mov edx, 0
+ mov dx, [VESAModeInfo.BytesPerScanline]
+
+ ; time to step through the string and draw it
+ .StringDrawLoop:
+ ; put the first character of the string into bl
+ mov byte bl, [esi]
+
+ ; see if the char we just got is null - if so, we exit
+ cmp bl, 0x00
+ jz .End
+
+ ; it wasn't, so we need to calculate the beginning of the data for this char in the font table into eax
+ mov eax, 0
+ mov al, bl
+ mov bh, 16
+ mul bh
+ add eax, kKernelFont
+
+ .FontBytesLoop:
+ ; save the contents of edx and move font byte 1 into dl, making a backup copy in dh
+ push edx
+ mov byte dl, [eax]
+ mov byte dh, dl
+
+ ; plot accordingly
+ and dl, 10000000b
+ cmp dl, 0
+ jz .PointSkipA
+ .PointPlotA:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneA
+ .PointSkipA:
+ add edi, 3
+ .PointDoneA:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 01000000b
+ cmp dl, 0
+ jz .PointSkipB
+ .PointPlotB:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneB
+ .PointSkipB:
+ add edi, 3
+ .PointDoneB:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 00100000b
+ cmp dl, 0
+ jz .PointSkipC
+ .PointPlotC:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneC
+ .PointSkipC:
+ add edi, 3
+ .PointDoneC:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 00010000b
+ cmp dl, 0
+ jz .PointSkipD
+ .PointPlotD:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneD
+ .PointSkipD:
+ add edi, 3
+ .PointDoneD:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 00001000b
+ cmp dl, 0
+ jz .PointSkipE
+ .PointPlotE:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneE
+ .PointSkipE:
+ add edi, 3
+ .PointDoneE:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 00000100b
+ cmp dl, 0
+ jz .PointSkipF
+ .PointPlotF:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneF
+ .PointSkipF:
+ add edi, 3
+ .PointDoneF:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 00000010b
+ cmp dl, 0
+ jz .PointSkipG
+ .PointPlotG:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneG
+ .PointSkipG:
+ add edi, 3
+ .PointDoneG:
+ mov byte dl, dh
+
+ ; plot accordingly
+ and dl, 00000001b
+ cmp dl, 0
+ jz .PointSkipH
+ .PointPlotH:
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ jmp .PointDoneH
+ .PointSkipH:
+ add edi, 3
+ .PointDoneH:
+ mov byte dl, dh
+
+ ; increment the font pointer
+ inc eax
+
+ ; set the framebuffer pointer to the next line
+ sub edi, 24
+ pop edx
+ add edi, edx
+
+ dec bh
+ cmp bh, 0
+ jne .FontBytesLoop
+
+
+ ; increment the string pointer
+ inc esi
+
+ ;restore the framebuffer pointer to its original value, save a copy adjusted for the next loop
+ pop edi
+ add edi, 24
+ push edi
+
+ jmp .StringDrawLoop
+
+ .End:
+
+ ;get rid of that extra saved value
+ pop edi
+
+ret
+
+
+
+VESAPrint32:
+ ; Prints an ASCIIZ string directly to the VESA framebuffer in 32 bit color modes
  ;  input:
  ;   horizontal position
  ;   vertical position
@@ -345,7 +669,7 @@ VESAPrint:
  mov al, bl
  mov bh, 16
  mul bh
- add eax, kernelFont
+ add eax, kKernelFont
 
  .FontBytesLoop:
  ; save the contents of edx and move font byte 1 into dl, making a backup copy in dh
@@ -461,24 +785,5 @@ VESAPrint:
  ;get rid of that extra saved value
  pop edi
 ret
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

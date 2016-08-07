@@ -190,7 +190,7 @@ push kFastA20Fail
 push 0xff777777
 push 2
 push 2
-call VESAPrint
+call [VESAPrint]
 jmp InfiniteLoop
 kernelInitFastA20Success:
 
@@ -231,6 +231,23 @@ mov word [SystemInfo.VESAHeight], dx
 
 mov byte dl, [VESAModeInfo.BitsPerPixel]
 mov byte [SystemInfo.VESAColorDepth], dl
+
+; while we're messing with color depth, we may as well set up function pointers to the appropriate VESA code
+cmp dl, 0x20
+jne ColorTest24Bit
+mov edx, VESAPrint32
+mov dword [VESAPrint], edx
+mov edx, VESAPlot32
+mov dword [VESAPlot], edx
+ColorTest24Bit:
+cmp dl, 0x18
+jne ColorTest16Bit
+mov edx, VESAPrint24
+mov dword [VESAPrint], edx
+mov edx, VESAPlot24
+mov dword [VESAPlot], edx
+ColorTest16Bit:
+; no others implemented for now
 
 mov eax, 0x00000000
 mov word ax, [VESAInfoBlock.TotalMemory]
@@ -311,12 +328,18 @@ add esi, 4
 mov [esi], edx
 CPUIDDoneProbing:
 
+; setup and remap both PICs, enable ints
+call PICInit
+call PICDisableIRQs
+call PICUnmaskAll
+call PITInit
+
 ; print splash message - if we get here, we're all clear!
 push SystemInfo.kernelCopyright
-push 0xff777777
+push 0xFF777777
 push 2
 push 2
-call VESAPrint
+call [VESAPrint]
 
 ; testing number to string code
 push kPrintString
@@ -325,19 +348,52 @@ call ConvertHexToString
 
 ; print number of int 15h entries
 push kPrintString
-push 0xff777777
+push 0xFF777777
 push 18
 push 2
-call VESAPrint
+call [VESAPrint]
 
-; setup and remap both PICs, enable ints
-call PICInit
-call PICDisableIRQs
-call PICUnmaskAll
-call PITInit
-; sti
+; pixel color test
+push 0xAAFF0000
+push 22
+push 100
+call [VESAPlot]
+
+push 0xAA00FF00
+push 22
+push 101
+call [VESAPlot]
+
+push 0xAA0000FF
+push 22
+push 102
+call [VESAPlot]
+
+sti
 
 InfiniteLoop:
+call KeyGet
+pop eax
+cmp al, 0x71 ; ascii code for "q"
+je .showMessage
+cmp al, 0x77 ; ascii code for "w"
+je .hideMessage
+jmp InfiniteLoop
+
+.showMessage:
+push SystemInfo.CPUIDBrandString
+push 0xFF777777
+push 34
+push 100
+call [VESAPrint]
+jmp InfiniteLoop
+
+.hideMessage:
+push SystemInfo.CPUIDBrandString
+push 0xFF000000
+push 34
+push 100
+call [VESAPrint]
 jmp InfiniteLoop
 
 

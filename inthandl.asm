@@ -21,405 +21,391 @@
 
 
 IntUnsupported:
-cli
-pusha
-push kUnsupportedInt
-push 0xff777777
-push 2
-push 2
-call VESAPrint
-call PICIntComplete
-popa
-sti
-iret
+ pusha
+ push kUnsupportedInt
+ push 0xff777777
+ push 2
+ push 2
+ call [VESAPrint]
+ call PICIntComplete
+ popa
+iretd
 
 
 
 ISR00:
-cli
-call PICIntComplete
-sti
-iret
+ ; Divide by Zero Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR01:
-cli
-call PICIntComplete
-sti
-iret
+ ; Debug Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR02:
-cli
-call PICIntComplete
-sti
-iret
+ ; Nonmaskable Interrupt Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR03:
-cli
-call PICIntComplete
-sti
-iret
+ ; Breakpoint Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR04:
-cli
-call PICIntComplete
-sti
-iret
+ ; Overflow Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR05:
-cli
-call PICIntComplete
-sti
-iret
+ ; Bound Range Exceeded Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR06:
-cli
-call PICIntComplete
-sti
-iret
+ ; Invalid Opcode Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR07:
-cli
-call PICIntComplete
-sti
-iret
+ ; Device Not Available Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR08:
-cli
-call PICIntComplete
-sti
-iret
+ ; Double Fault Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR09:
-cli
-call PICIntComplete
-sti
-iret
+ ; Former Coprocessor Segment Overrun Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR0A:
-cli
-call PICIntComplete
-sti
-iret
+ ; Invalid TSS Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR0B:
-cli
-call PICIntComplete
-sti
-iret
+ ; Segment Not Present Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR0C:
-cli
-call PICIntComplete
-sti
-iret
+ ; Stack Segment Fault Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR0D:
-cli
-call PICIntComplete
-sti
-iret
+ ; General Protection Fault
+ call PICIntComplete
+iretd
 
 
 
 ISR0E:
-cli
-call PICIntComplete
-sti
-iret
+ ; Page Fault Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR0F:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR10:
-cli
-call PICIntComplete
-sti
-iret
+ ; x86 Floating Point Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR11:
-cli
-call PICIntComplete
-sti
-iret
+ ; Alignment Check Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR12:
-cli
-call PICIntComplete
-sti
-iret
+ ; Machine Check Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR13:
-cli
-call PICIntComplete
-sti
-iret
+ ; SIMD Floating Point Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR14:
-cli
-call PICIntComplete
-sti
-iret
+ ; Virtualization Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR15:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR16:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR17:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR18:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR19:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR1A:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR1B:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR1C:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR1D:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 ISR1E:
-cli
-call PICIntComplete
-sti
-iret
+ ; Security Exception
+ call PICIntComplete
+iretd
 
 
 
 ISR1F:
-cli
-call PICIntComplete
-sti
-iret
+ ; Reserved
+ call PICIntComplete
+iretd
 
 
 
 ISR20:                           ; timer tick interrupt
-cli
-pusha
-inc dword [0x00000500]
-cmp byte [0x00000500], 128
-jz .incrementTicks
-.resume:
-call PICIntComplete
-popa
-sti
-iret
+ ; Programmable Interrupt Timer (PIT)
+ pushad
+ inc dword [0x00000500]
+ cmp byte [0x00000500], 128
+ jz .incrementTicks
+ .resume:
+ call PICIntComplete
+ popad
+iretd
 .incrementTicks:
-mov byte [0x00000500], 0
-inc dword [0x00000501]
+ mov byte [0x00000500], 0
+ inc dword [0x00000501]
 jmp .resume
 
 
 
 ISR21:
-cli
-call PICIntComplete
-in al, 0x60
-sti
-iret
+ ; Keyboard
+ pushad
+ call PICIntComplete
+ mov eax, 0x00000000
+ in al, 0x60
+
+ ; skip if this isn't a key down event
+ cmp al, 0x80
+ ja .done
+
+ ; load the buffer position
+ mov esi, kKeyBuffer
+ mov edx, 0x00000000
+ mov dl, [kKeyBufferWrite]
+ add esi, edx
+
+ ; get the letter or symbol associated with this key code
+ mov ebx, kKeyTable
+ add ebx, eax
+ mov cl, [ebx]
+
+ ; add the letter or symbol to the key buffer
+ mov byte [esi], cl
+
+ ; if the buffer isn't full, adjust the buffer pointer
+ mov dh, [kKeyBufferRead]
+ inc dl
+ cmp dl, dh
+ jne .incrementCounter
+
+ .done:
+ popad
+iretd
+.incrementCounter:
+ mov [kKeyBufferWrite], dl
+jmp .done
 
 
 
 ISR22:
-cli
-call PICIntComplete
-sti
-iret
+ ; Cascade - used internally by the PICs, should never fire
+ call PICIntComplete
+iretd
+
+
 
 ISR23:
-cli
-call PICIntComplete
-sti
-iret
+ ; Serial port 2
+ call PICIntComplete
+iretd
 
 
 
 ISR24:
-cli
-call PICIntComplete
-sti
-iret
+ ; Serial port 1
+ call PICIntComplete
+iretd
 
 
 
 ISR25:
-cli
-call PICIntComplete
-sti
-iret
+ ; Parallel port 2
+ call PICIntComplete
+iretd
 
 
 
 ISR26:
-cli
-call PICIntComplete
-sti
-iret
+ ; Floppy disk
+ call PICIntComplete
+iretd
 
 
 
 ISR27:
-cli
-call PICIntComplete
-sti
-iret
+ ; Parallel port 1 - prone to misfire
+ call PICIntComplete
+iretd
 
 
 
 ISR28:
-cli
-call PICIntComplete
-sti
-iret
+ ; CMOS real time closk
+ call PICIntComplete
+iretd
 
 
 
 ISR29:
-cli
-call PICIntComplete
-sti
-iret
+ ; Free for peripherals / legacy SCSI / NIC
+ call PICIntComplete
+iretd
+
+
 
 ISR2A:
-cli
-call PICIntComplete
-sti
-iret
+ ; Free for peripherals / SCSI / NIC
+ call PICIntComplete
+iretd
 
 
 
 ISR2B:
-cli
-call PICIntComplete
-sti
-iret
+ ; Free for peripherals / SCSI / NIC
+ call PICIntComplete
+iretd
 
 
 
 ISR2C:
-cli
-call PICIntComplete
-sti
-iret
+ ; PS/2 Mouse
+ call PICIntComplete
+iretd
 
 
 
 ISR2D:
-cli
-call PICIntComplete
-sti
-iret
+ ; FPU / Coprocessor / Inter-processor
+ call PICIntComplete
+iretd
 
 
 
 ISR2E:
-cli
-call PICIntComplete
-sti
-iret
+ ; Primary ATA Hard Disk 
+ call PICIntComplete
+iretd
 
 
 
 ISR2F:
-cli
-call PICIntComplete
-sti
-iret
+ ; Secondary ATA Hard Disk
+ call PICIntComplete
+iretd
 
 

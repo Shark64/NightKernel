@@ -109,6 +109,10 @@ VESAInfoBlock:
  .OffScreenMemSize					dw 0
  .ReservedB							times 206 db 0x00
 
+; function pointers
+VESAPlot							dd 0x00000000
+VESAPrint							dd 0x00000000
+
 
 
 ; vars 'n' such
@@ -124,6 +128,9 @@ kPITPort							dw 0x0040
 kConfigBitsHint						dd 'ConfigBits'
 kConfigBits							dd 0x00000000
 kHexDigits							db '0123456789ABCDEF'
+kKeyBufferWrite						db 0x00
+kKeyBufferRead						db 0x00
+kKeyBuffer							times 256 db 0x00
 kPrintString						times 256 db 0x00
 kUnsupportedInt						db 'An unsupported interrupt has been called', 0x00
 kFastA20Fail						db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
@@ -131,8 +138,11 @@ kMeme820unsup						db 'Could not detect memory, function unsupported', 0x00
 kFailed								db 'Failed to run kernel succesfully, see below.', 0x00
 kRebootMSG							db 'Rebooting...', 0x00
 
+; arrays
+kKeyTable:
+db '  1234567890-=  qwertyuiop[]  asdfghjkl; ` \zxcvbnm,0/ *               789-456+1230.  '
 
-kernelFont:
+kKernelFont:
 db 0xAA, 0xAA, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x4A, 0x51, 0xEA, 0x50, 0x5A, 0x51
 db 0xAA, 0xAA, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x39, 0x93, 0xC2, 0x52, 0x32, 0x5F
 db 0xAA, 0xAA, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x3B, 0xA5, 0xC1, 0x24, 0x31, 0x19
