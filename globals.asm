@@ -25,6 +25,9 @@ SystemInfo:
  .kernelVersionMajor				db 0x00
  .kernelVersionMinor				db 0x04
  .kernelCopyright					db 'Night Kernel version 0.04 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
+ .memoryTotalKB						dd 0x00000000
+ .memoryAvailableKB					dd 0x00000000
+ .memoryBlockPointer				dd 0x00000000
  .VESAVersionMajor					db 0x00
  .VESAVersionMinor					db 0x00
  .VESAOEMStringPointer				dd 0x00000000
