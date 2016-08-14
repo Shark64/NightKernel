@@ -1,5 +1,5 @@
-; Night Kernel version 0.04
-; Copyright 1995 - 2016 by mercury0x000d
+; Night Kernel version 0.06
+; Copyright 2015 - 2016 by mercury0x000d
 ; api.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or

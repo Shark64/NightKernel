@@ -1,5 +1,5 @@
-; Night Kernel version 0.04
-; Copyright 1995 - 2016 by mercury0x000d
+; Night Kernel version 0.06
+; Copyright 2015 - 2016 by mercury0x000d
 ; Kernel.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -328,7 +328,7 @@ add esi, 4
 mov [esi], edx
 CPUIDDoneProbing:
 
-; setup and remap both PICs, enable ints
+; setup and remap both PICs
 call PICInit
 call PICDisableIRQs
 call PICUnmaskAll
@@ -336,6 +336,7 @@ call PITInit
 
 ; print splash message - if we get here, we're all clear!
 push SystemInfo.kernelCopyright
+push 0xFF000000
 push 0xFF777777
 push 2
 push 2
@@ -343,31 +344,19 @@ call [VESAPrint]
 
 ; testing number to string code
 push kPrintString
-push memmap_ent
+push dword [memmap_ent]
 call ConvertHexToString
 
 ; print number of int 15h entries
 push kPrintString
+push 0xFF000000
 push 0xFF777777
 push 18
 push 2
 call [VESAPrint]
 
-; pixel color test
-push 0xAAFF0000
-push 22
-push 100
-call [VESAPlot]
-
-push 0xAA00FF00
-push 22
-push 101
-call [VESAPlot]
-
-push 0xAA0000FF
-push 22
-push 102
-call [VESAPlot]
+; setup that mickey!
+call MouseInit
 
 sti
 
@@ -378,11 +367,24 @@ cmp al, 0x71 ; ascii code for "q"
 je .showMessage
 cmp al, 0x77 ; ascii code for "w"
 je .hideMessage
+
+; print seconds since boot just for the heck of it
+push kPrintString
+push dword [SystemInfo.secondsSinceBoot]
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 34
+push 2
+call [VESAPrint]
+
 jmp InfiniteLoop
 
 .showMessage:
 push SystemInfo.CPUIDBrandString
-push 0xFF777777
+push 0xFF0000FF
+push 0xFF000000
 push 34
 push 100
 call [VESAPrint]
@@ -390,6 +392,7 @@ jmp InfiniteLoop
 
 .hideMessage:
 push SystemInfo.CPUIDBrandString
+push 0xFF000000
 push 0xFF000000
 push 34
 push 100

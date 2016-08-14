@@ -1,5 +1,5 @@
-; Night Kernel version 0.04
-; Copyright 1995 - 2016 by mercury0x000d
+; Night Kernel version 0.06
+; Copyright 2015 - 2016 by mercury0x000d
 ; hardware.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -84,8 +84,6 @@ KeyGet:
  ;  output:
  ;   key pressed in lowest byte of 32-bit value
  
- ; clear the necesary registers
- mov eax, 0x00000000
  mov ecx, 0x00000000
  mov edx, 0x00000000
  
@@ -96,12 +94,13 @@ KeyGet:
  ; if the read position is the same as the write position, the buffer is empty and we can exit
  cmp dl, cl
  je .done
-
+ 
  ; calculate the read address into esi
  mov esi, kKeyBuffer
  add esi, ecx
 
  ; get the byte to return into al
+ mov eax, 0x00000000
  mov byte al, [esi]
  
  ; update the read position
@@ -117,6 +116,35 @@ ret
 
 
 
+MouseInit:
+ ; Initializes the PS/2 mouse
+ ; Note: interrupts are assumed to be suspended prior to entry
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ ; get the status byte
+ mov al, 0x20
+ out 0x64, al
+ in al, 0x60
+ 
+ ; modify the proper bits to enable IRQ and mouse clock
+ or al, 00000010b
+ and al, 11011111b
+ mov bl, al
+ 
+ ; write the byte back
+ mov al, 0x60
+ out 0x64, al
+ mov al, bl
+ out 0x60, al
+
+ret
+ 
+ 
+ 
 PICDisableIRQs:
  ; Disables all IRQ lines across both PICs
  ;  input:
@@ -278,7 +306,7 @@ PITInit:
  ;  output:
  ;   n/a
 
- mov ax, 1193180 / 128
+ mov ax, 1193180 / 256
 
  mov al, 00110110b
  out 0x43, al
@@ -287,6 +315,119 @@ PITInit:
  xchg ah,al
  out 0x40, al
 
+ret
+
+
+
+PS2ControllerReadData:
+ ; Reads data from the PS/2 controller
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ ; set timeout value
+ mov byte bl, [SystemInfo.tickCounter]
+ dec bl
+
+ .waitLoop:
+ ; wait until the controller is ready
+ in al, 0x64
+ and al, 00000001b
+ cmp al, 0x01
+ je .ready
+ ; if we get here, the controller isn't ready, so see if we've timed out
+ mov byte cl, [SystemInfo.tickCounter]
+ cmp bl, cl
+ jne .waitLoop
+ ; if we get here, we've timed out
+ mov ax, 0xFF00
+ jmp .done
+ .ready:
+ ; do the read
+ mov eax, 0x00000000
+ in al, 0x60
+ pop edx
+ push eax
+ push edx
+ .done:
+ret
+
+
+
+PS2ControllerWriteCommand:
+ ; Writes a command to the PS/2 controller
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ pop ebx
+ pop edx
+ push ebx
+
+ ; set timeout value
+ mov byte bl, [SystemInfo.tickCounter]
+ dec bl
+
+ .waitLoop:
+ ; wait until the controller is ready
+ in al, 0x64
+ and al, 00000010b
+ cmp al, 0x00
+ je .ready
+ ; if we get here, the controller isn't ready, so see if we've timed out
+ mov byte cl, [SystemInfo.tickCounter]
+ cmp bl, cl
+ jne .waitLoop
+ ; if we get here, we've timed out
+ mov ax, 0xFF00
+ jmp .done
+ .ready:
+ ; do the write
+ mov al, dl
+ out 0x64, al
+ .done:
+ret
+
+
+
+PS2ControllerWriteData:
+ ; Writes data to the PS/2 controller
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ pop ebx
+ pop edx
+ push ebx
+
+ ; set timeout value
+ mov byte bl, [SystemInfo.tickCounter]
+ dec bl
+
+ .waitLoop:
+ ; wait until the controller is ready
+ in al, 0x64
+ and al, 00000010b
+ cmp al, 0x00
+ je .ready
+ ; if we get here, the controller isn't ready, so see if we've timed out
+ mov byte cl, [SystemInfo.tickCounter]
+ cmp bl, cl
+ jne .waitLoop
+ ; if we get here, we've timed out
+ mov ax, 0xFF01
+ jmp .done
+ .ready:
+ ; do the write
+ mov al, dl
+ out 0x60, al
+ .done:
 ret
 
 
@@ -389,7 +530,8 @@ VESAPrint24:
  pop edx                          ; get return address for end ret
  pop ebx                          ; get horizontal position
  pop eax                          ; get vertical position
- pop ecx                          ; get color attribute
+ pop ecx                          ; get text color
+ pop ebp                          ; get background color
  pop esi                          ; get string address
  push edx                         ; push return address back on the stack
 
@@ -446,7 +588,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneA
  .PointSkipA:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneA:
  mov byte dl, dh
 
@@ -466,7 +619,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneB
  .PointSkipB:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneB:
  mov byte dl, dh
 
@@ -486,7 +650,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneC
  .PointSkipC:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneC:
  mov byte dl, dh
 
@@ -506,7 +681,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneD
  .PointSkipD:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneD:
  mov byte dl, dh
 
@@ -526,7 +712,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneE
  .PointSkipE:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneE:
  mov byte dl, dh
 
@@ -546,7 +743,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneF
  .PointSkipF:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneF:
  mov byte dl, dh
 
@@ -566,7 +774,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneG
  .PointSkipG:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneG:
  mov byte dl, dh
 
@@ -586,7 +805,18 @@ VESAPrint24:
  ror ecx, 16
  jmp .PointDoneH
  .PointSkipH:
- add edi, 3
+ push ecx
+ mov ecx, ebp
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 8
+ mov byte [edi], cl
+ inc edi
+ ror ecx, 16
+ pop ecx
  .PointDoneH:
  mov byte dl, dh
 
@@ -627,7 +857,8 @@ VESAPrint32:
  ;  input:
  ;   horizontal position
  ;   vertical position
- ;   color attribute
+ ;   color
+ ;   background color
  ;   address of string to print
  ;
  ;  output:
@@ -636,7 +867,8 @@ VESAPrint32:
  pop edx                          ; get return address for end ret
  pop ebx                          ; get horizontal position
  pop eax                          ; get vertical position
- pop ecx                          ; get color attribute
+ pop ecx                          ; get text color
+ pop ebp                          ; get background color
  pop esi                          ; get string address
  push edx                         ; push return address back on the stack
 
@@ -683,7 +915,10 @@ VESAPrint32:
  jz .PointSkipA
  .PointPlotA:
  mov [edi], ecx
+ jmp .PointDoneA
  .PointSkipA:
+ mov [edi], ebp
+ .PointDoneA:
  add edi, 4
  mov byte dl, dh
 
@@ -693,7 +928,10 @@ VESAPrint32:
  jz .PointSkipB
  .PointPlotB:
  mov [edi], ecx
+ jmp .PointDoneB
  .PointSkipB:
+ mov [edi], ebp
+ .PointDoneB:
  add edi, 4
  mov byte dl, dh
 
@@ -703,7 +941,10 @@ VESAPrint32:
  jz .PointSkipC
  .PointPlotC:
  mov [edi], ecx
+ jmp .PointDoneC
  .PointSkipC:
+ mov [edi], ebp
+ .PointDoneC:
  add edi, 4
  mov byte dl, dh
 
@@ -713,7 +954,10 @@ VESAPrint32:
  jz .PointSkipD
  .PointPlotD:
  mov [edi], ecx
+ jmp .PointDoneD
  .PointSkipD:
+ mov [edi], ebp
+ .PointDoneD:
  add edi, 4
  mov byte dl, dh
 
@@ -723,7 +967,10 @@ VESAPrint32:
  jz .PointSkipE
  .PointPlotE:
  mov [edi], ecx
+ jmp .PointDoneE
  .PointSkipE:
+ mov [edi], ebp
+ .PointDoneE:
  add edi, 4
  mov byte dl, dh
 
@@ -733,7 +980,10 @@ VESAPrint32:
  jz .PointSkipF
  .PointPlotF:
  mov [edi], ecx
+ jmp .PointDoneF
  .PointSkipF:
+ mov [edi], ebp
+ .PointDoneF:
  add edi, 4
  mov byte dl, dh
 
@@ -743,7 +993,10 @@ VESAPrint32:
  jz .PointSkipG
  .PointPlotG:
  mov [edi], ecx
+ jmp .PointDoneG
  .PointSkipG:
+ mov [edi], ebp
+ .PointDoneG:
  add edi, 4
  mov byte dl, dh
 
@@ -753,7 +1006,10 @@ VESAPrint32:
  jz .PointSkipH
  .PointPlotH:
  mov [edi], ecx
+ jmp .PointDoneH
  .PointSkipH:
+ mov [edi], ebp
+ .PointDoneH:
  add edi, 4
  mov byte dl, dh
 

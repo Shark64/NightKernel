@@ -1,5 +1,5 @@
-; Night Kernel version 0.04
-; Copyright 1995 - 2016 by mercury0x000d
+; Night Kernel version 0.06
+; Copyright 2015 - 2016 by mercury0x000d
 ; globals.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -22,12 +22,14 @@
 
 ; structures
 SystemInfo:
- .kernelVersionMajor				db 0x00
- .kernelVersionMinor				db 0x04
- .kernelCopyright					db 'Night Kernel version 0.04 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
+ .kernelVersionMajor				dw 0x0000
+ .kernelVersionMinor				dw 0x0006
+ .kernelCopyright					db 'Night Kernel 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
  .memoryTotalKB						dd 0x00000000
  .memoryAvailableKB					dd 0x00000000
  .memoryBlockPointer				dd 0x00000000
+ .secondsSinceBoot					dd 0x00000000
+ .tickCounter						db 0x00
  .VESAVersionMajor					db 0x00
  .VESAVersionMinor					db 0x00
  .VESAOEMStringPointer				dd 0x00000000
@@ -51,9 +53,7 @@ SystemInfo:
  .APMFeatures						dw 0x0000
  .mouseAvailable					db 0x00
  .mouseButtonCount					db 0x00
- .mouseWheelSupportedByDriver		db 0x00
- .mouseWheelSupportedByDevice		db 0x00
- .memoryLargestAvailableBlock		dd 0x00000000
+ .mouseWheelPresent					db 0x00
  .multicoreAvailable				db 0x00
  .PCISupport						db 0x00
 
@@ -112,6 +112,60 @@ VESAInfoBlock:
  .OffScreenMemSize					dw 0
  .ReservedB							times 206 db 0x00
 
+MBR:
+ .BootCode							times 446 db 0x00
+ .Partiton1Status					db 0x00
+ .Partition1FirstSectorCHS			db 0x00, 0x00, 0x00
+ .Partition1Type					db 0x00
+ .Partition1LastSectorCHS			db 0x00, 0x00, 0x00
+ .Partition1FirstSectorLBA			dd 0x00000000
+ .Partition1SectorCount				dd 0x00000000
+ .Partition2Status					db 0x00
+ .Partition2FirstSectorCHS			db 0x00, 0x00, 0x00
+ .Partition2Type					db 0x00
+ .Partition2LastSectorCHS			db 0x00, 0x00, 0x00
+ .Partition2FirstSectorLBA			dd 0x00000000
+ .Partition2SectorCount				dd 0x00000000
+ .Partition3Status					db 0x00
+ .Partition3FirstSectorCHS			db 0x00, 0x00, 0x00
+ .Partition3Type					db 0x00
+ .Partition3LastSectorCHS			db 0x00, 0x00, 0x00
+ .Partition3FirstSectorLBA			dd 0x00000000
+ .Partition3SectorCount				dd 0x00000000
+ .Partition4Status					db 0x00
+ .Partition4FirstSectorCHS			db 0x00, 0x00, 0x00
+ .Partition4Type					db 0x00
+ .Partition4LastSectorCHS			db 0x00, 0x00, 0x00
+ .Partition4FirstSectorLBA			dd 0x00000000
+ .Partition4SectorCount				dd 0x00000000
+ .Signature							db 0x55, 0xAA
+ 
+FAT16BootSector:
+ .JumpOpcode						db 0x00, 0x00, 0x00
+ .OEMName							times 8 db 0x00
+ .BytesPerSector					dw 0x0000
+ .SectorsPerCluster					db 0x00
+ .ReservedSectors					dw 0x0000
+ .FATCount							db 0x00
+ .MaxRootEntries					dw 0x0000
+ .TotalSectors						dw 0x0000
+ .MediaDescriptor					db 0x00
+ .SectorsPerFAT						dw 0x0000
+ .SectorsPerTrack					dw 0x0000
+ .HeadCount							dw 0x0000
+ .HiddenSectors						dd 0x00000000
+ .TotalSectorsAndHidden				dw 0x00000000
+ .PhysicalDriveNumber				db 0x00
+ .Reserved							db 0x00
+ .ExtendedSignature					db 0x00
+ .VolumeSerial						dd 0x00000000
+ .PartitionVolumeLabel				times 11 db 0x00
+ .FileSystemType					times 8 db 0x00
+ .BootCode							times 448 db 0x00
+ .Signature							db 0x55, 0xAA
+
+
+
 ; function pointers
 VESAPlot							dd 0x00000000
 VESAPrint							dd 0x00000000
@@ -146,6 +200,7 @@ kKeyTable:
 db '  1234567890-=  qwertyuiop[]  asdfghjkl; ` \zxcvbnm,0/ *               789-456+1230.  '
 
 kKernelFont:
+; clipped from the GNU Unifont by Roman Czyborra
 db 0xAA, 0xAA, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x4A, 0x51, 0xEA, 0x50, 0x5A, 0x51
 db 0xAA, 0xAA, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x39, 0x93, 0xC2, 0x52, 0x32, 0x5F
 db 0xAA, 0xAA, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x3B, 0xA5, 0xC1, 0x24, 0x31, 0x19

@@ -1,5 +1,5 @@
-; Night Kernel version 0.04
-; Copyright 1995 - 2016 by mercury0x000d
+; Night Kernel version 0.06
+; Copyright 2015 - 2016 by mercury0x000d
 ; inthandl.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -255,27 +255,23 @@ iretd
 
 
 
-ISR20:                           ; timer tick interrupt
+ISR20:
  ; Programmable Interrupt Timer (PIT)
  pushad
- inc dword [0x00000500]
- cmp byte [0x00000500], 128
- jz .incrementTicks
- .resume:
+ inc byte [SystemInfo.tickCounter]
+ cmp byte [SystemInfo.tickCounter], 0x00
+ jne .noIncrement
+ inc dword [SystemInfo.secondsSinceBoot]
+ .noIncrement:
  call PICIntComplete
  popad
 iretd
-.incrementTicks:
- mov byte [0x00000500], 0
- inc dword [0x00000501]
-jmp .resume
 
 
 
 ISR21:
  ; Keyboard
  pushad
- call PICIntComplete
  mov eax, 0x00000000
  in al, 0x60
 
@@ -304,6 +300,7 @@ ISR21:
  jne .incrementCounter
 
  .done:
+ call PICIntComplete
  popad
 iretd
 .incrementCounter:
@@ -384,7 +381,26 @@ iretd
 
 ISR2C:
  ; PS/2 Mouse
+ pushad
+
+ ; pixel color test
+ push 0xAAFF0000
+ push 22
+ push 100
+ call [VESAPlot]
+ 
+ push 0xAA00FF00
+ push 22
+ push 101
+ call [VESAPlot]
+ 
+ push 0xAA0000FF
+ push 22
+ push 102
+ call [VESAPlot]
+
  call PICIntComplete
+ popad
 iretd
 
 
