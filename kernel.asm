@@ -1,4 +1,4 @@
-; Night Kernel version 0.06
+; Night Kernel
 ; Copyright 2015 - 2016 by mercury0x000d
 ; Kernel.asm is a part of the Night Kernel
 
@@ -342,12 +342,24 @@ push 2
 push 2
 call [VESAPrint]
 
+sti
+
+call SpeedDetect
+pop eax
+mov [SystemInfo.delayValue], eax
+
+cli
+
+; setup that mickey!
+call MouseInit
+
+sti
+
+; print number of int 15h entries
 ; testing number to string code
 push kPrintString
 push dword [memmap_ent]
 call ConvertHexToString
-
-; print number of int 15h entries
 push kPrintString
 push 0xFF000000
 push 0xFF777777
@@ -355,10 +367,6 @@ push 18
 push 2
 call [VESAPrint]
 
-; setup that mickey!
-call MouseInit
-
-sti
 
 InfiniteLoop:
 call KeyGet
@@ -378,6 +386,56 @@ push 0xFF777777
 push 34
 push 2
 call [VESAPrint]
+
+; print mouse position for testing
+push kPrintString
+mov eax, 0x00000000
+mov byte al, [SystemInfo.mouseButtons]
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 50
+push 100
+call [VESAPrint]
+
+push kPrintString
+mov eax, 0x00000000
+mov word ax, [SystemInfo.mouseX]
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 50
+push 200
+call [VESAPrint]
+
+push kPrintString
+mov eax, 0x00000000
+mov word ax, [SystemInfo.mouseY]
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 50
+push 300
+call [VESAPrint]
+ 
+push kPrintString
+mov eax, 0x00000000
+mov word ax, [SystemInfo.mouseZ]
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 50
+push 400
+call [VESAPrint]
+ 
 
 jmp InfiniteLoop
 

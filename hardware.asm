@@ -1,4 +1,4 @@
-; Night Kernel version 0.06
+; Night Kernel
 ; Copyright 2015 - 2016 by mercury0x000d
 ; hardware.asm is a part of the Night Kernel
 
@@ -40,7 +40,7 @@ PrintFail:
  sti
  int 0x10
  cli
- 
+
  pop ax
  pop si
  push ax
@@ -52,7 +52,7 @@ PrintFail:
  mov di, 0x0000
  mov ax, 0x0000
  mov es, ax
- 
+
  .loopBegin:
  mov al, [es:si]
 
@@ -67,7 +67,7 @@ PrintFail:
  inc si
  jmp .loopBegin
  .end:
- 
+
 ret
 
 
@@ -83,10 +83,10 @@ KeyGet:
  ;
  ;  output:
  ;   key pressed in lowest byte of 32-bit value
- 
+
  mov ecx, 0x00000000
  mov edx, 0x00000000
- 
+
  ; load the buffer positions
  mov cl, [kKeyBufferRead]
  mov dl, [kKeyBufferWrite]
@@ -94,7 +94,7 @@ KeyGet:
  ; if the read position is the same as the write position, the buffer is empty and we can exit
  cmp dl, cl
  je .done
- 
+
  ; calculate the read address into esi
  mov esi, kKeyBuffer
  add esi, ecx
@@ -102,49 +102,222 @@ KeyGet:
  ; get the byte to return into al
  mov eax, 0x00000000
  mov byte al, [esi]
- 
+
  ; update the read position
  inc cl
  mov byte [kKeyBufferRead], cl
- 
+
  .done:
  ; push the data we got onto the stack and exit
  pop ebx
  push eax
  push ebx
-ret 
+ret
 
 
 
 MouseInit:
  ; Initializes the PS/2 mouse
- ; Note: interrupts are assumed to be suspended prior to entry
  ;  input:
  ;   n/a
  ;
  ;  output:
  ;   n/a
 
- ; get the status byte
+ ; disable keyboard temporarily
+
+ call PS2ControllerWaitWrite
+ mov al, 0xAD
+ out 0x64, al
+
+ ; enable mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xA8
+ out 0x64, al
+
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+
+ ; reset command
+ call PS2ControllerWaitWrite
+ mov al, 0xFF
+ out 0x60, al
+ 
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ ; wait 5 seconds-ish for the mouse to say the reset is done
+ mov bl, 5
+ mov bh, 0x00
+ .loop:
+ ; check the mouse status
+ pusha
+ call PS2ControllerWaitRead
+ popa
+ in al, 0x60
+ cmp al, 0xAA
+ je .resetDone
+ inc bh
+ cmp bl, bh
+ jne .loop
+ .resetDone:
+ ; read mouse ID byte
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ ; get controller configuration byte
+ call PS2ControllerWaitWrite
  mov al, 0x20
  out 0x64, al
+ call PS2ControllerWaitRead
  in al, 0x60
- 
+
  ; modify the proper bits to enable IRQ and mouse clock
  or al, 00000010b
  and al, 11011111b
- mov bl, al
- 
- ; write the byte back
+ push eax
+
+ ; write controller configuration byte
+ call PS2ControllerWaitWrite
  mov al, 0x60
  out 0x64, al
- mov al, bl
+ call PS2ControllerWaitWrite
+ pop eax
  out 0x60, al
 
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin wheel mode init by setting sample rate to 200
+ call PS2ControllerWaitWrite
+ mov al, 0xF3
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ call PS2ControllerWaitWrite
+ mov al, 0xC8
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin wheel mode init by setting sample rate to 200
+ call PS2ControllerWaitWrite
+ mov al, 0xF3
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin wheel mode init by setting sample rate to 200
+ call PS2ControllerWaitWrite
+ mov al, 0x64
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin wheel mode init by setting sample rate to 200
+ call PS2ControllerWaitWrite
+ mov al, 0xF3
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin wheel mode init by setting sample rate to 200
+ call PS2ControllerWaitWrite
+ mov al, 0x50
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+ 
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin wheel mode init by setting sample rate to 200
+ call PS2ControllerWaitWrite
+ mov al, 0xF2
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ mov byte [SystemInfo.mouseID], al
+
+ ; see if this is one of those newfangled wheel mice
+ ; if it is, we skip the next section where we reapply default settings
+ cmp al, 0x03
+ je .skipDefaultSettings
+
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; use default settings
+ call PS2ControllerWaitWrite
+ mov al, 0xF6
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ .skipDefaultSettings:
+ ; here we set the packet size
+ mov byte al, [SystemInfo.mouseID]
+ cmp al, 0x03
+ je .fancyMouse
+ mov byte [SystemInfo.mousePacketByteSize], 0x03
+ jmp .donePacketSetting
+ .fancyMouse:
+ mov byte [SystemInfo.mousePacketByteSize], 0x04
+ .donePacketSetting:
+ 
+ ; select PS/2 device 2 to send next data byte to mouse
+ call PS2ControllerWaitWrite
+ mov al, 0xD4
+ out 0x64, al
+ ; begin packet transmission
+ call PS2ControllerWaitWrite
+ mov al, 0xF4
+ out 0x60, al
+ call PS2ControllerWaitRead
+ in al, 0x60
+
+ ; enable keyboard
+ call PS2ControllerWaitWrite
+ mov al, 0xAE
+ out 0x64, al
+
+ mov ax, [SystemInfo.VESAWidth]
+ shr ax, 1
+ mov word [SystemInfo.mouseX], ax
+
+ mov ax, [SystemInfo.VESAHeight]
+ shr ax, 1
+ mov word [SystemInfo.mouseY], ax
+
+ mov word [SystemInfo.mouseZ], 0x7777
+  
 ret
- 
- 
- 
+
+
+
 PICDisableIRQs:
  ; Disables all IRQ lines across both PICs
  ;  input:
@@ -211,7 +384,6 @@ PICInit:
  mov al, 0xFF
  mov dx, [kPIC2DataPort]
  out dx, al
-
 ret
 
 
@@ -230,7 +402,6 @@ PICIntComplete:
 
  mov dx, [kPIC2CmdPort]           ; write bit to PIC 2
  out dx, al
-
 ret
 
 
@@ -252,7 +423,6 @@ PICMaskAll:
  in al, dx
  and al, 0xff
  out dx, al
-
 ret
 
 
@@ -274,7 +444,6 @@ PICMaskSet:
  in al, dx
  and al, 0xff
  out dx, al
-
 ret
 
 
@@ -293,7 +462,6 @@ PICUnmaskAll:
 
  mov dx, [kPIC2DataPort]
  out dx, al
-
 ret
 
 
@@ -312,14 +480,13 @@ PITInit:
  out 0x43, al
 
  out 0x40, al
- xchg ah,al
+ xchg ah, al
  out 0x40, al
-
 ret
 
 
 
-PS2ControllerReadData:
+PS2ControllerWaitRead:
  ; Reads data from the PS/2 controller
  ;  input:
  ;   n/a
@@ -327,106 +494,59 @@ PS2ControllerReadData:
  ;  output:
  ;   n/a
 
- ; set timeout value
- mov byte bl, [SystemInfo.tickCounter]
- dec bl
+ mov dword [SystemInfo.lastError], 0x00000000
+
+ ; set timeout value for roughly a couple seconds
+ mov ebx, [SystemInfo.delayValue]
+ shr ebx, 8
+ mov ecx, 0x00000000
 
  .waitLoop:
  ; wait until the controller is ready
  in al, 0x64
  and al, 00000001b
  cmp al, 0x01
- je .ready
+ je .done
  ; if we get here, the controller isn't ready, so see if we've timed out
- mov byte cl, [SystemInfo.tickCounter]
- cmp bl, cl
+ inc ecx
+ cmp ebx, ecx
  jne .waitLoop
  ; if we get here, we've timed out
- mov ax, 0xFF00
- jmp .done
- .ready:
- ; do the read
- mov eax, 0x00000000
- in al, 0x60
- pop edx
- push eax
- push edx
+ mov dword [SystemInfo.lastError], 0x0000FF00
  .done:
 ret
 
 
 
-PS2ControllerWriteCommand:
- ; Writes a command to the PS/2 controller
+PS2ControllerWaitWrite:
+ ; Waits with timeout until the PS/2 controller is ready to accept data, then returns
+ ; Note: Uses the system delay value for timeout since interrupts may be disabled upon calling
  ;  input:
  ;   n/a
  ;
  ;  output:
  ;   n/a
 
- pop ebx
- pop edx
- push ebx
+  mov dword [SystemInfo.lastError], 0x00000000
 
- ; set timeout value
- mov byte bl, [SystemInfo.tickCounter]
- dec bl
-
- .waitLoop:
- ; wait until the controller is ready
- in al, 0x64
- and al, 00000010b
- cmp al, 0x00
- je .ready
- ; if we get here, the controller isn't ready, so see if we've timed out
- mov byte cl, [SystemInfo.tickCounter]
- cmp bl, cl
- jne .waitLoop
- ; if we get here, we've timed out
- mov ax, 0xFF00
- jmp .done
- .ready:
- ; do the write
- mov al, dl
- out 0x64, al
- .done:
-ret
-
-
-
-PS2ControllerWriteData:
- ; Writes data to the PS/2 controller
- ;  input:
- ;   n/a
- ;
- ;  output:
- ;   n/a
-
- pop ebx
- pop edx
- push ebx
-
- ; set timeout value
- mov byte bl, [SystemInfo.tickCounter]
- dec bl
+ ; set timeout value for roughly a couple seconds
+ mov ebx, [SystemInfo.delayValue]
+ shr ebx, 8
+ mov ecx, 0x00000000
 
  .waitLoop:
  ; wait until the controller is ready
  in al, 0x64
  and al, 00000010b
  cmp al, 0x00
- je .ready
+ je .done
  ; if we get here, the controller isn't ready, so see if we've timed out
- mov byte cl, [SystemInfo.tickCounter]
- cmp bl, cl
+ inc ecx
+ cmp ebx, ecx
  jne .waitLoop
  ; if we get here, we've timed out
  mov ax, 0xFF01
  jmp .done
- .ready:
- ; do the write
- mov al, dl
- out 0x60, al
  .done:
 ret
 
@@ -446,6 +566,34 @@ Reboot:
  out dx, al
 
  ; and now, for the return we'll never reach...
+ret
+
+
+
+SpeedDetect:
+ ; Determines how many iterations of three increments the CPU is capable of in one second
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   number of iterations
+
+ mov ebx, 0x00000000
+ mov ecx, 0x00000000
+ mov edx, 0x00000000
+ mov al, [SystemInfo.tickCounter]
+ mov ah, al
+ dec ah
+ .loop1:
+ inc ebx
+ inc ecx
+ inc edx
+ mov al, [SystemInfo.tickCounter]
+ cmp al, ah
+ jne .loop1
+ pop eax
+ push ecx
+ push eax
 ret
 
 

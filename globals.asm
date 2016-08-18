@@ -1,4 +1,4 @@
-; Night Kernel version 0.06
+; Night Kernel
 ; Copyright 2015 - 2016 by mercury0x000d
 ; globals.asm is a part of the Night Kernel
 
@@ -23,13 +23,15 @@
 ; structures
 SystemInfo:
  .kernelVersionMajor				dw 0x0000
- .kernelVersionMinor				dw 0x0006
+ .kernelVersionMinor				dw 0x0007
  .kernelCopyright					db 'Night Kernel 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
  .memoryTotalKB						dd 0x00000000
  .memoryAvailableKB					dd 0x00000000
  .memoryBlockPointer				dd 0x00000000
  .secondsSinceBoot					dd 0x00000000
  .tickCounter						db 0x00
+ .delayValue						dd 0x00000000
+ .lastError							dd 0x00000000
  .VESAVersionMajor					db 0x00
  .VESAVersionMinor					db 0x00
  .VESAOEMStringPointer				dd 0x00000000
@@ -53,7 +55,18 @@ SystemInfo:
  .APMFeatures						dw 0x0000
  .mouseAvailable					db 0x00
  .mouseButtonCount					db 0x00
+ .mouseID							db 0x00
  .mouseWheelPresent					db 0x00
+ .mouseButtons						db 0x00
+ .mouseX							dw 0x0000
+ .mouseY							dw 0x0000
+ .mouseZ							dw 0x0000
+ .mousePacketByteSize				db 0x00
+ .mousePacketByteCount				db 0x00
+ .mousePacketByte1					db 0x00
+ .mousePacketByte2					db 0x00
+ .mousePacketByte3					db 0x00
+ .mousePacketByte4					db 0x00
  .multicoreAvailable				db 0x00
  .PCISupport						db 0x00
 

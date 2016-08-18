@@ -1,4 +1,4 @@
-; Night Kernel version 0.06
+; Night Kernel
 ; Copyright 2015 - 2016 by mercury0x000d
 ; inthandl.asm is a part of the Night Kernel
 
@@ -383,22 +383,94 @@ ISR2C:
  ; PS/2 Mouse
  pushad
 
- ; pixel color test
- push 0xAAFF0000
- push 22
- push 100
- call [VESAPlot]
- 
- push 0xAA00FF00
- push 22
- push 101
- call [VESAPlot]
- 
- push 0xAA0000FF
- push 22
- push 102
- call [VESAPlot]
+ mov eax, 0x00000000
+ in al, 0x60
 
+ ; add this byte to the mouse packet
+ mov ebx, SystemInfo.mousePacketByte1
+ mov ecx, 0x00000000
+ mov cl, [SystemInfo.mousePacketByteCount]
+ mov dl, [SystemInfo.mousePacketByteSize]
+ add ebx, ecx
+ mov byte [ebx], al
+
+ ; see if we have a full set of bytes, skip to the end if not
+ inc cl
+ cmp cl, dl
+ jne .done
+ 
+ ; if we get here, we have a whole packet
+ mov byte [SystemInfo.mousePacketByteCount], 0xFF
+
+ mov edx, 0x00000000
+ mov byte dl, [SystemInfo.mousePacketByte1]
+ 
+ ; save edx, mask off the three main mouse buttons, restore edx
+ push edx
+ and dl, 00000111b
+ mov byte [SystemInfo.mouseButtons], dl
+ pop edx
+
+ mov eax, 0x00000000
+ mov byte al, [SystemInfo.mousePacketByte2]
+ mov word bx, [SystemInfo.mouseX]
+  
+ push edx 
+ and dl, 00010000b
+ cmp dl, 00010000b
+ pop edx
+ jne .mouseXPositive
+ ; movement was negative
+ neg al
+ sub bx, ax
+ jmp .mouseXDone
+ .mouseXPositive:
+ ; movement was positive
+ add bx, ax
+ .mouseXDone:
+ mov word [SystemInfo.mouseX], bx
+
+ mov eax, 0x00000000
+ mov byte al, [SystemInfo.mousePacketByte3]
+ mov word bx, [SystemInfo.mouseY]
+ and dl, 00100000b
+ cmp dl, 00100000b
+ jne .mouseYPositive
+ ; movement was negative (but we add to counteract the mouse's cartesian coordinate system)
+ neg al
+ add bx, ax
+ jmp .mouseYDone
+ .mouseYPositive:
+ ; movement was positive (but we subtract to counteract the mouse's cartesian coordinate system)
+ sub bx, ax
+ .mouseYDone:
+ mov word [SystemInfo.mouseY], bx
+ 
+ ; see if we're using a FancyMouse(TM) and act accordingly
+ mov byte al, [SystemInfo.mouseID]
+ cmp al, 0x03
+ jne .done
+ ; if we get here, we need have a wheel and need to process the Z axis
+ mov eax, 0x00000000
+ mov byte al, [SystemInfo.mousePacketByte4]
+ mov word bx, [SystemInfo.mouseZ]
+ mov cl, 0xF0
+ and cl, al
+ cmp cl, 0xF0
+ jne .mouseZPositive
+ ; movement was negative
+ neg al
+ and al, 0x0F
+ sub bx, ax
+ jmp .mouseZDone
+ .mouseZPositive:
+ ; movement was positive
+ add bx, ax
+ .mouseZDone:
+ mov word [SystemInfo.mouseZ], bx
+
+ .done:
+ inc byte [SystemInfo.mousePacketByteCount]
  call PICIntComplete
  popad
 iretd
