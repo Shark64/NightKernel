@@ -239,6 +239,7 @@ mov edx, VESAPrint32
 mov dword [VESAPrint], edx
 mov edx, VESAPlot32
 mov dword [VESAPlot], edx
+jmp ColorTestDone
 ColorTest24Bit:
 cmp dl, 0x18
 jne ColorTest16Bit
@@ -248,6 +249,7 @@ mov edx, VESAPlot24
 mov dword [VESAPlot], edx
 ColorTest16Bit:
 ; no others implemented for now
+ColorTestDone:
 
 mov eax, 0x00000000
 mov word ax, [VESAInfoBlock.TotalMemory]
@@ -367,6 +369,12 @@ push 18
 push 2
 call [VESAPrint]
 
+; testing DebugPrint - print the address in memory of the VESA OEM String and the string itself
+push dword [SystemInfo.VESAOEMVendorNamePointer]
+push SystemInfo.VESAOEMVendorNamePointer
+push 64
+push 2
+call DebugPrint
 
 InfiniteLoop:
 call KeyGet
@@ -397,7 +405,7 @@ push kPrintString
 push 0xFF000000
 push 0xFF777777
 push 50
-push 100
+push 2
 call [VESAPrint]
 
 push kPrintString
@@ -409,7 +417,7 @@ push kPrintString
 push 0xFF000000
 push 0xFF777777
 push 50
-push 200
+push 102
 call [VESAPrint]
 
 push kPrintString
@@ -421,7 +429,7 @@ push kPrintString
 push 0xFF000000
 push 0xFF777777
 push 50
-push 300
+push 202
 call [VESAPrint]
  
 push kPrintString
@@ -433,7 +441,7 @@ push kPrintString
 push 0xFF000000
 push 0xFF777777
 push 50
-push 400
+push 302
 call [VESAPrint]
  
 
@@ -443,7 +451,7 @@ jmp InfiniteLoop
 push SystemInfo.CPUIDBrandString
 push 0xFF0000FF
 push 0xFF000000
-push 34
+push 80
 push 100
 call [VESAPrint]
 jmp InfiniteLoop
@@ -452,7 +460,7 @@ jmp InfiniteLoop
 push SystemInfo.CPUIDBrandString
 push 0xFF000000
 push 0xFF000000
-push 34
+push 80
 push 100
 call [VESAPrint]
 jmp InfiniteLoop

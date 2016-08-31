@@ -102,3 +102,72 @@ ConvertHexToString:
  inc edi
 
 ret
+
+
+
+DebugPrint:
+ ; Quick minimal printing routine for debug purposes
+ ;  input:
+ ;   horizontal position
+ ;   vertical position
+ ;   numeric value to print
+ ;   address of string to print
+ ;
+ ;  output:
+ ;   n/a
+
+ ; do some stack magic to line up the items for calling in the order they'll be used
+ pop esi
+ pop eax
+ pop ebx
+ pop ecx
+ pop edx
+ push esi
+ push edx
+ push eax
+ push ebx
+
+ ; set up value print
+ push .scratchString
+ push ecx
+ call ConvertHexToString
+ pop ebx
+ pop eax
+ push eax
+ push ebx
+ push .scratchString
+ push 0xFF000000
+ push 0xFF777777
+ push ebx
+ push eax
+ call [VESAPrint]
+
+ ; set up string print
+ pop ebx
+ pop eax
+ pop edx
+ push edx
+ push 0xFF000000
+ push 0xFF777777
+ push ebx
+ add eax, 72
+ push eax
+ call [VESAPrint]
+ret
+.scratchString						times 10 db 0x00
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

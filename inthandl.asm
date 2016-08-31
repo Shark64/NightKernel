@@ -21,6 +21,7 @@
 
 
 IntUnsupported:
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  pusha
  push kUnsupportedInt
  push 0xff777777
@@ -35,6 +36,7 @@ iretd
 
 ISR00:
  ; Divide by Zero Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -42,6 +44,7 @@ iretd
 
 ISR01:
  ; Debug Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -49,6 +52,7 @@ iretd
 
 ISR02:
  ; Nonmaskable Interrupt Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -56,6 +60,7 @@ iretd
 
 ISR03:
  ; Breakpoint Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -63,6 +68,7 @@ iretd
 
 ISR04:
  ; Overflow Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -70,6 +76,7 @@ iretd
 
 ISR05:
  ; Bound Range Exceeded Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -77,6 +84,7 @@ iretd
 
 ISR06:
  ; Invalid Opcode Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -84,6 +92,7 @@ iretd
 
 ISR07:
  ; Device Not Available Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -91,6 +100,7 @@ iretd
 
 ISR08:
  ; Double Fault Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -98,6 +108,7 @@ iretd
 
 ISR09:
  ; Former Coprocessor Segment Overrun Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -105,6 +116,7 @@ iretd
 
 ISR0A:
  ; Invalid TSS Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -112,6 +124,7 @@ iretd
 
 ISR0B:
  ; Segment Not Present Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -119,6 +132,7 @@ iretd
 
 ISR0C:
  ; Stack Segment Fault Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -126,6 +140,7 @@ iretd
 
 ISR0D:
  ; General Protection Fault
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -133,6 +148,7 @@ iretd
 
 ISR0E:
  ; Page Fault Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -140,6 +156,7 @@ iretd
 
 ISR0F:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -147,6 +164,7 @@ iretd
 
 ISR10:
  ; x86 Floating Point Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -154,6 +172,7 @@ iretd
 
 ISR11:
  ; Alignment Check Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -161,6 +180,7 @@ iretd
 
 ISR12:
  ; Machine Check Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -168,6 +188,7 @@ iretd
 
 ISR13:
  ; SIMD Floating Point Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -175,6 +196,7 @@ iretd
 
 ISR14:
  ; Virtualization Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -182,6 +204,7 @@ iretd
 
 ISR15:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -189,6 +212,7 @@ iretd
 
 ISR16:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -196,6 +220,7 @@ iretd
 
 ISR17:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -203,6 +228,7 @@ iretd
 
 ISR18:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -210,6 +236,7 @@ iretd
 
 ISR19:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -217,6 +244,7 @@ iretd
 
 ISR1A:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -224,6 +252,7 @@ iretd
 
 ISR1B:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -231,6 +260,7 @@ iretd
 
 ISR1C:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -238,11 +268,13 @@ iretd
 
 ISR1D:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
 ISR1E:
  ; Security Exception
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -250,6 +282,7 @@ iretd
 
 ISR1F:
  ; Reserved
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -311,6 +344,7 @@ jmp .done
 
 ISR22:
  ; Cascade - used internally by the PICs, should never fire
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -318,6 +352,7 @@ iretd
 
 ISR23:
  ; Serial port 2
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -325,6 +360,7 @@ iretd
 
 ISR24:
  ; Serial port 1
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -332,6 +368,7 @@ iretd
 
 ISR25:
  ; Parallel port 2
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -339,6 +376,7 @@ iretd
 
 ISR26:
  ; Floppy disk
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -346,13 +384,15 @@ iretd
 
 ISR27:
  ; Parallel port 1 - prone to misfire
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
 
 
 ISR28:
- ; CMOS real time closk
+ ; CMOS real time clock
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -360,6 +400,7 @@ iretd
 
 ISR29:
  ; Free for peripherals / legacy SCSI / NIC
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -367,6 +408,7 @@ iretd
 
 ISR2A:
  ; Free for peripherals / SCSI / NIC
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -374,6 +416,7 @@ iretd
 
 ISR2B:
  ; Free for peripherals / SCSI / NIC
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -411,10 +454,11 @@ ISR2C:
  mov byte [SystemInfo.mouseButtons], dl
  pop edx
 
+ ; process the X axis
  mov eax, 0x00000000
+ mov ebx, 0x00000000
  mov byte al, [SystemInfo.mousePacketByte2]
- mov word bx, [SystemInfo.mouseX]
-  
+ mov word bx, [SystemInfo.mouseX]  
  push edx 
  and dl, 00010000b
  cmp dl, 00010000b
@@ -422,15 +466,24 @@ ISR2C:
  jne .mouseXPositive
  ; movement was negative
  neg al
- sub bx, ax
+ sub ebx, eax
+ ; see if the mouse position would be beyond the left side of the screen, correct if necessary
+ cmp ebx, 0x0000FFFF
+ ja .mouseXNegativeAdjust
  jmp .mouseXDone
  .mouseXPositive:
  ; movement was positive
- add bx, ax
+ add ebx, eax
+ ; see if the mouse position would be beyond the right side of the screen, correct if necessary
+ mov ax, [SystemInfo.VESAWidth]
+ cmp ebx, eax
+ jae .mouseXPositiveAdjust
  .mouseXDone:
  mov word [SystemInfo.mouseX], bx
 
+ ; process the Y axis
  mov eax, 0x00000000
+ mov ebx, 0x00000000
  mov byte al, [SystemInfo.mousePacketByte3]
  mov word bx, [SystemInfo.mouseY]
  and dl, 00100000b
@@ -438,11 +491,18 @@ ISR2C:
  jne .mouseYPositive
  ; movement was negative (but we add to counteract the mouse's cartesian coordinate system)
  neg al
- add bx, ax
+ add ebx, eax
+ ; see if the mouse position would be beyond the bottom of the screen, correct if necessary
+ mov ax, [SystemInfo.VESAHeight]
+ cmp ebx, eax
+ jae .mouseYPositiveAdjust
  jmp .mouseYDone
  .mouseYPositive:
  ; movement was positive (but we subtract to counteract the mouse's cartesian coordinate system)
- sub bx, ax
+ sub ebx, eax
+ ; see if the mouse position would be beyond the top of the screen, correct if necessary
+ cmp ebx, 0x0000FFFF
+ ja .mouseYNegativeAdjust
  .mouseYDone:
  mov word [SystemInfo.mouseY], bx
  
@@ -468,24 +528,41 @@ ISR2C:
  add bx, ax
  .mouseZDone:
  mov word [SystemInfo.mouseZ], bx
-
+ 
  .done:
  inc byte [SystemInfo.mousePacketByteCount]
  call PICIntComplete
  popad
 iretd
 
+.mouseXNegativeAdjust:
+ mov bx, 0x00000000
+jmp .mouseXDone
+.mouseXPositiveAdjust:
+ mov word bx, [SystemInfo.VESAWidth]
+ dec bx
+jmp .mouseXDone
+.mouseYNegativeAdjust:
+ mov bx, 0x00000000
+jmp .mouseYDone
+.mouseYPositiveAdjust:
+ mov word bx, [SystemInfo.VESAHeight]
+ dec bx
+jmp .mouseYDone
+
 
 
 ISR2D:
  ; FPU / Coprocessor / Inter-processor
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
 
 
 ISR2E:
- ; Primary ATA Hard Disk 
+ ; Primary ATA Hard Disk
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 
@@ -493,6 +570,7 @@ iretd
 
 ISR2F:
  ; Secondary ATA Hard Disk
+ jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 

@@ -23,7 +23,7 @@
 ; structures
 SystemInfo:
  .kernelVersionMajor				dw 0x0000
- .kernelVersionMinor				dw 0x0007
+ .kernelVersionMinor				dw 0x0008
  .kernelCopyright					db 'Night Kernel 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
  .memoryTotalKB						dd 0x00000000
  .memoryAvailableKB					dd 0x00000000
