@@ -447,9 +447,8 @@ PICMaskSet:
 ret
 
 
-
 PICUnmaskAll:
- ; Masks all interrupts
+ ; unmasks all interrupts
  ;  input:
  ;   n/a
  ;
