@@ -51,8 +51,10 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-; init and probe RAM
-call MemoryInit
+mov si, msg
+call SimplePrint16
+
+msg db "Goodmorning!", 0
 
 ; get video controller info
 mov ax, 0x4F00
@@ -64,66 +66,8 @@ cmp ax, 0x004F
 je GetModes
 jmp InfiniteLoop
 
-GetModes:
-; step through the VESA modes available and find the best one available
-mov ds, [VESAInfoBlock.VideoModeListSegment]
-mov si, [VESAInfoBlock.VideoModeListOffset]
-mov edi, 0x00000000
-mov edx, 0x00000000
-.readLoop:
-mov cx, [si]
 
-;see if the mode = 0xffff so we know if we're all done
-cmp cx, 0xFFFF
-je .doneLoop
-
-; get info on that mode
-mov ax, 0x4F01
-mov di, VESAModeInfo
-sti
-int 0x10
-cli
-
-; skip this mode if it doesn't support a linear frame buffer
-cmp dword [VESAModeInfo.PhysBasePtr], 0x00000000
-je .doNextIteration
-
-push edx
-mov eax, 0x00000000
-mov ebx, 0x00000000
-mov word ax, [VESAModeInfo.YResolution]
-mov word bx, [VESAModeInfo.BytesPerScanline]
-mul ebx
-pop edx
-
-; loop again if this mode doesn't score higher than our current record holder
-cmp eax, edx
-jna .doNextIteration
-; it did score higher, so let's make note of it
-mov gs, cx
-mov edx, eax
-
-.doNextIteration:
-add si, 2
-jmp .readLoop
-.doneLoop:
-mov ax, 0xbeef
-
-; get info on the final mode
-mov ax, 0x4F01
-mov cx, gs
-mov di, VESAModeInfo
-sti
-int 0x10
-cli
-
-; set that mode
-mov ax, 0x4F02
-mov bx, cx
-sti
-int 0x10
-cli
-
+InitPM:
 ; load that GDT
 call load_GDT
 
@@ -466,10 +410,11 @@ call [VESAPrint]
 jmp InfiniteLoop
 
 
-
+%include "VESA.asm"							; Everything VESA
 %include "inthandl.asm"						; interrupt handlers
 %include "idt.asm"							; Interrupt Descriptor Table
 %include "hardware.asm"						; hardware routines
 %include "memory.asm"						; memory manager
 %include "api.asm"							; memory manager
 %include "globals.asm"						; global variable setup
+%include "screen.asm"						; Everything screen-ish
