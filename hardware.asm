@@ -33,6 +33,8 @@ PrintFail:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: ax, bl, es, di, ds, si
 
  ; set the proper mode
  mov ah, 0x00
@@ -76,6 +78,173 @@ bits 32
 
 
 
+KeyboardInit:
+ ; Initializes the PS/2 keyboard
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ;  changes: al, bx, ecx, edx
+
+ call PS2ControllerWaitDataWrite
+ mov al, 0xFF
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ ; if not 0xFA, then the keyboard is missing or not responding
+
+ ; wait 5 seconds-ish for the keyboard to say the reset is done
+ mov bl, 5
+ mov bh, 0x00
+ .loop:
+ ; check the keyboard status
+ pushad
+ call PS2ControllerWaitDataRead
+ popad
+ in al, 0x60
+ cmp al, 0xAA
+ je .resetDone
+ inc bh
+ cmp bl, bh
+ jne .loop
+ .resetDone:
+
+ ; now we set the custom stuff
+ mov ebx, [tSystemInfo.delayValue]
+ shr ebx, 2
+ push ebx
+
+ ; illuminate scroll lock
+ call PS2ControllerWaitDataWrite
+ mov al, 0xED
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataWrite
+ mov al, 00000001b
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ pop ebx
+ push ebx
+ mov ecx, 0x00000000
+ .loopA:
+ inc ecx
+ cmp ebx, ecx
+ jne .loopA
+
+ ; set autorepeat delay and rate to fastest available
+ call PS2ControllerWaitDataWrite
+ mov al, 0xF3
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataWrite
+ mov al, 00000000b
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+
+ ; illuminate caps lock
+ call PS2ControllerWaitDataWrite
+ mov al, 0xED
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataWrite
+ mov al, 00000100b
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ pop ebx
+ push ebx
+ mov ecx, 0x00000000
+ .loopB:
+ inc ecx
+ cmp ebx, ecx
+ jne .loopB
+
+ ; set scan code set to 2
+ call PS2ControllerWaitDataWrite
+ mov al, 0xF0
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataWrite
+ mov al, 00000010b
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+
+ ; illuminate num lock
+ call PS2ControllerWaitDataWrite
+ mov al, 0xED
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataWrite
+ mov al, 00000010b
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ pop ebx
+ mov ecx, 0x00000000
+ .loopC:
+ inc ecx
+ cmp ebx, ecx
+ jne .loopC
+
+ ; get ID bytes
+ call PS2ControllerWaitDataWrite
+ mov al, 0xF2
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ mov edx, tSystemInfo.keyboardType
+ inc edx
+ mov [edx] ,al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ dec edx
+ mov [edx] ,al
+
+ ; enable num lock
+ call KeyboardNumLockSet
+
+ret
+
+
+
+KeyboardNumLockSet:
+ ; Handles the internals of turning on Num Lock - sets the flag and turns on the LED
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ;  changes: al
+
+ ; right now we just illuminate num lock
+ ; once we figure out how the kernel keeps track of lock modifiers, that will get added in too
+ call PS2ControllerWaitDataWrite
+ mov al, 0xED
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ call PS2ControllerWaitDataWrite
+ mov al, 00000010b
+ out 0x60, al
+ call PS2ControllerWaitDataRead
+ in al, 0x60
+ret
+
+
+
 KeyGet:
  ; Returns the oldest key in the key buffer, or null if it's empty
  ;  input:
@@ -83,6 +252,8 @@ KeyGet:
  ;
  ;  output:
  ;   key pressed in lowest byte of 32-bit value
+ ;
+ ;  changes: eax, ecx, edx, esi
 
  mov ecx, 0x00000000
  mov edx, 0x00000000
@@ -109,9 +280,9 @@ KeyGet:
 
  .done:
  ; push the data we got onto the stack and exit
- pop ebx
+ pop edx
  push eax
- push ebx
+ push edx
 ret
 
 
@@ -123,29 +294,31 @@ MouseInit:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: ax, bx
 
  ; disable keyboard temporarily
 
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xAD
  out 0x64, al
 
  ; enable mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xA8
  out 0x64, al
 
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
 
  ; reset command
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xFF
  out 0x60, al
- 
- call PS2ControllerWaitRead
+
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  ; wait 5 seconds-ish for the mouse to say the reset is done
@@ -154,7 +327,7 @@ MouseInit:
  .loop:
  ; check the mouse status
  pusha
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  popa
  in al, 0x60
  cmp al, 0xAA
@@ -164,14 +337,14 @@ MouseInit:
  jne .loop
  .resetDone:
  ; read mouse ID byte
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  ; get controller configuration byte
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0x20
  out 0x64, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  ; modify the proper bits to enable IRQ and mouse clock
@@ -180,86 +353,86 @@ MouseInit:
  push eax
 
  ; write controller configuration byte
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0x60
  out 0x64, al
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  pop eax
  out 0x60, al
 
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin wheel mode init by setting sample rate to 200
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xF3
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xC8
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin wheel mode init by setting sample rate to 200
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xF3
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin wheel mode init by setting sample rate to 200
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0x64
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin wheel mode init by setting sample rate to 200
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xF3
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin wheel mode init by setting sample rate to 200
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0x50
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
- 
+
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin wheel mode init by setting sample rate to 200
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xF2
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
- mov byte [SystemInfo.mouseID], al
+ mov byte [tSystemInfo.mouseID], al
 
  ; see if this is one of those newfangled wheel mice
  ; if it is, we skip the next section where we reapply default settings
@@ -267,53 +440,53 @@ MouseInit:
  je .skipDefaultSettings
 
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; use default settings
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xF6
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  .skipDefaultSettings:
  ; here we set the packet size
- mov byte al, [SystemInfo.mouseID]
+ mov byte al, [tSystemInfo.mouseID]
  cmp al, 0x03
  je .fancyMouse
- mov byte [SystemInfo.mousePacketByteSize], 0x03
+ mov byte [tSystemInfo.mousePacketByteSize], 0x03
  jmp .donePacketSetting
  .fancyMouse:
- mov byte [SystemInfo.mousePacketByteSize], 0x04
+ mov byte [tSystemInfo.mousePacketByteSize], 0x04
  .donePacketSetting:
- 
+
  ; select PS/2 device 2 to send next data byte to mouse
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xD4
  out 0x64, al
  ; begin packet transmission
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xF4
  out 0x60, al
- call PS2ControllerWaitRead
+ call PS2ControllerWaitDataRead
  in al, 0x60
 
  ; enable keyboard
- call PS2ControllerWaitWrite
+ call PS2ControllerWaitDataWrite
  mov al, 0xAE
  out 0x64, al
 
- mov ax, [SystemInfo.VESAWidth]
+ mov ax, [tSystemInfo.VESAWidth]
  shr ax, 1
- mov word [SystemInfo.mouseX], ax
+ mov word [tSystemInfo.mouseX], ax
 
- mov ax, [SystemInfo.VESAHeight]
+ mov ax, [tSystemInfo.VESAHeight]
  shr ax, 1
- mov word [SystemInfo.mouseY], ax
+ mov word [tSystemInfo.mouseY], ax
 
- mov word [SystemInfo.mouseZ], 0x7777
-  
+ mov word [tSystemInfo.mouseZ], 0x7777
+
 ret
 
 
@@ -325,6 +498,8 @@ PICDisableIRQs:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, dx
 
  mov al, 0xFF                     ; disable IRQs
  mov dx, [kPIC1DataPort]          ; set up PIC 1
@@ -342,6 +517,8 @@ PICInit:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, dx
 
  mov al, 0x11                     ; set ICW1
  mov dx, [kPIC1CmdPort]           ; set up PIC 1
@@ -395,6 +572,8 @@ PICIntComplete:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, dx
 
  mov al, 0x20                     ; sets the interrupt complete bit
  mov dx, [kPIC1CmdPort]           ; write bit to PIC 1
@@ -413,6 +592,9 @@ PICMaskAll:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, dx
+
 
  mov dx, [kPIC1DataPort]
  in al, dx
@@ -434,6 +616,9 @@ PICMaskSet:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, dx
+
 
  mov dx, [kPIC1DataPort]
  in al, dx
@@ -447,8 +632,9 @@ PICMaskSet:
 ret
 
 
+
 PICUnmaskAll:
- ; unmasks all interrupts
+ ; Unmasks all interrupts
  ;  input:
  ;   n/a
  ;
@@ -485,18 +671,20 @@ ret
 
 
 
-PS2ControllerWaitRead:
+PS2ControllerWaitDataRead:
  ; Reads data from the PS/2 controller
  ;  input:
  ;   n/a
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, ebx, ecx
 
- mov dword [SystemInfo.lastError], 0x00000000
+ mov dword [tSystemInfo.lastError], 0x00000000
 
  ; set timeout value for roughly a couple seconds
- mov ebx, [SystemInfo.delayValue]
+ mov ebx, [tSystemInfo.delayValue]
  shr ebx, 8
  mov ecx, 0x00000000
 
@@ -511,13 +699,13 @@ PS2ControllerWaitRead:
  cmp ebx, ecx
  jne .waitLoop
  ; if we get here, we've timed out
- mov dword [SystemInfo.lastError], 0x0000FF00
+ mov dword [tSystemInfo.lastError], 0x0000FF00
  .done:
 ret
 
 
 
-PS2ControllerWaitWrite:
+PS2ControllerWaitDataWrite:
  ; Waits with timeout until the PS/2 controller is ready to accept data, then returns
  ; Note: Uses the system delay value for timeout since interrupts may be disabled upon calling
  ;  input:
@@ -525,11 +713,13 @@ PS2ControllerWaitWrite:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: ax, ebx, ecx
 
-  mov dword [SystemInfo.lastError], 0x00000000
+  mov dword [tSystemInfo.lastError], 0x00000000
 
  ; set timeout value for roughly a couple seconds
- mov ebx, [SystemInfo.delayValue]
+ mov ebx, [tSystemInfo.delayValue]
  shr ebx, 8
  mov ecx, 0x00000000
 
@@ -558,6 +748,8 @@ Reboot:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: al, dx
 
  mov dx, 0x92
  in al, dx
@@ -570,29 +762,37 @@ ret
 
 
 SpeedDetect:
- ; Determines how many iterations of three increments the CPU is capable of in one second
+ ; Determines how many iterations of a random activity the CPU is capable of in one second
  ;  input:
  ;   n/a
  ;
  ;  output:
  ;   number of iterations
+ ;
+ ;  changes: ebx, ecx, edx
 
  mov ebx, 0x00000000
  mov ecx, 0x00000000
  mov edx, 0x00000000
- mov al, [SystemInfo.tickCounter]
+ mov al, [tSystemInfo.tickCounter]
  mov ah, al
  dec ah
  .loop1:
  inc ebx
+ push ebx
  inc ecx
+ push ecx
  inc edx
- mov al, [SystemInfo.tickCounter]
+ push edx
+ pop edx
+ pop ecx
+ pop ebx
+ mov al, [tSystemInfo.tickCounter]
  cmp al, ah
  jne .loop1
- pop eax
+ pop ebx
  push ecx
- push eax
+ push ebx
 ret
 
 
@@ -606,6 +806,8 @@ VESAPlot24:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: eax, ebx, ecx, esi
 
  pop esi                          ; get return address for end ret
  pop ebx                          ; get horizontal position
@@ -614,12 +816,12 @@ VESAPlot24:
  push esi                         ; push return address back on the stack
 
  ; calculate write position
- mov dx, [VESAModeInfo.XResolution]
+ mov dx, [tVESAModeInfo.XResolution]
  mul edx
  add ax, bx
  mov edx, 3
  mul edx
- add eax, [VESAModeInfo.PhysBasePtr]
+ add eax, [tVESAModeInfo.PhysBasePtr]
 
  ; do the write
  mov byte [eax], cl
@@ -643,6 +845,8 @@ VESAPlot32:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: eax, ebx, ecx, esi
 
  pop esi                          ; get return address for end ret
  pop ebx                          ; get horizontal position
@@ -651,12 +855,12 @@ VESAPlot32:
  push esi                         ; push return address back on the stack
 
  ; calculate write position
- mov dx, [VESAModeInfo.XResolution]
+ mov dx, [tVESAModeInfo.XResolution]
  mul edx
  add ax, bx
  mov edx, 4
  mul edx
- add eax, [VESAModeInfo.PhysBasePtr]
+ add eax, [tVESAModeInfo.PhysBasePtr]
 
  ; do the write
  mov dword [eax], ecx
@@ -674,6 +878,9 @@ VESAPrint24:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: eax, ebx, ecx, edx, ebp, edi, esi
+
  pop edx                          ; get return address for end ret
  pop ebx                          ; get horizontal position
  pop eax                          ; get vertical position
@@ -684,18 +891,18 @@ VESAPrint24:
 
  ; calculate write position into edi and save to the stack
  mov edx, 0
- mov dx, [VESAModeInfo.XResolution] ; can probably be optimized to use bytes per scanline field to eliminate doing multiply
+ mov dx, [tVESAModeInfo.XResolution] ; can probably be optimized to use bytes per scanline field to eliminate doing multiply
  mul edx
  add ax, bx
  mov edx, 3
  mul edx
- add eax, [VESAModeInfo.PhysBasePtr]
+ add eax, [tVESAModeInfo.PhysBasePtr]
  mov edi, eax
  push edi
 
  ; keep the number of bytes in a scanline handy in edx for later
  mov edx, 0
- mov dx, [VESAModeInfo.BytesPerScanline]
+ mov dx, [tVESAModeInfo.BytesPerScanline]
 
  ; time to step through the string and draw it
  .StringDrawLoop:
@@ -1010,6 +1217,8 @@ VESAPrint32:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: eax, ebx, ecx, edx, ebp, edi, esi
 
  pop edx                          ; get return address for end ret
  pop ebx                          ; get horizontal position
@@ -1021,18 +1230,18 @@ VESAPrint32:
 
  ; calculate write position into edi and save to the stack
  mov edx, 0
- mov dx, [VESAModeInfo.XResolution] ; can probably be optimized to use bytes per scanline field to eliminate doing multiply
+ mov dx, [tVESAModeInfo.XResolution] ; can probably be optimized to use bytes per scanline field to eliminate doing multiply
  mul edx
  add ax, bx
  mov edx, 4
  mul edx
- add eax, [VESAModeInfo.PhysBasePtr]
+ add eax, [tVESAModeInfo.PhysBasePtr]
  mov edi, eax
  push edi
 
  ; keep the number of bytes in a scanline handy in edx for later
  mov edx, 0
- mov dx, [VESAModeInfo.BytesPerScanline]
+ mov dx, [tVESAModeInfo.BytesPerScanline]
 
  ; time to step through the string and draw it
  .StringDrawLoop:
@@ -1057,108 +1266,51 @@ VESAPrint32:
  mov byte dh, dl
 
  ; plot accordingly
- and dl, 10000000b
- cmp dl, 0
- jz .PointSkipA
- .PointPlotA:
- mov [edi], ecx
- jmp .PointDoneA
- .PointSkipA:
- mov [edi], ebp
- .PointDoneA:
- add edi, 4
- mov byte dl, dh
+ push eax
 
- ; plot accordingly
- and dl, 01000000b
- cmp dl, 0
- jz .PointSkipB
- .PointPlotB:
- mov [edi], ecx
- jmp .PointDoneB
- .PointSkipB:
- mov [edi], ebp
- .PointDoneB:
- add edi, 4
- mov byte dl, dh
+ test dl, 10000000b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi], eax
 
- ; plot accordingly
- and dl, 00100000b
- cmp dl, 0
- jz .PointSkipC
- .PointPlotC:
- mov [edi], ecx
- jmp .PointDoneC
- .PointSkipC:
- mov [edi], ebp
- .PointDoneC:
- add edi, 4
- mov byte dl, dh
+ test dl, 1000000b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+4], eax
 
- ; plot accordingly
- and dl, 00010000b
- cmp dl, 0
- jz .PointSkipD
- .PointPlotD:
- mov [edi], ecx
- jmp .PointDoneD
- .PointSkipD:
- mov [edi], ebp
- .PointDoneD:
- add edi, 4
- mov byte dl, dh
+ test dl, 100000b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+8], eax
 
- ; plot accordingly
- and dl, 00001000b
- cmp dl, 0
- jz .PointSkipE
- .PointPlotE:
- mov [edi], ecx
- jmp .PointDoneE
- .PointSkipE:
- mov [edi], ebp
- .PointDoneE:
- add edi, 4
- mov byte dl, dh
+ test dl, 10000b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+12], eax
 
- ; plot accordingly
- and dl, 00000100b
- cmp dl, 0
- jz .PointSkipF
- .PointPlotF:
- mov [edi], ecx
- jmp .PointDoneF
- .PointSkipF:
- mov [edi], ebp
- .PointDoneF:
- add edi, 4
- mov byte dl, dh
+ test dl, 1000b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+16], eax
 
- ; plot accordingly
- and dl, 00000010b
- cmp dl, 0
- jz .PointSkipG
- .PointPlotG:
- mov [edi], ecx
- jmp .PointDoneG
- .PointSkipG:
- mov [edi], ebp
- .PointDoneG:
- add edi, 4
- mov byte dl, dh
+ test dl, 100b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+20], eax
 
- ; plot accordingly
- and dl, 00000001b
- cmp dl, 0
- jz .PointSkipH
- .PointPlotH:
- mov [edi], ecx
- jmp .PointDoneH
- .PointSkipH:
- mov [edi], ebp
- .PointDoneH:
- add edi, 4
- mov byte dl, dh
+ test dl, 10b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+24], eax
+
+ test dl, 1b
+ cmovnz eax, ecx
+ cmovz  eax, ebp
+ mov [edi+28], eax
+
+ add edi,32
+
+ pop eax
 
  ; increment the font pointer
  inc eax

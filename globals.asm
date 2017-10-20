@@ -21,7 +21,7 @@
 
 
 ; structures
-SystemInfo:
+tSystemInfo:
  .kernelVersionMajor				dw 0x0000
  .kernelVersionMinor				dw 0x0008
  .kernelCopyright					db 'Night Kernel 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
@@ -53,6 +53,7 @@ SystemInfo:
  .APMVersionMajor					db 0x00
  .APMVersionMinor					db 0x00
  .APMFeatures						dw 0x0000
+ .keyboardType						dw 0x0000
  .mouseAvailable					db 0x00
  .mouseButtonCount					db 0x00
  .mouseID							db 0x00
@@ -70,7 +71,9 @@ SystemInfo:
  .multicoreAvailable				db 0x00
  .PCISupport						db 0x00
 
-VESAInfoBlock:
+
+
+tVESAInfoBlock:
  .VBESignature						db 'VBE2'
  .VBEVersionMinor					db 0x00
  .VBEVersionMajor					db 0x00
@@ -90,42 +93,42 @@ VESAInfoBlock:
  .Reserved							times 222 db 0
  .OEMData							times 256 db 0
 
- VESAModeInfo:
- .ModeAttributes					dw 0
- .WinAAttributes					db 0
- .WinBAttributes					db 0
- .WinGranularity					dw 0
- .WinSize							dw 0
- .WinASegment						dw 0
- .WinBSegment						dw 0
- .WinFuncPtr						dd 0
- .BytesPerScanline					dw 0
- .XResolution						dw 0
- .YResolution						dw 0
- .XCharSize							db 0
- .YCharSize							db 0
- .NumberOfPlanes					db 0
- .BitsPerPixel						db 0
- .NumberOfBanks						db 0
- .MemoryModel						db 0
- .BankSize							db 0
- .NumberOfImagePages				db 0
- .ReservedA							db 0
- .RedMaskSize						db 0
- .RedFieldPosition					db 0
- .GreenMaskSize						db 0
- .GreenFieldPosition				db 0
- .BlueMaskSize						db 0
- .BlueFieldPosition					db 0
- .RsvdMaskSize						db 0
- .RsvdFieldPosition					db 0
- .DirectColorModeInfo				db 0
- .PhysBasePtr						dd 0
- .OffScreenMemOffset				dd 0
- .OffScreenMemSize					dw 0
+tVESAModeInfo:
+ .ModeAttributes					dw 0x0000
+ .WinAAttributes					db 0x00
+ .WinBAttributes					db 0x00
+ .WinGranularity					dw 0x0000
+ .WinSize							dw 0x0000
+ .WinASegment						dw 0x0000
+ .WinBSegment						dw 0x0000
+ .WinFuncPtr						dd 0x00000000
+ .BytesPerScanline					dw 0x0000
+ .XResolution						dw 0x0000
+ .YResolution						dw 0x0000
+ .XCharSize							db 0x00
+ .YCharSize							db 0x00
+ .NumberOfPlanes					db 0x00
+ .BitsPerPixel						db 0x00
+ .NumberOfBanks						db 0x00
+ .MemoryModel						db 0x00
+ .BankSize							db 0x00
+ .NumberOfImagePages				db 0x00
+ .ReservedA							db 0x00
+ .RedMaskSize						db 0x00
+ .RedFieldPosition					db 0x00
+ .GreenMaskSize						db 0x00
+ .GreenFieldPosition				db 0x00
+ .BlueMaskSize						db 0x00
+ .BlueFieldPosition					db 0x00
+ .RsvdMaskSize						db 0x00
+ .RsvdFieldPosition					db 0x00
+ .DirectColorModeInfo				db 0x00
+ .PhysBasePtr						dd 0x00000000
+ .OffScreenMemOffset				dd 0x00000000
+ .OffScreenMemSize					dw 0x0000
  .ReservedB							times 206 db 0x00
 
-MBR:
+tMBR:
  .BootCode							times 446 db 0x00
  .Partiton1Status					db 0x00
  .Partition1FirstSectorCHS			db 0x00, 0x00, 0x00
@@ -153,7 +156,7 @@ MBR:
  .Partition4SectorCount				dd 0x00000000
  .Signature							db 0x55, 0xAA
  
-FAT16BootSector:
+tFAT16BootSector:
  .JumpOpcode						db 0x00, 0x00, 0x00
  .OEMName							times 8 db 0x00
  .BytesPerSector					dw 0x0000
@@ -187,9 +190,7 @@ VESAPrint							dd 0x00000000
 
 ; vars 'n' such
 kCRLF								db 0x0d, 0x0a, 0x00
-kGDTDS								dd 0x00000500
-kGDTPtr								dd 0x00008000
-kIDTPtr								dd 0x00018000
+kIDTPtr								dd 0x0008F800
 kPIC1CmdPort						dw 0x0020
 kPIC1DataPort						dw 0x0021
 kPIC2CmdPort						dw 0x00a0
@@ -208,9 +209,13 @@ kMeme820unsup						db 'Could not detect memory, function unsupported', 0x00
 kFailed								db 'Failed to run kernel succesfully, see below.', 0x00
 kRebootMSG							db 'Rebooting...', 0x00
 
+
+
 ; arrays
 kKeyTable:
 db '  1234567890-=  qwertyuiop[]  asdfghjkl; ` \zxcvbnm,0/ *               789-456+1230.  '
+
+
 
 kKernelFont:
 ; clipped from the GNU Unifont by Roman Czyborra
@@ -470,3 +475,70 @@ db 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x46,
 db 0x00, 0x00, 0x0C, 0x30, 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x26, 0x1A, 0x02, 0x02, 0x3C
 db 0x00, 0x00, 0x00, 0x00, 0x20, 0x20, 0x3C, 0x22, 0x22, 0x22, 0x24, 0x28, 0x30, 0x20, 0x20, 0x20
 db 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x26, 0x1A, 0x02, 0x02, 0x3C
+
+
+
+; random kernel infos follow...
+
+
+
+; Memory Map
+; Start				End				Size						Description
+; 0x00000000		0x000003FF		1 KB						interrupt vector table
+; 0x00000400		0x000004FF		256 bytes					BIOS data area (remapped here from CMOS)
+; 0x00000500		0x000005FF		256 bytes					unused
+; 0x00000600		0x00007BFF		30207 bytes (29.49 KB)		kernel space (kernel is loaded here by freeDOS bootloader)
+; 0x00007C00		0x00007DFF		512 bytes					bootloader (copied here by BIOS, can be overwritten)
+; 0x00007E00		0x0008F7FF		555520 bytes (542.50 KB)	available, unused
+; 0x0008F800		0x0009F7FF		64 KB						IDT
+; 0x0009F800		0x0009FBFF		1 KB						stack
+; 0x0009FC00		0x0009FFFF		1 KB						extended BIOS data area
+; 0x000A0000		0x000AFFFF		64 KB						video buffer for EGA/VGA graphics modes
+; 0x000B0000		0x000B7FFF		32 KB						video buffer for EGA/VGA graphics modes
+; 0x000B8000		0x000BFFFF		32 KB						video buffer for color text and CGA graphics
+; 0x000C0000		0x000DFFFF		128 KB						device-mounted ROMs
+; 0x000E0000		0x0010FFEF		196591 bytes (191.98 KB)	BIOS ROM
+; 0x0010FFF0		0x001FFFFF		983055 bytes (960.01 KB)    applications use
+; 0x00200000		0x002FFFFF		1 MB						memory allocation bitmap
+; 0x00300000		0xFFFFFFFF		?							application use
+
+
+
+; Error Codes
+; 0xFF00			PS2 Controller Timeout - Write Command
+; 0xFF01			PS2 Controller Timeout - Write Data
+; 0xFF02			PS2 Controller Timeout - Read Data
+
+
+
+; Event Codes
+; Note - Event codes 128 - 255 are reserved for software and interprocess communication
+; 0					Null (nothing is waiting in the queue)
+; 1					Key down
+; 2					Key up
+; 3					Mouse move
+; 4					Mouse button down
+; 5					Mouse button up
+; 6					Mouse wheel move
+; 64				Application is losing focus
+; 65				Application is gaining focus
+
+
+tEvent:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -30,6 +30,8 @@ IDTWrite:
  ;
  ;  output:
  ;   n/a
+ ;
+ ;  changes: eax, ebx, ecx, edx, edi, esi
 
  pop esi                          ; save ret address
  pop ebx                          ; get destination IDT index
@@ -66,3 +68,5 @@ IDTWrite:
 
  push esi                         ; restore ret address
 ret
+
+

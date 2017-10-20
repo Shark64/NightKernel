@@ -25,6 +25,8 @@
 ; Note: Any call to a kernel (or system library) function may destroy the
 ; contents of eax, ebx, ecx, edx, edi and esi.
 
+; Thanks to:
+; Tom Ehlert for optimizing our text printing code which resulted in a 30% speedup
 
 [map all kernel.map]
 
@@ -56,7 +58,7 @@ call MemoryInit
 
 ; get video controller info
 mov ax, 0x4F00
-mov di, VESAInfoBlock
+mov di, tVESAInfoBlock
 sti
 int 0x10
 cli
@@ -66,8 +68,8 @@ jmp InfiniteLoop
 
 GetModes:
 ; step through the VESA modes available and find the best one available
-mov ds, [VESAInfoBlock.VideoModeListSegment]
-mov si, [VESAInfoBlock.VideoModeListOffset]
+mov ds, [tVESAInfoBlock.VideoModeListSegment]
+mov si, [tVESAInfoBlock.VideoModeListOffset]
 mov edi, 0x00000000
 mov edx, 0x00000000
 .readLoop:
@@ -79,20 +81,20 @@ je .doneLoop
 
 ; get info on that mode
 mov ax, 0x4F01
-mov di, VESAModeInfo
+mov di, tVESAModeInfo
 sti
 int 0x10
 cli
 
 ; skip this mode if it doesn't support a linear frame buffer
-cmp dword [VESAModeInfo.PhysBasePtr], 0x00000000
+cmp dword [tVESAModeInfo.PhysBasePtr], 0x00000000
 je .doNextIteration
 
 push edx
 mov eax, 0x00000000
 mov ebx, 0x00000000
-mov word ax, [VESAModeInfo.YResolution]
-mov word bx, [VESAModeInfo.BytesPerScanline]
+mov word ax, [tVESAModeInfo.YResolution]
+mov word bx, [tVESAModeInfo.BytesPerScanline]
 mul ebx
 pop edx
 
@@ -112,7 +114,7 @@ mov ax, 0xbeef
 ; get info on the final mode
 mov ax, 0x4F01
 mov cx, gs
-mov di, VESAModeInfo
+mov di, tVESAModeInfo
 sti
 int 0x10
 cli
@@ -141,7 +143,7 @@ bits 32
 
 idtStructure:
 .limit  dw 2047
-.base   dd 0x18000
+.base   dd 0x0008F800
 
 
 kernel_start:
@@ -151,7 +153,7 @@ mov ax, 0x0010
 mov ds, ax
 mov es, ax
 mov ss, ax
-mov esp, 0x00090000
+mov esp, 0x0009F800
 
 ; loop to init IDT
 mov eax, 0
@@ -197,40 +199,40 @@ kernelInitFastA20Success:
 ; probe CPUID for vendor ID
 mov eax, 0x00000000
 cpuid
-mov esi, SystemInfo.CPUIDVendorString
-mov [SystemInfo.CPUIDLargestBasicQuery], eax
+mov esi, tSystemInfo.CPUIDVendorString
+mov [tSystemInfo.CPUIDLargestBasicQuery], eax
 mov [esi], ebx
 add esi, 4
 mov [esi], edx
 add esi, 4
 mov [esi], ecx
 
-; set VESA information into the SystemInfo structure
-mov byte dl, [VESAInfoBlock.VBEVersionMajor]
-mov byte [SystemInfo.VESAVersionMajor], dl
+; set VESA information into the tSystemInfo structure
+mov byte dl, [tVESAInfoBlock.VBEVersionMajor]
+mov byte [tSystemInfo.VESAVersionMajor], dl
 
-mov byte dl, [VESAInfoBlock.VBEVersionMinor]
-mov byte [SystemInfo.VESAVersionMinor], dl
+mov byte dl, [tVESAInfoBlock.VBEVersionMinor]
+mov byte [tSystemInfo.VESAVersionMinor], dl
 
 mov eax, 0x00000000
-mov word ax, [VESAInfoBlock.OEMStringSegment]
+mov word ax, [tVESAInfoBlock.OEMStringSegment]
 shl eax, 4
 mov ebx, 0x00000000
-mov bx, [VESAInfoBlock.OEMStringOffset]
+mov bx, [tVESAInfoBlock.OEMStringOffset]
 add eax, ebx
-mov dword [SystemInfo.VESAOEMStringPointer], eax
+mov dword [tSystemInfo.VESAOEMStringPointer], eax
 
-mov dword edx, [VESAInfoBlock.Capabilities]
-mov dword [SystemInfo.VESACapabilities], edx
+mov dword edx, [tVESAInfoBlock.Capabilities]
+mov dword [tSystemInfo.VESACapabilities], edx
 
-mov word dx, [VESAModeInfo.XResolution]
-mov word [SystemInfo.VESAWidth], dx
+mov word dx, [tVESAModeInfo.XResolution]
+mov word [tSystemInfo.VESAWidth], dx
 
-mov word dx, [VESAModeInfo.YResolution]
-mov word [SystemInfo.VESAHeight], dx
+mov word dx, [tVESAModeInfo.YResolution]
+mov word [tSystemInfo.VESAHeight], dx
 
-mov byte dl, [VESAModeInfo.BitsPerPixel]
-mov byte [SystemInfo.VESAColorDepth], dl
+mov byte dl, [tVESAModeInfo.BitsPerPixel]
+mov byte [tSystemInfo.VESAColorDepth], dl
 
 ; while we're messing with color depth, we may as well set up function pointers to the appropriate VESA code
 cmp dl, 0x20
@@ -252,55 +254,55 @@ ColorTest16Bit:
 ColorTestDone:
 
 mov eax, 0x00000000
-mov word ax, [VESAInfoBlock.TotalMemory]
+mov word ax, [tVESAInfoBlock.TotalMemory]
 mov ebx, 0x00010000
 mul ebx
 mov ebx, 0x00000400
 div ebx
-mov dword [SystemInfo.VESAVideoRAMKB], eax
+mov dword [tSystemInfo.VESAVideoRAMKB], eax
 
-mov word dx, [VESAInfoBlock.OEMSoftwareRev]
-mov word [SystemInfo.VESAOEMSoftwareRevision], dx
-
-mov eax, 0x00000000
-mov word ax, [VESAInfoBlock.OEMVendorNameSegment]
-shl eax, 4
-mov ebx, 0x00000000
-mov bx, [VESAInfoBlock.OEMVendorNameOffset]
-add eax, ebx
-mov [SystemInfo.VESAOEMVendorNamePointer], eax
+mov word dx, [tVESAInfoBlock.OEMSoftwareRev]
+mov word [tSystemInfo.VESAOEMSoftwareRevision], dx
 
 mov eax, 0x00000000
-mov word ax, [VESAInfoBlock.OEMProductNameSegment]
+mov word ax, [tVESAInfoBlock.OEMVendorNameSegment]
 shl eax, 4
 mov ebx, 0x00000000
-mov bx, [VESAInfoBlock.OEMProductNameOffset]
+mov bx, [tVESAInfoBlock.OEMVendorNameOffset]
 add eax, ebx
-mov [SystemInfo.VESAOEMProductNamePointer], eax
+mov [tSystemInfo.VESAOEMVendorNamePointer], eax
 
 mov eax, 0x00000000
-mov word ax, [VESAInfoBlock.OEMProductRevSegment]
+mov word ax, [tVESAInfoBlock.OEMProductNameSegment]
 shl eax, 4
 mov ebx, 0x00000000
-mov bx, [VESAInfoBlock.OEMProductRevOffset]
+mov bx, [tVESAInfoBlock.OEMProductNameOffset]
 add eax, ebx
-mov [SystemInfo.VESAOEMProductRevisionPointer], eax
+mov [tSystemInfo.VESAOEMProductNamePointer], eax
 
-mov eax, VESAInfoBlock.OEMData
-mov [SystemInfo.VESAOEMDataStringsPointer], eax
+mov eax, 0x00000000
+mov word ax, [tVESAInfoBlock.OEMProductRevSegment]
+shl eax, 4
+mov ebx, 0x00000000
+mov bx, [tVESAInfoBlock.OEMProductRevOffset]
+add eax, ebx
+mov [tSystemInfo.VESAOEMProductRevisionPointer], eax
 
-mov dword edx, [VESAModeInfo.PhysBasePtr]
-mov dword [SystemInfo.VESALFBAddress], edx
+mov eax, tVESAInfoBlock.OEMData
+mov [tSystemInfo.VESAOEMDataStringsPointer], eax
+
+mov dword edx, [tVESAModeInfo.PhysBasePtr]
+mov dword [tSystemInfo.VESALFBAddress], edx
 
 ; probe CPUID for processor brand string
 mov eax, 0x80000000
 cpuid
 cmp eax, 0x80000004
 jnae CPUIDDoneProbing
-mov [SystemInfo.CPUIDLargestExtendedQuery], eax
+mov [tSystemInfo.CPUIDLargestExtendedQuery], eax
 mov eax, 0x80000002
 cpuid
-mov esi, SystemInfo.CPUIDBrandString
+mov esi, tSystemInfo.CPUIDBrandString
 mov [esi], eax
 add esi, 4
 mov [esi], ebx
@@ -337,7 +339,7 @@ call PICUnmaskAll
 call PITInit
 
 ; print splash message - if we get here, we're all clear!
-push SystemInfo.kernelCopyright
+push tSystemInfo.kernelCopyright
 push 0xFF000000
 push 0xFF777777
 push 2
@@ -348,12 +350,15 @@ sti
 
 call SpeedDetect
 pop eax
-mov [SystemInfo.delayValue], eax
+mov [tSystemInfo.delayValue], eax
 
 cli
 
 ; setup that mickey!
 call MouseInit
+
+; setup keyboard
+call KeyboardInit
 
 sti
 
@@ -369,12 +374,16 @@ push 18
 push 2
 call [VESAPrint]
 
+
+
 ; testing DebugPrint - print the address in memory of the VESA OEM String and the string itself
-push dword [SystemInfo.VESAOEMVendorNamePointer]
-push SystemInfo.VESAOEMVendorNamePointer
+push dword [tSystemInfo.VESAOEMVendorNamePointer]
+push tSystemInfo.VESAOEMVendorNamePointer
 push 64
 push 2
 call DebugPrint
+
+
 
 InfiniteLoop:
 call KeyGet
@@ -386,7 +395,7 @@ je .hideMessage
 
 ; print seconds since boot just for the heck of it
 push kPrintString
-push dword [SystemInfo.secondsSinceBoot]
+push dword [tSystemInfo.secondsSinceBoot]
 call ConvertHexToString
 push kPrintString
 push 0xFF000000
@@ -398,7 +407,7 @@ call [VESAPrint]
 ; print mouse position for testing
 push kPrintString
 mov eax, 0x00000000
-mov byte al, [SystemInfo.mouseButtons]
+mov byte al, [tSystemInfo.mouseButtons]
 push eax
 call ConvertHexToString
 push kPrintString
@@ -410,7 +419,7 @@ call [VESAPrint]
 
 push kPrintString
 mov eax, 0x00000000
-mov word ax, [SystemInfo.mouseX]
+mov word ax, [tSystemInfo.mouseX]
 push eax
 call ConvertHexToString
 push kPrintString
@@ -422,7 +431,7 @@ call [VESAPrint]
 
 push kPrintString
 mov eax, 0x00000000
-mov word ax, [SystemInfo.mouseY]
+mov word ax, [tSystemInfo.mouseY]
 push eax
 call ConvertHexToString
 push kPrintString
@@ -434,7 +443,7 @@ call [VESAPrint]
  
 push kPrintString
 mov eax, 0x00000000
-mov word ax, [SystemInfo.mouseZ]
+mov word ax, [tSystemInfo.mouseZ]
 push eax
 call ConvertHexToString
 push kPrintString
@@ -448,7 +457,7 @@ call [VESAPrint]
 jmp InfiniteLoop
 
 .showMessage:
-push SystemInfo.CPUIDBrandString
+push tSystemInfo.CPUIDBrandString
 push 0xFF0000FF
 push 0xFF000000
 push 80
@@ -457,7 +466,7 @@ call [VESAPrint]
 jmp InfiniteLoop
 
 .hideMessage:
-push SystemInfo.CPUIDBrandString
+push tSystemInfo.CPUIDBrandString
 push 0xFF000000
 push 0xFF000000
 push 80

@@ -291,10 +291,10 @@ iretd
 ISR20:
  ; Programmable Interrupt Timer (PIT)
  pushad
- inc byte [SystemInfo.tickCounter]
- cmp byte [SystemInfo.tickCounter], 0x00
+ inc byte [tSystemInfo.tickCounter]
+ cmp byte [tSystemInfo.tickCounter], 0x00
  jne .noIncrement
- inc dword [SystemInfo.secondsSinceBoot]
+ inc dword [tSystemInfo.secondsSinceBoot]
  .noIncrement:
  call PICIntComplete
  popad
@@ -430,10 +430,10 @@ ISR2C:
  in al, 0x60
 
  ; add this byte to the mouse packet
- mov ebx, SystemInfo.mousePacketByte1
+ mov ebx, tSystemInfo.mousePacketByte1
  mov ecx, 0x00000000
- mov cl, [SystemInfo.mousePacketByteCount]
- mov dl, [SystemInfo.mousePacketByteSize]
+ mov cl, [tSystemInfo.mousePacketByteCount]
+ mov dl, [tSystemInfo.mousePacketByteSize]
  add ebx, ecx
  mov byte [ebx], al
 
@@ -443,22 +443,22 @@ ISR2C:
  jne .done
  
  ; if we get here, we have a whole packet
- mov byte [SystemInfo.mousePacketByteCount], 0xFF
+ mov byte [tSystemInfo.mousePacketByteCount], 0xFF
 
  mov edx, 0x00000000
- mov byte dl, [SystemInfo.mousePacketByte1]
+ mov byte dl, [tSystemInfo.mousePacketByte1]
  
  ; save edx, mask off the three main mouse buttons, restore edx
  push edx
  and dl, 00000111b
- mov byte [SystemInfo.mouseButtons], dl
+ mov byte [tSystemInfo.mouseButtons], dl
  pop edx
 
  ; process the X axis
  mov eax, 0x00000000
  mov ebx, 0x00000000
- mov byte al, [SystemInfo.mousePacketByte2]
- mov word bx, [SystemInfo.mouseX]  
+ mov byte al, [tSystemInfo.mousePacketByte2]
+ mov word bx, [tSystemInfo.mouseX]  
  push edx 
  and dl, 00010000b
  cmp dl, 00010000b
@@ -475,17 +475,17 @@ ISR2C:
  ; movement was positive
  add ebx, eax
  ; see if the mouse position would be beyond the right side of the screen, correct if necessary
- mov ax, [SystemInfo.VESAWidth]
+ mov ax, [tSystemInfo.VESAWidth]
  cmp ebx, eax
  jae .mouseXPositiveAdjust
  .mouseXDone:
- mov word [SystemInfo.mouseX], bx
+ mov word [tSystemInfo.mouseX], bx
 
  ; process the Y axis
  mov eax, 0x00000000
  mov ebx, 0x00000000
- mov byte al, [SystemInfo.mousePacketByte3]
- mov word bx, [SystemInfo.mouseY]
+ mov byte al, [tSystemInfo.mousePacketByte3]
+ mov word bx, [tSystemInfo.mouseY]
  and dl, 00100000b
  cmp dl, 00100000b
  jne .mouseYPositive
@@ -493,7 +493,7 @@ ISR2C:
  neg al
  add ebx, eax
  ; see if the mouse position would be beyond the bottom of the screen, correct if necessary
- mov ax, [SystemInfo.VESAHeight]
+ mov ax, [tSystemInfo.VESAHeight]
  cmp ebx, eax
  jae .mouseYPositiveAdjust
  jmp .mouseYDone
@@ -504,16 +504,16 @@ ISR2C:
  cmp ebx, 0x0000FFFF
  ja .mouseYNegativeAdjust
  .mouseYDone:
- mov word [SystemInfo.mouseY], bx
+ mov word [tSystemInfo.mouseY], bx
  
  ; see if we're using a FancyMouse(TM) and act accordingly
- mov byte al, [SystemInfo.mouseID]
+ mov byte al, [tSystemInfo.mouseID]
  cmp al, 0x03
  jne .done
  ; if we get here, we need have a wheel and need to process the Z axis
  mov eax, 0x00000000
- mov byte al, [SystemInfo.mousePacketByte4]
- mov word bx, [SystemInfo.mouseZ]
+ mov byte al, [tSystemInfo.mousePacketByte4]
+ mov word bx, [tSystemInfo.mouseZ]
  mov cl, 0xF0
  and cl, al
  cmp cl, 0xF0
@@ -527,10 +527,10 @@ ISR2C:
  ; movement was positive
  add bx, ax
  .mouseZDone:
- mov word [SystemInfo.mouseZ], bx
+ mov word [tSystemInfo.mouseZ], bx
  
  .done:
- inc byte [SystemInfo.mousePacketByteCount]
+ inc byte [tSystemInfo.mousePacketByteCount]
  call PICIntComplete
  popad
 iretd
@@ -539,14 +539,14 @@ iretd
  mov bx, 0x00000000
 jmp .mouseXDone
 .mouseXPositiveAdjust:
- mov word bx, [SystemInfo.VESAWidth]
+ mov word bx, [tSystemInfo.VESAWidth]
  dec bx
 jmp .mouseXDone
 .mouseYNegativeAdjust:
  mov bx, 0x00000000
 jmp .mouseYDone
 .mouseYPositiveAdjust:
- mov word bx, [SystemInfo.VESAHeight]
+ mov word bx, [tSystemInfo.VESAHeight]
  dec bx
 jmp .mouseYDone
 
