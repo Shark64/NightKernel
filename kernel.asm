@@ -52,6 +52,16 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
+;----------------------------------
+;Testing PrintReal!
+;----------------------------------
+mov si, msg
+call PrintReal
+hlt
+
+msg db "Welcome everyone!", 0
+;=================================
+
 ; init and probe RAM
 call MemoryInit
 

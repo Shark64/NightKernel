@@ -20,6 +20,13 @@
 
 
 
+;Colors - [Background_foreground]
+Color:
+	.Black_Red 						db 0x04
+	.Black_Grey						db 0x07
+	.Black_Yellow					db 0x0E
+	.PopColor						db 0x00 ;This is used for popping the color
+
 ; structures
 tSystemInfo:
  .kernelVersionMajor				dw 0x0000
@@ -208,7 +215,6 @@ kFastA20Fail						db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x0
 kMeme820unsup						db 'Could not detect memory, function unsupported', 0x00
 kFailed								db 'Failed to run kernel succesfully, see below.', 0x00
 kRebootMSG							db 'Rebooting...', 0x00
-
 
 
 ; arrays
