@@ -55,7 +55,7 @@ mov gs, ax
 ;----------------------------------
 ;Testing PrintReal!
 ;----------------------------------
-mov si, msg
+push msg
 call PrintReal
 hlt
 
