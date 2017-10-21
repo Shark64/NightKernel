@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 2015 - 2016 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x000d
 ; memory.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -84,7 +84,7 @@ MemoryInit:
  .failed:		;function unsupported
  stc
  push kMeme820unsup
- call PrintFail
+ call PrintReal
  jmp InfiniteLoop
 
  memmap_ent db 0

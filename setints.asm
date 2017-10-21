@@ -1,5 +1,5 @@
-; Night Kernel version 0.04
-; Copyright 1995 - 2016 by mercury0x000d
+; Night Kernel
+; Copyright 1995 - 2018 by mercury0x000d
 ; setints.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or

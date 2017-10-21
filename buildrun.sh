@@ -1,4 +1,4 @@
-# let's make a kernel image! :D
+# let's make a kernel image and test it out! :D
 
 # first we compile the kernel
 nasm -f bin -o kernel.sys kernel.asm
@@ -16,3 +16,6 @@ sudo umount ./floppy
 rmdir floppy
 
 #fun! all done! ready to run, son!
+imagepath=$(pwd)/night.img
+virtualbox --startvm "Night" --fda "$imagepath" --debug-command-line --start-running
+

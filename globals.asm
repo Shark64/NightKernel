@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 2015 - 2016 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x000d
 ; globals.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -24,7 +24,7 @@
 tSystemInfo:
  .kernelVersionMajor				dw 0x0000
  .kernelVersionMinor				dw 0x0008
- .kernelCopyright					db 'Night Kernel 2015 - 2016 by Mercury0x000d, Antony Gordon, Maarten Vermeulen', 0x00
+ .kernelCopyright					db 'Night Kernel, copyright 1995 - 2018', 0x00
  .memoryTotalKB						dd 0x00000000
  .memoryAvailableKB					dd 0x00000000
  .memoryBlockPointer				dd 0x00000000

@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 2015 - 2016 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x000d
 ; api.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or
@@ -158,16 +158,176 @@ ret
 
 
 
+SetSystemInfoCPUID:
+ ; Probes the CPU using CPUID instruction and saves results to the tSystemInfo structure
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+
+ ; get vendor ID
+ mov eax, 0x00000000
+ cpuid
+ mov esi, tSystemInfo.CPUIDVendorString
+ mov [tSystemInfo.CPUIDLargestBasicQuery], eax
+ mov [esi], ebx
+ add esi, 4
+ mov [esi], edx
+ add esi, 4
+ mov [esi], ecx
+
+ ; get processor brand string
+ mov eax, 0x80000000
+ cpuid
+ cmp eax, 0x80000004
+ jnae .done
+ mov [tSystemInfo.CPUIDLargestExtendedQuery], eax
+ mov eax, 0x80000002
+ cpuid
+ mov esi, tSystemInfo.CPUIDBrandString
+ mov [esi], eax
+ add esi, 4
+ mov [esi], ebx
+ add esi, 4
+ mov [esi], ecx
+ add esi, 4
+ mov [esi], edx
+ add esi, 4
+ mov eax, 0x80000003
+ cpuid
+ mov [esi], eax
+ add esi, 4
+ mov [esi], ebx
+ add esi, 4
+ mov [esi], ecx
+ add esi, 4
+ mov [esi], edx
+ add esi, 4
+ mov eax, 0x80000004
+ cpuid
+ mov [esi], eax
+ add esi, 4
+ mov [esi], ebx
+ add esi, 4
+ mov [esi], ecx
+ add esi, 4
+ mov [esi], edx
+ .done:
+ret
 
 
 
+SetSystemInfoCPUSpeed:
+ ; Writes CPU speed info to the tSystemInfo structure
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ;  changes: eax
+ 
+ sti
+ call CPUSpeedDetect
+ pop eax
+ mov [tSystemInfo.delayValue], eax
+ cli
+ret
 
 
 
+SetSystemInfoVESA:
+ ; Sets information from the VESA subsystem into the tSystemInfo structure
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
 
+ mov byte dl, [tVESAInfoBlock.VBEVersionMajor]
+ mov byte [tSystemInfo.VESAVersionMajor], dl
 
+ mov byte dl, [tVESAInfoBlock.VBEVersionMinor]
+ mov byte [tSystemInfo.VESAVersionMinor], dl
 
+ mov eax, 0x00000000
+ mov word ax, [tVESAInfoBlock.OEMStringSegment]
+ shl eax, 4
+ mov ebx, 0x00000000
+ mov bx, [tVESAInfoBlock.OEMStringOffset]
+ add eax, ebx
+ mov dword [tSystemInfo.VESAOEMStringPointer], eax
 
+ mov dword edx, [tVESAInfoBlock.Capabilities]
+ mov dword [tSystemInfo.VESACapabilities], edx
 
+ mov word dx, [tVESAModeInfo.XResolution]
+ mov word [tSystemInfo.VESAWidth], dx
 
+ mov word dx, [tVESAModeInfo.YResolution]
+ mov word [tSystemInfo.VESAHeight], dx
 
+ mov byte dl, [tVESAModeInfo.BitsPerPixel]
+ mov byte [tSystemInfo.VESAColorDepth], dl
+
+ ; while we're messing with color depth, we may as well set up function pointers to the appropriate VESA code
+ cmp dl, 0x20
+ jne .ColorTest24Bit
+ mov edx, VESAPrint32
+ mov dword [VESAPrint], edx
+ mov edx, VESAPlot32
+ mov dword [VESAPlot], edx
+ jmp .ColorTestDone
+ .ColorTest24Bit:
+ cmp dl, 0x18
+ jne .ColorTest16Bit
+ mov edx, VESAPrint24
+ mov dword [VESAPrint], edx
+ mov edx, VESAPlot24
+ mov dword [VESAPlot], edx
+ .ColorTest16Bit:
+ ; no others implemented for now
+ .ColorTestDone:
+
+ mov eax, 0x00000000
+ mov word ax, [tVESAInfoBlock.TotalMemory]
+ mov ebx, 0x00010000
+ mul ebx
+ mov ebx, 0x00000400
+ div ebx
+ mov dword [tSystemInfo.VESAVideoRAMKB], eax
+
+ mov word dx, [tVESAInfoBlock.OEMSoftwareRev]
+ mov word [tSystemInfo.VESAOEMSoftwareRevision], dx
+
+ mov eax, 0x00000000
+ mov word ax, [tVESAInfoBlock.OEMVendorNameSegment]
+ shl eax, 4
+ mov ebx, 0x00000000
+ mov bx, [tVESAInfoBlock.OEMVendorNameOffset]
+ add eax, ebx
+ mov [tSystemInfo.VESAOEMVendorNamePointer], eax
+
+ mov eax, 0x00000000
+ mov word ax, [tVESAInfoBlock.OEMProductNameSegment]
+ shl eax, 4
+ mov ebx, 0x00000000
+ mov bx, [tVESAInfoBlock.OEMProductNameOffset]
+ add eax, ebx
+ mov [tSystemInfo.VESAOEMProductNamePointer], eax
+
+ mov eax, 0x00000000
+ mov word ax, [tVESAInfoBlock.OEMProductRevSegment]
+ shl eax, 4
+ mov ebx, 0x00000000
+ mov bx, [tVESAInfoBlock.OEMProductRevOffset]
+ add eax, ebx
+ mov [tSystemInfo.VESAOEMProductRevisionPointer], eax
+
+ mov eax, tVESAInfoBlock.OEMData
+ mov [tSystemInfo.VESAOEMDataStringsPointer], eax
+
+ mov dword edx, [tVESAModeInfo.PhysBasePtr]
+ mov dword [tSystemInfo.VESALFBAddress], edx
+ret
