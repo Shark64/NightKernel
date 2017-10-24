@@ -291,11 +291,36 @@ iretd
 ISR20:
  ; Programmable Interrupt Timer (PIT)
  pushad
- inc byte [tSystemInfo.tickCounter]
- cmp byte [tSystemInfo.tickCounter], 0x00
- jne .noIncrement
+ inc byte [tSystemInfo.ticks]
+ cmp byte [tSystemInfo.ticks], 0
+ jne .done
  inc dword [tSystemInfo.secondsSinceBoot]
- .noIncrement:
+ inc byte [tSystemInfo.second]
+ cmp byte [tSystemInfo.second], 60
+ jne .done
+ mov byte [tSystemInfo.second], 0
+ inc byte [tSystemInfo.minute]
+ cmp byte [tSystemInfo.minute], 60
+ jne .done
+ mov byte [tSystemInfo.minute], 0
+ inc byte [tSystemInfo.hour]
+ cmp byte [tSystemInfo.hour], 24
+ jne .done
+ mov byte [tSystemInfo.hour], 0
+ inc byte [tSystemInfo.day]
+ cmp byte [tSystemInfo.day], 30 ; this will need modified to account for the different number of days in the months
+ jne .done
+ mov byte [tSystemInfo.day], 0
+ inc byte [tSystemInfo.month]
+ cmp byte [tSystemInfo.month], 13
+ jne .done
+ mov byte [tSystemInfo.month], 1
+ inc byte [tSystemInfo.year]
+ cmp byte [tSystemInfo.year], 100
+ jne .done
+ mov byte [tSystemInfo.year], 0
+ inc byte [tSystemInfo.century]
+ .done:
  call PICIntComplete
  popad
 iretd
@@ -360,7 +385,7 @@ iretd
 
 ISR24:
  ; Serial port 1
- jmp $ ; for debugging, makes sure the system hangs upon exception
+ ;jmp $ ; for debugging, makes sure the system hangs upon exception
  call PICIntComplete
 iretd
 

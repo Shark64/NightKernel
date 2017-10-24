@@ -20,13 +20,6 @@
 
 
 
-;Colors - [Background_foreground]
-Color:
-	.Black_Red 						db 0x04
-	.Black_Grey						db 0x07
-	.Black_Yellow					db 0x0E
-	.PopColor						db 0x00 ;This is used for popping the color
-
 ; structures
 tSystemInfo:
  .kernelVersionMajor				dw 0x0000
@@ -35,8 +28,15 @@ tSystemInfo:
  .memoryTotalKB						dd 0x00000000
  .memoryAvailableKB					dd 0x00000000
  .memoryBlockPointer				dd 0x00000000
+ .hour								db 0x00
+ .minute							db 0x00
+ .second							db 0x00
+ .ticks								db 0x00
+ .century							db 0x00
+ .year								db 0x00
+ .month								db 0x00
+ .day								db 0x00
  .secondsSinceBoot					dd 0x00000000
- .tickCounter						db 0x00
  .delayValue						dd 0x00000000
  .lastError							dd 0x00000000
  .VESAVersionMajor					db 0x00
@@ -213,8 +213,10 @@ kPrintString						times 256 db 0x00
 kUnsupportedInt						db 'An unsupported interrupt has been called', 0x00
 kFastA20Fail						db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
 kMeme820unsup						db 'Could not detect memory, function unsupported', 0x00
+kVESAUnsupported					db 'VESA support not found', 0x00
 kFailed								db 'Failed to run kernel succesfully, see below.', 0x00
 kRebootMSG							db 'Rebooting...', 0x00
+
 
 
 ; arrays

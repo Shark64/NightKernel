@@ -22,6 +22,88 @@
 
 ; Miscellaneous routines which will eventually comprise the Night API
 
+
+
+bits 16
+
+
+
+PrintSimple16:
+ ; Prints an ASCIIZ failure message directly to the screen.
+ ; Note: Uses text mode (assumed already set) not VESA.
+ ; Note: For use in Real Mode only.
+ ;  input:
+ ;   address of string to print
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ;  changes: ax, bl, es, di, ds, si
+
+ ; set the proper mode
+ mov ah, 0x00
+ mov al, 0x03
+ sti
+ int 0x10
+ cli
+
+ pop ax
+ pop si
+ push ax
+
+ ; write the string
+ mov bl, 0x07
+ mov ax, 0xB800
+ mov ds, ax
+ mov di, 0x0000
+ mov ax, 0x0000
+ mov es, ax
+
+ .loopBegin:
+ mov al, [es:si]
+
+ ; have we reached the string end? if yes, exit the loop
+ cmp al, 0x00
+ je .end
+
+ mov byte[ds:di], al
+ inc di
+ mov byte[ds:di], bl
+ inc di
+ inc si
+ jmp .loopBegin
+ .end:
+ret
+
+
+
+SetSystemInfoAPM:
+ ; Gets the APM interface version and saves results to the tSystemInfo structure
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ;  changes: ax, bx, cx
+
+ mov ax, 0x5300
+ mov bx, 0x0000
+ int 0x15
+ cmp bx, 0x504D
+ jne .skipped
+  mov byte [tSystemInfo.APMVersionMajor], ah
+  mov byte [tSystemInfo.APMVersionMinor], al
+  mov word [tSystemInfo.APMFeatures], cx
+ .skipped:
+ret
+
+
+
+bits 32
+
+
+
 ConvertHexToString:
  ; Makes a string out of a hexidceimal number
  ; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
@@ -105,8 +187,8 @@ ret
 
 
 
-DebugPrint:
- ; Quick minimal printing routine for debug purposes
+PrintDebug:
+ ; Quick minimal printing routine, mainly for debug purposes
  ;  input:
  ;   horizontal position
  ;   vertical position
@@ -115,6 +197,8 @@ DebugPrint:
  ;
  ;  output:
  ;   n/a
+ ;
+ ; changes: 
 
  ; do some stack magic to line up the items for calling in the order they'll be used
  pop esi
@@ -155,6 +239,37 @@ DebugPrint:
  call [VESAPrint]
 ret
 .scratchString						times 10 db 0x00
+
+
+
+PrintSimple32:
+ ; Quick minimal printing routine, mainly for debug purposes in 16 bit mode
+ ;  input:
+ ;   address of string to print
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ; changes: 
+
+ pop dword [.tempAddress]
+ push 0xff000000
+ push 0xff777777
+ push 2
+ push 2
+ call [VESAPrint]
+ push dword [.tempAddress]
+ret
+.tempAddress						dd 0x00000000
+
+
+
+;push tSystemInfo.kernelCopyright
+;push 0xFF000000
+;push 0xFF777777
+;push 2
+;push 2
+;call [VESAPrint]
 
 
 
@@ -233,6 +348,93 @@ SetSystemInfoCPUSpeed:
  pop eax
  mov [tSystemInfo.delayValue], eax
  cli
+ret
+
+
+
+SetSystemInfoRTC:
+ ; Copies the RTC time and date into the tSystemInfo structure
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   n/a
+ ;
+ ;  changes: eax
+
+ ; wait until the status register tells us the RTC is busy
+ mov al, 0x0A
+ out 0x70, al
+ .pollStatus1:
+ in al, 0x71
+ and al, 10000000b
+ cmp al, 10000000b
+ je .flagSet
+ jmp .pollStatus1
+ .flagSet:
+ ; wait until the status register tells us the RTC is not busy
+ mov al, 0x0A
+ out 0x70, al
+ .pollStatus2:
+ in al, 0x71
+ and al, 10000000b
+ cmp al, 00000000b
+ je .flagClear
+ jmp .pollStatus2
+ .flagClear:
+
+ ; set binary format and 24 hour mode
+ mov al, 0x0B
+ out 0x70, al
+ in al, 0x71
+ or al, 00000110b
+ mov bl, al
+ mov al, 0x0B
+ out 0x70, al
+ mov al, bl
+ out 0x71, al
+; get the century
+ mov al, 0x32
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.century], al
+ ; get the year
+ mov al, 0x09
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.year], al
+ ; get the month
+ mov al, 0x08
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.month], al
+ ; get the day
+ mov al, 0x07
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.day], al
+ ; get the hour
+ mov al, 0x04
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.hour], al
+ ; get the minutes
+ mov al, 0x02
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.minute], al
+ ; get the seconds
+ mov al, 0x00
+ out 0x70, al
+ mov eax, 0x00000000
+ in al, 0x71
+ mov byte [tSystemInfo.second], al
 ret
 
 

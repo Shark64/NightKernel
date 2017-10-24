@@ -20,6 +20,7 @@
 
 
 
+; sets the interrupt handler addresses
 push 0x8e
 push ISR00
 push 0x08

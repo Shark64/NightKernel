@@ -52,18 +52,12 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-;----------------------------------
-;Testing PrintReal!
-;----------------------------------
-push msg
-call PrintReal
-hlt
-
-msg db "Welcome everyone!", 0
-;=================================
-
 ; init and probe RAM
 call MemoryInit
+
+; get that good ol' APM info and enable the interface
+call SetSystemInfoAPM
+call APMEnable
 
 ; init VESA
 call VESAInit
@@ -128,6 +122,9 @@ call PICDisableIRQs
 call PICUnmaskAll
 call PITInit
 
+; load the RTC values into the system struct
+call SetSystemInfoRTC
+
 ; set some info from the CPU into the system struct
 call SetSystemInfoCPUID
 
@@ -148,6 +145,8 @@ push 2
 push 2
 call [VESAPrint]
 sti
+
+
 
 ; debugging code follows
 
@@ -170,7 +169,7 @@ push dword [tSystemInfo.VESAOEMVendorNamePointer]
 push tSystemInfo.VESAOEMVendorNamePointer
 push 64
 push 2
-call DebugPrint
+call PrintSimple32
 
 
 
@@ -241,7 +240,106 @@ push 0xFF777777
 push 50
 push 302
 call [VESAPrint]
- 
+
+
+
+mov eax, 0x00000000
+mov al, [tSystemInfo.hour]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 180
+push 20
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.minute]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 180
+push 120
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.second]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 180
+push 220
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.ticks]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 180
+push 320
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.month]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 200
+push 20
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.day]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 200
+push 120
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.century]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 200
+push 220
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+mov eax, 0x00000000
+mov al, [tSystemInfo.year]
+push kPrintString
+push eax
+call ConvertHexToString
+push kPrintString
+push 0xFF000000
+push 0xFF777777
+push 200
+push 320
+call [VESAPrint]
+;;;;;;;;;;;;;;;;;
+
 
 jmp InfiniteLoop
 
@@ -272,5 +370,7 @@ jmp InfiniteLoop
 %include "inthandl.asm"						; interrupt handlers
 %include "memory.asm"						; memory manager
 %include "pic.asm"							; Programmable Interrupt Controller routines
+%include "power.asm"						; Power Management (APM & ACPI) routines
 %include "ps2.asm"							; PS/2 keyboard and mouse routines
 %include "screen.asm"						; VESA and other screen routines
+%include "serial.asm"						; serial communication routines
