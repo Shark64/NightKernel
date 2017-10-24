@@ -20,60 +20,6 @@
 
 
 
-bits 16
-
-
-
-PrintReal:
- ; Prints an ASCIIZ failure message directly to the screen.
- ; Note: Uses text mode (assumed already set) not VESA.
- ; Note: For use in Real Mode only.
- ;  input:
- ;   address of string to print
- ;
- ;  output:
- ;   n/a
- ;
- ;  changes: ax, bl, es, di, ds, si
-
- ; set the proper mode
- mov ah, 0x00
- mov al, 0x03
- sti
- int 0x10
- cli
-
- pop ax
- pop si
- push ax
-
- ; write the string
- mov bl, 0x07
- mov ax, 0xB800
- mov ds, ax
- mov di, 0x0000
- mov ax, 0x0000
- mov es, ax
-
- .loopBegin:
- mov al, [es:si]
-
- ; have we reached the string end? if yes, exit the loop
- cmp al, 0x00
- je .end
-
- mov byte[ds:di], al
- inc di
- mov byte[ds:di], bl
- inc di
- inc si
- jmp .loopBegin
- .end:
-
-ret
-
-
-
 bits 32
 
 
@@ -124,7 +70,7 @@ CPUSpeedDetect:
  mov ebx, 0x00000000
  mov ecx, 0x00000000
  mov edx, 0x00000000
- mov al, [tSystemInfo.tickCounter]
+ mov al, [tSystemInfo.ticks]
  mov ah, al
  dec ah
  .loop1:
@@ -137,12 +83,47 @@ CPUSpeedDetect:
  pop edx
  pop ecx
  pop ebx
- mov al, [tSystemInfo.tickCounter]
+ mov al, [tSystemInfo.ticks]
  cmp al, ah
  jne .loop1
  pop ebx
  push ecx
  push ebx
+ret
+
+
+
+Random:
+ ; Returns a random number
+ ;  input:
+ ;   n/a
+ ;
+ ;  output:
+ ;   32-bit random number
+ ;
+ ;  changes: eax, ecx, edx
+
+ mov ecx, [tSystemInfo.secondsSinceBoot]
+ mov edx, [tSystemInfo.ticks]
+ add ecx, edx
+ mov edx, ecx
+ shr edx, 12
+ xor ecx, edx
+ mov edx, ecx
+ shl edx, 25
+ xor ecx, edx
+ mov edx, ecx
+ shr edx, 27
+ xor ecx, edx
+ mov eax, [tSystemInfo.ticks]
+ mul ecx 
+ mov ecx, [tSystemInfo.mouseX]
+ add eax, ecx
+ add ecx, [tSystemInfo.mouseY]
+ add eax, ecx
+ pop edx
+ push eax
+ push edx
 ret
 
 

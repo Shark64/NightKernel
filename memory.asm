@@ -84,7 +84,7 @@ MemoryInit:
  .failed:		;function unsupported
  stc
  push kMeme820unsup
- call PrintReal
+ call PrintSimple16
  jmp InfiniteLoop
 
  memmap_ent db 0

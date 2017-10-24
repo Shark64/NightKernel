@@ -423,14 +423,17 @@ MouseInit:
  mov al, 0xAE
  out 0x64, al
 
+ ; limit mouse horizontally
  mov ax, [tSystemInfo.VESAWidth]
  shr ax, 1
  mov word [tSystemInfo.mouseX], ax
 
+ ; limit mouse vertically
  mov ax, [tSystemInfo.VESAHeight]
  shr ax, 1
  mov word [tSystemInfo.mouseY], ax
 
+ ; init mouse wheel index
  mov word [tSystemInfo.mouseZ], 0x7777
 
 ret
