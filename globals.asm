@@ -22,206 +22,205 @@
 
 ; structures
 tSystemInfo:
- .kernelVersionMajor				dw 0x0000
- .kernelVersionMinor				dw 0x0008
- .kernelCopyright					db 'Night Kernel, copyright 1995 - 2018', 0x00
- .memoryTotalKB						dd 0x00000000
- .memoryAvailableKB					dd 0x00000000
- .memoryBlockPointer				dd 0x00000000
- .hour								db 0x00
- .minute							db 0x00
- .second							db 0x00
- .ticks								db 0x00
- .century							db 0x00
- .year								db 0x00
- .month								db 0x00
- .day								db 0x00
- .secondsSinceBoot					dd 0x00000000
- .delayValue						dd 0x00000000
- .lastError							dd 0x00000000
- .VESAVersionMajor					db 0x00
- .VESAVersionMinor					db 0x00
- .VESAOEMStringPointer				dd 0x00000000
- .VESACapabilities					dd 0x00000000
- .VESAWidth							dw 0x0000
- .VESAHeight						dw 0x0000
- .VESAColorDepth					db 0x00
- .VESAVideoRAMKB					dd 0x00000000 
- .VESAOEMSoftwareRevision			dw 0x0000
- .VESAOEMVendorNamePointer			dd 0x00000000
- .VESAOEMProductNamePointer			dd 0x00000000
- .VESAOEMProductRevisionPointer		dd 0x00000000
- .VESAOEMDataStringsPointer			dd 0x00000000 
- .VESALFBAddress					dd 0x00000000
- .CPUIDVendorString					times 16 db 0x00
- .CPUIDBrandString					times 64 db 0x00
- .CPUIDLargestBasicQuery			dd 0x00000000
- .CPUIDLargestExtendedQuery			dd 0x00000000
- .APMVersionMajor					db 0x00
- .APMVersionMinor					db 0x00
- .APMFeatures						dw 0x0000
- .keyboardType						dw 0x0000
- .mouseAvailable					db 0x00
- .mouseButtonCount					db 0x00
- .mouseID							db 0x00
- .mouseWheelPresent					db 0x00
- .mouseButtons						db 0x00
- .mouseX							dw 0x0000
- .mouseY							dw 0x0000
- .mouseZ							dw 0x0000
- .mousePacketByteSize				db 0x00
- .mousePacketByteCount				db 0x00
- .mousePacketByte1					db 0x00
- .mousePacketByte2					db 0x00
- .mousePacketByte3					db 0x00
- .mousePacketByte4					db 0x00
- .multicoreAvailable				db 0x00
- .PCISupport						db 0x00
+	.kernelVersionMajor						dw 0x0000
+	.kernelVersionMinor						dw 0x0008
+	.kernelCopyright						db 'Night Kernel, copyright 1995 - 2018', 0x00
+	.memoryTotalKB							dd 0x00000000
+	.memoryAvailableKB						dd 0x00000000
+	.memoryBlockPointer						dd 0x00000000
+	.hours									db 0x00
+	.minutes								db 0x00
+	.seconds								db 0x00
+	.ticks									db 0x00
+	.century								db 0x00
+	.year									db 0x00
+	.month									db 0x00
+	.day									db 0x00
+	.secondsSinceBoot						dd 0x00000000
+	.delayValue								dd 0x00000000
+	.lastError								dd 0x00000000
+	.VESAVersionMajor						db 0x00
+	.VESAVersionMinor						db 0x00
+	.VESAOEMStringPointer					dd 0x00000000
+	.VESACapabilities						dd 0x00000000
+	.VESAWidth								dw 0x0000
+	.VESAHeight								dw 0x0000
+	.VESAColorDepth							db 0x00
+	.VESAVideoRAMKB							dd 0x00000000
+	.VESAOEMSoftwareRevision				dw 0x0000
+	.VESAOEMVendorNamePointer				dd 0x00000000
+	.VESAOEMProductNamePointer				dd 0x00000000
+	.VESAOEMProductRevisionPointer			dd 0x00000000
+	.VESAOEMDataStringsPointer				dd 0x00000000
+	.VESALFBAddress							dd 0x00000000
+	.CPUIDVendorString						times 16 db 0x00
+	.CPUIDBrandString						times 64 db 0x00
+	.CPUIDLargestBasicQuery					dd 0x00000000
+	.CPUIDLargestExtendedQuery				dd 0x00000000
+	.APMVersionMajor						db 0x00
+	.APMVersionMinor						db 0x00
+	.APMFeatures							dw 0x0000
+	.keyboardType							dw 0x0000
+	.mouseAvailable							db 0x00
+	.mouseButtonCount						db 0x00
+	.mouseID								db 0x00
+	.mouseWheelPresent						db 0x00
+	.mouseButtons							db 0x00
+	.mouseX									dw 0x0000
+	.mouseY									dw 0x0000
+	.mouseZ									dw 0x0000
+	.mousePacketByteSize					db 0x00
+	.mousePacketByteCount					db 0x00
+	.mousePacketByte1						db 0x00
+	.mousePacketByte2						db 0x00
+	.mousePacketByte3						db 0x00
+	.mousePacketByte4						db 0x00
+	.multicoreAvailable						db 0x00
+	.PCISupport								db 0x00
 
 
 
 tVESAInfoBlock:
- .VBESignature						db 'VBE2'
- .VBEVersionMinor					db 0x00
- .VBEVersionMajor					db 0x00
- .OEMStringOffset					dw 0x0000
- .OEMStringSegment					dw 0x0000
- .Capabilities						times 4 db 0x00
- .VideoModeListOffset				dw 0x0000
- .VideoModeListSegment				dw 0x0000
- .TotalMemory						dw 0x0000
- .OEMSoftwareRev					dw 0x0000
- .OEMVendorNameOffset				dw 0x0000
- .OEMVendorNameSegment				dw 0x0000
- .OEMProductNameOffset				dw 0x0000
- .OEMProductNameSegment				dw 0x0000
- .OEMProductRevOffset				dw 0x0000
- .OEMProductRevSegment				dw 0x0000
- .Reserved							times 222 db 0
- .OEMData							times 256 db 0
+	.VBESignature							db 'VBE2'
+	.VBEVersionMinor						db 0x00
+	.VBEVersionMajor						db 0x00
+	.OEMStringOffset						dw 0x0000
+	.OEMStringSegment						dw 0x0000
+	.Capabilities							times 4 db 0x00
+	.VideoModeListOffset					dw 0x0000
+	.VideoModeListSegment					dw 0x0000
+	.TotalMemory							dw 0x0000
+	.OEMSoftwareRev							dw 0x0000
+	.OEMVendorNameOffset					dw 0x0000
+	.OEMVendorNameSegment					dw 0x0000
+	.OEMProductNameOffset					dw 0x0000
+	.OEMProductNameSegment					dw 0x0000
+	.OEMProductRevOffset					dw 0x0000
+	.OEMProductRevSegment					dw 0x0000
+	.Reserved								times 222 db 0
+	.OEMData								times 256 db 0
 
 tVESAModeInfo:
- .ModeAttributes					dw 0x0000
- .WinAAttributes					db 0x00
- .WinBAttributes					db 0x00
- .WinGranularity					dw 0x0000
- .WinSize							dw 0x0000
- .WinASegment						dw 0x0000
- .WinBSegment						dw 0x0000
- .WinFuncPtr						dd 0x00000000
- .BytesPerScanline					dw 0x0000
- .XResolution						dw 0x0000
- .YResolution						dw 0x0000
- .XCharSize							db 0x00
- .YCharSize							db 0x00
- .NumberOfPlanes					db 0x00
- .BitsPerPixel						db 0x00
- .NumberOfBanks						db 0x00
- .MemoryModel						db 0x00
- .BankSize							db 0x00
- .NumberOfImagePages				db 0x00
- .ReservedA							db 0x00
- .RedMaskSize						db 0x00
- .RedFieldPosition					db 0x00
- .GreenMaskSize						db 0x00
- .GreenFieldPosition				db 0x00
- .BlueMaskSize						db 0x00
- .BlueFieldPosition					db 0x00
- .RsvdMaskSize						db 0x00
- .RsvdFieldPosition					db 0x00
- .DirectColorModeInfo				db 0x00
- .PhysBasePtr						dd 0x00000000
- .OffScreenMemOffset				dd 0x00000000
- .OffScreenMemSize					dw 0x0000
- .ReservedB							times 206 db 0x00
+	.ModeAttributes							dw 0x0000
+	.WinAAttributes							db 0x00
+	.WinBAttributes							db 0x00
+	.WinGranularity							dw 0x0000
+	.WinSize								dw 0x0000
+	.WinASegment							dw 0x0000
+	.WinBSegment							dw 0x0000
+	.WinFuncPtr								dd 0x00000000
+	.BytesPerScanline						dw 0x0000
+	.XResolution							dw 0x0000
+	.YResolution							dw 0x0000
+	.XCharSize								db 0x00
+	.YCharSize								db 0x00
+	.NumberOfPlanes							db 0x00
+	.BitsPerPixel							db 0x00
+	.NumberOfBanks							db 0x00
+	.MemoryModel							db 0x00
+	.BankSize								db 0x00
+	.NumberOfImagePages						db 0x00
+	.ReservedA								db 0x00
+	.RedMaskSize							db 0x00
+	.RedFieldPosition						db 0x00
+	.GreenMaskSize							db 0x00
+	.GreenFieldPosition						db 0x00
+	.BlueMaskSize							db 0x00
+	.BlueFieldPosition						db 0x00
+	.RsvdMaskSize							db 0x00
+	.RsvdFieldPosition						db 0x00
+	.DirectColorModeInfo					db 0x00
+	.PhysBasePtr							dd 0x00000000
+	.OffScreenMemOffset						dd 0x00000000
+	.OffScreenMemSize						dw 0x0000
+	.ReservedB								times 206 db 0x00
 
 tMBR:
- .BootCode							times 446 db 0x00
- .Partiton1Status					db 0x00
- .Partition1FirstSectorCHS			db 0x00, 0x00, 0x00
- .Partition1Type					db 0x00
- .Partition1LastSectorCHS			db 0x00, 0x00, 0x00
- .Partition1FirstSectorLBA			dd 0x00000000
- .Partition1SectorCount				dd 0x00000000
- .Partition2Status					db 0x00
- .Partition2FirstSectorCHS			db 0x00, 0x00, 0x00
- .Partition2Type					db 0x00
- .Partition2LastSectorCHS			db 0x00, 0x00, 0x00
- .Partition2FirstSectorLBA			dd 0x00000000
- .Partition2SectorCount				dd 0x00000000
- .Partition3Status					db 0x00
- .Partition3FirstSectorCHS			db 0x00, 0x00, 0x00
- .Partition3Type					db 0x00
- .Partition3LastSectorCHS			db 0x00, 0x00, 0x00
- .Partition3FirstSectorLBA			dd 0x00000000
- .Partition3SectorCount				dd 0x00000000
- .Partition4Status					db 0x00
- .Partition4FirstSectorCHS			db 0x00, 0x00, 0x00
- .Partition4Type					db 0x00
- .Partition4LastSectorCHS			db 0x00, 0x00, 0x00
- .Partition4FirstSectorLBA			dd 0x00000000
- .Partition4SectorCount				dd 0x00000000
- .Signature							db 0x55, 0xAA
- 
+	.BootCode								times 446 db 0x00
+	.Partiton1Status						db 0x00
+	.Partition1FirstSectorCHS				db 0x00, 0x00, 0x00
+	.Partition1Type							db 0x00
+	.Partition1LastSectorCHS				db 0x00, 0x00, 0x00
+	.Partition1FirstSectorLBA				dd 0x00000000
+	.Partition1SectorCount					dd 0x00000000
+	.Partition2Status						db 0x00
+	.Partition2FirstSectorCHS				db 0x00, 0x00, 0x00
+	.Partition2Type							db 0x00
+	.Partition2LastSectorCHS				db 0x00, 0x00, 0x00
+	.Partition2FirstSectorLBA				dd 0x00000000
+	.Partition2SectorCount					dd 0x00000000
+	.Partition3Status						db 0x00
+	.Partition3FirstSectorCHS				db 0x00, 0x00, 0x00
+	.Partition3Type							db 0x00
+	.Partition3LastSectorCHS				db 0x00, 0x00, 0x00
+	.Partition3FirstSectorLBA				dd 0x00000000
+	.Partition3SectorCount					dd 0x00000000
+	.Partition4Status						db 0x00
+	.Partition4FirstSectorCHS				db 0x00, 0x00, 0x00
+	.Partition4Type							db 0x00
+	.Partition4LastSectorCHS				db 0x00, 0x00, 0x00
+	.Partition4FirstSectorLBA				dd 0x00000000
+	.Partition4SectorCount					dd 0x00000000
+	.Signature								db 0x55, 0xAA
+
 tFAT16BootSector:
- .JumpOpcode						db 0x00, 0x00, 0x00
- .OEMName							times 8 db 0x00
- .BytesPerSector					dw 0x0000
- .SectorsPerCluster					db 0x00
- .ReservedSectors					dw 0x0000
- .FATCount							db 0x00
- .MaxRootEntries					dw 0x0000
- .TotalSectors						dw 0x0000
- .MediaDescriptor					db 0x00
- .SectorsPerFAT						dw 0x0000
- .SectorsPerTrack					dw 0x0000
- .HeadCount							dw 0x0000
- .HiddenSectors						dd 0x00000000
- .TotalSectorsAndHidden				dw 0x00000000
- .PhysicalDriveNumber				db 0x00
- .Reserved							db 0x00
- .ExtendedSignature					db 0x00
- .VolumeSerial						dd 0x00000000
- .PartitionVolumeLabel				times 11 db 0x00
- .FileSystemType					times 8 db 0x00
- .BootCode							times 448 db 0x00
- .Signature							db 0x55, 0xAA
+	.JumpOpcode								db 0x00, 0x00, 0x00
+	.OEMName								times 8 db 0x00
+	.BytesPerSector							dw 0x0000
+	.SectorsPerCluster						db 0x00
+	.ReservedSectors						dw 0x0000
+	.FATCount								db 0x00
+	.MaxRootEntries							dw 0x0000
+	.TotalSectors							dw 0x0000
+	.MediaDescriptor						db 0x00
+	.SectorsPerFAT							dw 0x0000
+	.SectorsPerTrack						dw 0x0000
+	.HeadCount								dw 0x0000
+	.HiddenSectors							dd 0x00000000
+	.TotalSectorsAndHidden					dw 0x00000000
+	.PhysicalDriveNumber					db 0x00
+	.Reserved								db 0x00
+	.ExtendedSignature						db 0x00
+	.VolumeSerial							dd 0x00000000
+	.PartitionVolumeLabel					times 11 db 0x00
+	.FileSystemType							times 8 db 0x00
+	.BootCode								times 448 db 0x00
+	.Signature								db 0x55, 0xAA
 
 
 
 ; function pointers
-VESAPlot							dd 0x00000000
-VESAPrint							dd 0x00000000
+VESAPlot									dd 0x00000000
+VESAPrint									dd 0x00000000
 
 
 
 ; vars 'n' such
-kCRLF								db 0x0d, 0x0a, 0x00
-kIDTPtr								dd 0x0008F800
-kPIC1CmdPort						dw 0x0020
-kPIC1DataPort						dw 0x0021
-kPIC2CmdPort						dw 0x00a0
-kPIC2DataPort						dw 0x00a1
-kPITPort							dw 0x0040
-kConfigBitsHint						dd 'ConfigBits'
-kConfigBits							dd 0x00000000
-kHexDigits							db '0123456789ABCDEF'
-kKeyBufferWrite						db 0x00
-kKeyBufferRead						db 0x00
-kKeyBuffer							times 256 db 0x00
-kPrintString						times 256 db 0x00
-kUnsupportedInt						db 'An unsupported interrupt has been called', 0x00
-kFastA20Fail						db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
-kMeme820unsup						db 'Could not detect memory, function unsupported', 0x00
-kVESAUnsupported					db 'VESA support not found', 0x00
-kFailed								db 'Failed to run kernel succesfully, see below.', 0x00
-kRebootMSG							db 'Rebooting...', 0x00
+kCRLF										db 0x0d, 0x0a, 0x00
+kIDTPtr										dd 0x0008F800
+kPIC1CmdPort								dw 0x0020
+kPIC1DataPort								dw 0x0021
+kPIC2CmdPort								dw 0x00a0
+kPIC2DataPort								dw 0x00a1
+kPITPort									dw 0x0040
+kConfigBitsHint								dd 'ConfigBits'
+kConfigBits									dd 0x00000003
+kHexDigits									db '0123456789ABCDEF'
+kKeyBufferWrite								db 0x00
+kKeyBufferRead								db 0x00
+kKeyBuffer									times 256 db 0x00
+kPrintString								times 256 db 0x00
+kUnsupportedInt								db 'An unsupported interrupt has been called', 0x00
+kFastA20Fail								db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
+kMeme820unsup								db 'Could not detect memory, function unsupported', 0x00
+kVESAUnsupported							db 'VESA support not found', 0x00
+kFailed										db 'Failed to run kernel succesfully, see below.', 0x00
+kRebootMSG									db 'Rebooting...', 0x00
 
 
 
 ; arrays
-kKeyTable:
-db '  1234567890-=  qwertyuiop[]  asdfghjkl; ` \zxcvbnm,0/ *               789-456+1230.  '
+kKeyTable:									db '  1234567890-=  qwertyuiop[]  asdfghjkl; ` \zxcvbnm,0/ *               789-456+1230.  '
 
 
 
@@ -486,6 +485,10 @@ db 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x26, 0x1A,
 
 
 
+tEvent:
+
+
+
 ; random kernel infos follow...
 
 
@@ -512,41 +515,33 @@ db 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x42, 0x42, 0x42, 0x42, 0x42, 0x26, 0x1A,
 
 
 
-; Error Codes
-; 0xFF00			PS2 Controller Timeout - Write Command
-; 0xFF01			PS2 Controller Timeout - Write Data
-; 0xFF02			PS2 Controller Timeout - Read Data
+; Result Codes
+; 0xF000			Success, no error
+; 0xF001			Value specified is too low
+; 0xF002			Value specified is too high
+; 0xFF00			PS2 Controller write command timeout
+; 0xFF01			PS2 Controller write data timeout
+; 0xFF02			PS2 Controller read data timeout
+
+
+
+; ConfigBits options
+;  0				Show boot logo
+;  1				Enable debugging menu
 
 
 
 ; Event Codes
-; Note - Event codes 128 - 255 are reserved for software and interprocess communication
-; 0					Null (nothing is waiting in the queue)
-; 1					Key down
-; 2					Key up
-; 3					Mouse move
-; 4					Mouse button down
-; 5					Mouse button up
-; 6					Mouse wheel move
-; 64				Application is losing focus
-; 65				Application is gaining focus
-
-
-tEvent:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+; Note - Event codes 80 - FF are reserved for software and interprocess communication
+; 00				Null (nothing is waiting in the queue)
+; 01				Key down
+; 02				Key up
+; 03				Mouse move
+; 04				Mouse button down
+; 05				Mouse button up
+; 06				Mouse wheel move
+; 20				Serial input received
+; 40				Application is losing focus
+; 41				Application is gaining focus
 
 

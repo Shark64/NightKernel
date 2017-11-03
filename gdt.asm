@@ -61,7 +61,7 @@ db 11001111b                      ; granularity
 db 0x00                           ; base high
 
 ;----------------------------------------------------------
-; Kernel space data (Offset 0x10)    
+; Kernel space data (Offset 0x10)
 ;----------------------------------------------------------
 dw 0xffff                         ; limit low
 dw 0x0000                         ; base low

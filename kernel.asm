@@ -137,233 +137,31 @@ call MouseInit
 ; setup keyboard
 call KeyboardInit
 
-; print splash message - if we get here, we're all clear!
-push tSystemInfo.kernelCopyright
-push 0xFF000000
-push 0xFF777777
-push 2
-push 2
-call [VESAPrint]
+; let's get some interrupts firing!
 sti
 
+; draw our lovely logo
+call DrawLogo
 
+; set up a short delay
+push 300
+call TimerWait
 
-; debugging code follows
-
-; print number of int 15h entries
-; testing number to string code
-push kPrintString
-push dword [memmap_ent]
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 18
-push 2
-call [VESAPrint]
+; clear the screen
+call VESAClearScreen
 
 
 
-; testing DebugPrint - print the address in memory of the VESA OEM String and the string itself
-push dword [tSystemInfo.VESAOEMVendorNamePointer]
-push tSystemInfo.VESAOEMVendorNamePointer
-push 64
-push 2
-call PrintSimple32
-
-
-
+; enter the infinite loop which runs the kernel
 InfiniteLoop:
-call KeyGet
-pop eax
-cmp al, 0x71 ; ascii code for "q"
-je .showMessage
-cmp al, 0x77 ; ascii code for "w"
-je .hideMessage
-
-; print seconds since boot just for the heck of it
-push kPrintString
-push dword [tSystemInfo.secondsSinceBoot]
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 34
-push 2
-call [VESAPrint]
-
-; print mouse position for testing
-push kPrintString
-mov eax, 0x00000000
-mov byte al, [tSystemInfo.mouseButtons]
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 50
-push 2
-call [VESAPrint]
-
-push kPrintString
-mov eax, 0x00000000
-mov word ax, [tSystemInfo.mouseX]
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 50
-push 102
-call [VESAPrint]
-
-push kPrintString
-mov eax, 0x00000000
-mov word ax, [tSystemInfo.mouseY]
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 50
-push 202
-call [VESAPrint]
- 
-push kPrintString
-mov eax, 0x00000000
-mov word ax, [tSystemInfo.mouseZ]
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 50
-push 302
-call [VESAPrint]
-
-
-
-mov eax, 0x00000000
-mov al, [tSystemInfo.hour]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 180
-push 20
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.minute]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 180
-push 120
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.second]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 180
-push 220
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.ticks]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 180
-push 320
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.month]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 200
-push 20
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.day]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 200
-push 120
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.century]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 200
-push 220
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-mov eax, 0x00000000
-mov al, [tSystemInfo.year]
-push kPrintString
-push eax
-call ConvertHexToString
-push kPrintString
-push 0xFF000000
-push 0xFF777777
-push 200
-push 320
-call [VESAPrint]
-;;;;;;;;;;;;;;;;;
-
-
-jmp InfiniteLoop
-
-.showMessage:
-push tSystemInfo.CPUIDBrandString
-push 0xFF0000FF
-push 0xFF000000
-push 80
-push 100
-call [VESAPrint]
-jmp InfiniteLoop
-
-.hideMessage:
-push tSystemInfo.CPUIDBrandString
-push 0xFF000000
-push 0xFF000000
-push 80
-push 100
-call [VESAPrint]
+	; do stuff here, i guess... :)
+	call DebugMenu
 jmp InfiniteLoop
 
 
 
 %include "api.asm"							; implements the kernel Application Programming Interface
+%include "debug.asm"						; implements the debugging menu
 %include "globals.asm"						; global variable setup
 %include "hardware.asm"						; routines for other miscellaneous hardware
 %include "idt.asm"							; Interrupt Descriptor Table
@@ -374,3 +172,4 @@ jmp InfiniteLoop
 %include "ps2.asm"							; PS/2 keyboard and mouse routines
 %include "screen.asm"						; VESA and other screen routines
 %include "serial.asm"						; serial communication routines
+%include "logo.asm"							; logo data

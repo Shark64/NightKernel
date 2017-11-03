@@ -21,52 +21,52 @@
 
 
 IDTWrite:
- ; Formats the passed data and writes it to the IDT in the slot specified
- ;  input:
- ;   IDT index 
- ;   ISR selector
- ;   ISR base address
- ;   flags
- ;
- ;  output:
- ;   n/a
- ;
- ;  changes: eax, ebx, ecx, edx, edi, esi
+	; Formats the passed data and writes it to the IDT in the slot specified
+	;  input:
+	;   IDT index
+	;   ISR selector
+	;   ISR base address
+	;   flags
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax, ebx, ecx, edx, edi, esi
 
- pop esi                          ; save ret address
- pop ebx                          ; get destination IDT index
- mov eax, 8                       ; calc the destination offset into the IDT
- mul ebx
- mov edi, [kIDTPtr]               ; get IDT's base address
- add edi, eax                     ; calc the actual write address
+	pop esi                          ; save ret address
+	pop ebx                          ; get destination IDT index
+	mov eax, 8                       ; calc the destination offset into the IDT
+	mul ebx
+	mov edi, [kIDTPtr]               ; get IDT's base address
+	add edi, eax                     ; calc the actual write address
 
- pop ebx                          ; get ISR selector
- 
- pop ecx                          ; get ISR base address
- 
- mov eax, 0x0000ffff
- and eax, ecx                     ; get low word of base address in eax
- mov word [edi], ax               ; write low word
- add edi, 2                       ; adjust the destination pointer
- 
- mov word [edi], bx               ; write selector
- add edi, 2                       ; adjust the destination pointer again
+	pop ebx                          ; get ISR selector
 
- mov al, 0x00
- mov byte [edi], al               ; write null (reserved byte)
- inc edi                          ; adjust the destination pointer again
- 
- pop edx                          ; get the flags
- mov byte [edi], dl               ; and write those flags!
- inc edi                          ; guess what we're doing here :D
- 
- shr ecx, 16                      ; shift base address right 16 bits to
-                                  ; get high word in position
- mov eax, 0x0000ffff
- and eax, ecx                     ; get high word of base address in eax
- mov word [edi], ax               ; write high word
+	pop ecx                          ; get ISR base address
 
- push esi                         ; restore ret address
+	mov eax, 0x0000ffff
+	and eax, ecx                     ; get low word of base address in eax
+	mov word [edi], ax               ; write low word
+	add edi, 2                       ; adjust the destination pointer
+
+	mov word [edi], bx               ; write selector
+	add edi, 2                       ; adjust the destination pointer again
+
+	mov al, 0x00
+	mov byte [edi], al               ; write null (reserved byte)
+	inc edi                          ; adjust the destination pointer again
+
+	pop edx                          ; get the flags
+	mov byte [edi], dl               ; and write those flags!
+	inc edi                          ; guess what we're doing here :D
+
+	shr ecx, 16                      ; shift base address right 16 bits to
+									; get high word in position
+	mov eax, 0x0000ffff
+	and eax, ecx                     ; get high word of base address in eax
+	mov word [edi], ax               ; write high word
+
+	push esi                         ; restore ret address
 ret
 
 

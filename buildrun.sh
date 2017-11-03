@@ -1,6 +1,9 @@
 # let's make a kernel image and test it out! :D
 
-# first we compile the kernel
+# print size data for the files, just to satisfy the curiousity :)
+du -b -c *.asm|tail -l
+
+# first we have to compile the kernel
 nasm -f bin -o kernel.sys kernel.asm
 
 # now we mount the existing floppy image
@@ -18,4 +21,3 @@ rmdir floppy
 #fun! all done! ready to run, son!
 imagepath=$(pwd)/night.img
 virtualbox --startvm "Night" --fda "$imagepath" --debug-command-line --start-running
-
