@@ -20,6 +20,36 @@
 
 
 
+
+IDTInit:
+	; Initializes the kernel IDT
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax
+
+	mov eax, 0
+	setupOneVector:
+		push eax
+		push 0x8e
+		push IntUnsupported
+		push 0x08
+		push eax
+		call IDTWrite
+		pop eax
+		inc eax
+		cmp eax, 0x00000100
+		jz endIDTSetupLoop
+	jmp setupOneVector
+	endIDTSetupLoop:
+	lidt [tIDTStructure]
+ret
+
+
+
 IDTWrite:
 	; Formats the passed data and writes it to the IDT in the slot specified
 	;  input:

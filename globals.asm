@@ -21,6 +21,10 @@
 
 
 ; structures
+tIDTStructure:
+	.limit									dw 2047
+	.base									dd 0x0008F800
+
 tSystemInfo:
 	.kernelVersionMajor						dw 0x0000
 	.kernelVersionMinor						dw 0x0008
@@ -97,8 +101,8 @@ tVESAInfoBlock:
 	.OEMProductNameSegment					dw 0x0000
 	.OEMProductRevOffset					dw 0x0000
 	.OEMProductRevSegment					dw 0x0000
-	.Reserved								times 222 db 0
-	.OEMData								times 256 db 0
+	.Reserved								times 222 db 0x00
+	.OEMData								times 256 db 0x00
 
 tVESAModeInfo:
 	.ModeAttributes							dw 0x0000
@@ -203,8 +207,8 @@ kPIC1DataPort								dw 0x0021
 kPIC2CmdPort								dw 0x00a0
 kPIC2DataPort								dw 0x00a1
 kPITPort									dw 0x0040
-kConfigBitsHint								dd 'ConfigBits'
-kConfigBits									dd 0x00000003
+kConfigBitsHint								db 'ConfigBits'
+kConfigBits									dd 0x00000002
 kHexDigits									db '0123456789ABCDEF'
 kKeyBufferWrite								db 0x00
 kKeyBufferRead								db 0x00
@@ -526,8 +530,38 @@ tEvent:
 
 
 ; ConfigBits options
-;  0				Show boot logo
-;  1				Enable debugging menu
+; 0					Show boot logo
+; 1					reserved
+; 2					Enable debugging menu
+; 3					reserved
+; 4					reserved
+; 5					reserved
+; 6					reserved
+; 7					reserved
+; 8					reserved
+; 9					reserved
+; 10				reserved
+; 11				reserved
+; 12				reserved
+; 13				reserved
+; 14				reserved
+; 15				reserved
+; 16				reserved
+; 17				reserved
+; 18				reserved
+; 19				reserved
+; 20				reserved
+; 21				reserved
+; 22				reserved
+; 23				reserved
+; 24				reserved
+; 25				reserved
+; 26				reserved
+; 27				reserved
+; 28				reserved
+; 29				reserved
+; 30				reserved
+; 31				reserved
 
 
 

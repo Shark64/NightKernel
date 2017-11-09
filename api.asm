@@ -104,8 +104,46 @@ bits 32
 
 
 
+ConvertDecimalToString:
+	; Translates the value specified to a decimal number in string form
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	;       No terminating null is put on the end of the string - do that yourself.
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, edx, esi
+
+	pop edx
+	pop eax
+	pop esi
+	push esi
+	push edx
+
+	; add to the buffer since we start from the right
+	add esi, 9
+	
+	; set the divisor
+	mov ebx, 10
+	.DecodeLoop:
+		mov edx, 0							; clear edx so we don't mess up the division
+		div ebx								; divide eax by 10
+		add dx, 48							; add 48 to the remainder to give us an ASCII character for this number
+		dec esi								; move to the next position in the buffer
+		mov [esi], dl
+		cmp eax, 0
+		jz .Exit							; if ax=0, end of the procedure
+		jmp .DecodeLoop						; else repeat
+	.Exit:
+ret
+
+
+
 ConvertHexToString:
-	; Makes a string out of a hexidceimal number
+	; Translates the value specified to a hexadecimal number in string form
 	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
 	;       No terminating null is put on the end of the string - do that yourself.
 	;  input:
@@ -182,7 +220,6 @@ ConvertHexToString:
 	mov al, [ecx]
 	mov byte[edi], al
 	inc edi
-
 ret
 
 
@@ -238,7 +275,7 @@ PrintDebug:
 	push eax
 	call [VESAPrint]
 ret
-.scratchString						times 10 db 0x00
+.scratchString								times 10 db 0x00
 
 
 
@@ -306,7 +343,7 @@ PrintSimple32:
 	call [VESAPrint]
 	push dword [.tempAddress]
 ret
-.tempAddress						dd 0x00000000
+.tempAddress								dd 0x00000000
 
 
 

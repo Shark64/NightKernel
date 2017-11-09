@@ -34,6 +34,7 @@ iretd
 ISR00:
 	; Divide by Zero Exception
 	pushad
+	mov edx, 0x00000000
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -44,6 +45,7 @@ iretd
 ISR01:
 	; Debug Exception
 	pushad
+	mov edx, 0x00000001
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -54,6 +56,7 @@ iretd
 ISR02:
 	; Nonmaskable Interrupt Exception
 	pushad
+	mov edx, 0x00000002
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -64,6 +67,7 @@ iretd
 ISR03:
 	; Breakpoint Exception
 	pushad
+	mov edx, 0x00000003
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -74,6 +78,7 @@ iretd
 ISR04:
 	; Overflow Exception
 	pushad
+	mov edx, 0x00000004
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -84,6 +89,7 @@ iretd
 ISR05:
 	; Bound Range Exceeded Exception
 	pushad
+	mov edx, 0x00000005
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -93,8 +99,9 @@ iretd
 
 ISR06:
 	; Invalid Opcode Exception
-	pushad
+	mov edx, 0x00000006
 	jmp $ ; for debugging, makes sure the system hangs upon exception
+	pushad
 	call PICIntComplete
 	popad
 iretd
@@ -104,6 +111,7 @@ iretd
 ISR07:
 	; Device Not Available Exception
 	pushad
+	mov edx, 0x00000007
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -114,6 +122,7 @@ iretd
 ISR08:
 	; Double Fault Exception
 	pushad
+	mov edx, 0x00000008
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -124,6 +133,7 @@ iretd
 ISR09:
 	; Former Coprocessor Segment Overrun Exception
 	pushad
+	mov edx, 0x00000009
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -134,6 +144,7 @@ iretd
 ISR0A:
 	; Invalid TSS Exception
 	pushad
+	mov edx, 0x0000000A
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -144,6 +155,7 @@ iretd
 ISR0B:
 	; Segment Not Present Exception
 	pushad
+	mov edx, 0x0000000B
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -154,6 +166,7 @@ iretd
 ISR0C:
 	; Stack Segment Fault Exception
 	pushad
+	mov edx, 0x0000000C
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -164,6 +177,7 @@ iretd
 ISR0D:
 	; General Protection Fault
 	pushad
+	mov edx, 0x0000000D
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -174,6 +188,7 @@ iretd
 ISR0E:
 	; Page Fault Exception
 	pushad
+	mov edx, 0x0000000E
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -184,6 +199,7 @@ iretd
 ISR0F:
 	; Reserved
 	pushad
+	mov edx, 0x0000000F
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -194,6 +210,7 @@ iretd
 ISR10:
 	; x86 Floating Point Exception
 	pushad
+	mov edx, 0x00000010
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -204,6 +221,7 @@ iretd
 ISR11:
 	; Alignment Check Exception
 	pushad
+	mov edx, 0x00000011
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -214,6 +232,7 @@ iretd
 ISR12:
 	; Machine Check Exception
 	pushad
+	mov edx, 0x00000012
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -224,6 +243,7 @@ iretd
 ISR13:
 	; SIMD Floating Point Exception
 	pushad
+	mov edx, 0x00000013
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -234,6 +254,7 @@ iretd
 ISR14:
 	; Virtualization Exception
 	pushad
+	mov edx, 0x00000014
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -244,6 +265,7 @@ iretd
 ISR15:
 	; Reserved
 	pushad
+	mov edx, 0x00000015
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -254,6 +276,7 @@ iretd
 ISR16:
 	; Reserved
 	pushad
+	mov edx, 0x00000016
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -264,6 +287,7 @@ iretd
 ISR17:
 	; Reserved
 	pushad
+	mov edx, 0x00000017
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -274,6 +298,7 @@ iretd
 ISR18:
 	; Reserved
 	pushad
+	mov edx, 0x00000018
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -284,6 +309,7 @@ iretd
 ISR19:
 	; Reserved
 	pushad
+	mov edx, 0x00000019
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -294,6 +320,7 @@ iretd
 ISR1A:
 	; Reserved
 	pushad
+	mov edx, 0x0000001A
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -304,6 +331,7 @@ iretd
 ISR1B:
 	; Reserved
 	pushad
+	mov edx, 0x0000001B
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -314,6 +342,7 @@ iretd
 ISR1C:
 	; Reserved
 	pushad
+	mov edx, 0x0000001C
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -324,6 +353,7 @@ iretd
 ISR1D:
 	; Reserved
 	pushad
+	mov edx, 0x0000001D
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -334,6 +364,7 @@ iretd
 ISR1E:
 	; Security Exception
 	pushad
+	mov edx, 0x0000001E
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -344,6 +375,7 @@ iretd
 ISR1F:
 	; Reserved
 	pushad
+	mov edx, 0x0000001F
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -433,6 +465,7 @@ jmp .done
 ISR22:
 	; Cascade - used internally by the PICs, should never fire
 	pushad
+	mov edx, 0x00000022
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -443,6 +476,7 @@ iretd
 ISR23:
 	; Serial port 2
 	pushad
+	mov edx, 0x00000023
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -466,6 +500,7 @@ iretd
 ISR25:
 	; Parallel port 2
 	pushad
+	mov edx, 0x00000025
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -476,6 +511,7 @@ iretd
 ISR26:
 	; Floppy disk
 	pushad
+	mov edx, 0x00000026
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -486,6 +522,7 @@ iretd
 ISR27:
 	; Parallel port 1 - prone to misfire
 	pushad
+	mov edx, 0x00000027
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -496,6 +533,7 @@ iretd
 ISR28:
 	; CMOS real time clock
 	pushad
+	mov edx, 0x00000028
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -506,6 +544,7 @@ iretd
 ISR29:
 	; Free for peripherals / legacy SCSI / NIC
 	pushad
+	mov edx, 0x00000029
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -516,6 +555,7 @@ iretd
 ISR2A:
 	; Free for peripherals / SCSI / NIC
 	pushad
+	mov edx, 0x0000002A
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -526,6 +566,7 @@ iretd
 ISR2B:
 	; Free for peripherals / SCSI / NIC
 	pushad
+	mov edx, 0x0000002B
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -669,6 +710,7 @@ jmp .mouseYDone
 ISR2D:
 	; FPU / Coprocessor / Inter-processor
 	pushad
+	mov edx, 0x0000002D
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -679,6 +721,7 @@ iretd
 ISR2E:
 	; Primary ATA Hard Disk
 	pushad
+	mov edx, 0x0000002E
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad
@@ -689,6 +732,7 @@ iretd
 ISR2F:
 	; Secondary ATA Hard Disk
 	pushad
+	mov edx, 0x0000002F
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popad

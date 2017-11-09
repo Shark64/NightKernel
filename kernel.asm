@@ -31,11 +31,8 @@
 
 bits 16
 
-; set origin point to where the FreeDOS bootloader loads this code
-org 0x0600
-
-; turn off interrupts and skip the GDT in a jump to our main routine
-cli	
+org 0x0600									; set origin point to where the FreeDOS bootloader loads this code
+cli											; turn off interrupts and skip the GDT in a jump to our main routine
 jmp main
 
 %include "gdt.asm"
@@ -52,34 +49,27 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-; init and probe RAM
-call MemoryInit
+call MemoryInit								; init and probe RAM
 
 ; get that good ol' APM info and enable the interface
 call SetSystemInfoAPM
 call APMEnable
 
-; init VESA
-call VESAInit
-
-; load that GDT
-call load_GDT
+call VESAInit								; init VESA
+call load_GDT								; load that GDT
 
 ; enter protected mode. YAY!
 mov eax, cr0
 or eax, 00000001b
 mov cr0, eax
 
+; jump to start the kernel in 32-bit mode
 jmp 0x08:kernel_start
 
 
 
 bits 32
 
-
-idtStructure:
-.limit  dw 2047
-.base   dd 0x0008F800
 
 
 kernel_start:
@@ -90,31 +80,18 @@ mov es, ax
 mov ss, ax
 mov esp, 0x0009F800
 
-; loop to init IDT
-mov eax, 0
-setupOneVector:
-push eax
-push 0x8e
-push IntUnsupported
-push 0x08
-push eax
-call IDTWrite
-pop eax
-inc eax
-cmp eax, 0x00000100
-jz endIDTSetupLoop
-jmp setupOneVector
-endIDTSetupLoop:
-lidt [idtStructure]
+call IDTInit								; init our IDT
+%include "setints.asm"						; set interrupt handler addresses
+call SetSystemInfoVESA						; set the remaining important video stuff to the system struct
+call A20Enable								; enable the A20 line - one of the things we require for operation
 
-; set interrupt handler addresses
-%include "setints.asm"
-
-; now that we're in 32 bit mode, set the remaining important video stuff to the system struct
-call SetSystemInfoVESA
-
-; enable the A20 line - one of the things we require for operation
-call A20Enable
+; draw our lovely splash screen, if enabled
+mov eax, [kConfigBits]
+and eax, 00000000000000000000000000000001b
+cmp eax, 00000000000000000000000000000001b
+jne .SkipLogo
+call LogoSplash
+.SkipLogo:
 
 ; setup and remap both PICs
 call PICInit
@@ -122,35 +99,18 @@ call PICDisableIRQs
 call PICUnmaskAll
 call PITInit
 
-; load the RTC values into the system struct
-call SetSystemInfoRTC
-
-; set some info from the CPU into the system struct
-call SetSystemInfoCPUID
-
-; write the CPU speed info to the system struct
-call SetSystemInfoCPUSpeed
-
-; setup that mickey!
-call MouseInit
-
-; setup keyboard
-call KeyboardInit
-
-; let's get some interrupts firing!
-sti
-
-; draw our lovely logo
-call DrawLogo
-
-; set up a short delay
-push 300
-call TimerWait
-
-; clear the screen
-call VESAClearScreen
+call SetSystemInfoRTC						; load the RTC values into the system struct
+call SetSystemInfoCPUID						; set some info from the CPU into the system struct
+call SetSystemInfoCPUSpeed					; write the CPU speed info to the system struct
+call MouseInit								; setup that mickey!
+call KeyboardInit							; setup keyboard
+call VESAClearScreen						; clear the screen
+sti											; let's get some interrupts firing!
 
 
+push kPrintString
+push 19881980
+call ConvertDecimalToString
 
 ; enter the infinite loop which runs the kernel
 InfiniteLoop:

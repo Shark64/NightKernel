@@ -200,6 +200,7 @@ KeyGet:
 	;
 	;  changes: eax, ecx, edx, esi
 
+	mov eax, 0x00000000
 	mov ecx, 0x00000000
 	mov edx, 0x00000000
 
@@ -216,7 +217,6 @@ KeyGet:
 	add esi, ecx
 
 	; get the byte to return into al
-	mov eax, 0x00000000
 	mov byte al, [esi]
 
 	; update the read position
@@ -228,6 +228,27 @@ KeyGet:
 	pop edx
 	push eax
 	push edx
+ret
+
+
+
+KeyWait:
+	; Waits until a key is pressed
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax, ecx, edx
+	
+	mov ebx, 0x00000000
+
+	.KeyLoop:
+		call KeyGet
+		pop eax
+		cmp al, 0x00
+	je .KeyLoop
 ret
 
 

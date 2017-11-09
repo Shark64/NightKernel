@@ -24,7 +24,57 @@ bits 32
 
 
 
-DrawLogo:
+LogoSplash:
+	; Sets up all data structures which will be used by the memory manager
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, ecx, edx
+
+	; draw a field of random stars
+	mov dl, 0x00
+	mov dh, 0xFF
+	.StarLoop:
+		; get a random number between 0 and the current VESA screen width
+		mov ecx, 0x00000000
+		mov cx, [tSystemInfo.VESAWidth]
+		pushad
+		push ecx
+		call Random
+		pop eax
+		mov dword [.temp], eax
+		popad
+		mov dword eax, [.temp]
+
+		; get a random number between 0 and the current VESA screen height
+		mov ecx, 0x00000000
+		mov cx, [tSystemInfo.VESAHeight]
+		pushad
+		push ecx
+		call Random
+		pop ebx
+		mov dword [.temp], ebx
+		popad
+		mov dword ebx, [.temp]
+		
+		; draw that star!
+		pushad
+		push 0x00FFFFFF
+		push ebx
+		push eax
+		call [VESAPlot]
+		popad
+
+		; see if we need to do another loop
+		cmp dl, dh
+		je .StarsDone
+		inc dl
+	jmp .StarLoop
+	.StarsDone:
+
 	; determine vertical placement
 	mov ebx, 0x00000000
 	mov bx, [tSystemInfo.VESAHeight]
@@ -58,10 +108,15 @@ DrawLogo:
 			xchg ch, cl
 			ror ecx, 16
 			xchg ch, cl
+			and ecx, 0x00FFFFFF
 
 			; adjust the logo address pointer
 			add edx, 4
 
+			; if this dot is all black, we can skip it
+			cmp ecx, 0x00000000
+			je .SkipPoint
+			
 			; draw the pixel
 			pushad
 			push ecx
@@ -69,6 +124,7 @@ DrawLogo:
 			push eax
 			call [VESAPlot]
 			popad
+			.SkipPoint:
 
 			; increment the horizontal value
 			inc eax
@@ -86,6 +142,7 @@ DrawLogo:
 		jmp .vertLoop
 	.vertLoopDone:
 ret
+.temp										dd 0x00000000
 
 
 

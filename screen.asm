@@ -168,16 +168,25 @@ VESAPlot24:
 	;
 	;  changes: eax, ebx, ecx, esi
 
-	pop esi							; get return address for end ret
-	pop ebx							; get horizontal position
-	pop eax							; get vertical position
-	pop ecx							; get color attribute
-	push esi							; push return address back on the stack
+	pop esi									; get return address for end ret
+	pop ebx									; get horizontal position
+	pop eax									; get vertical position
+	pop ecx									; get color attribute
+	push esi								; push return address back on the stack
+
+	; exit if we're writing outside the screen
+	mov edx, 0x00000000
+	mov dx, [tSystemInfo.VESAWidth]
+	cmp bx, dx
+	jae .done
+	mov dx, [tSystemInfo.VESAHeight]
+	cmp ax, dx
+	jae .done
 
 	; calculate write position
 	mov dx, [tVESAModeInfo.XResolution]
 	mul edx
-	add ax, bx							; possibly need to change to 32-bit registers
+	add eax, ebx
 	mov edx, 3
 	mul edx
 	add eax, [tVESAModeInfo.PhysBasePtr]
@@ -191,6 +200,7 @@ VESAPlot24:
 	ror ecx, 8
 	mov byte [eax], cl
 	ror ecx, 16
+.done:
 ret
 
 
@@ -207,11 +217,20 @@ VESAPlot32:
 	;
 	;  changes: eax, ebx, ecx, esi
 
-	pop esi							; get return address for end ret
-	pop ebx							; get horizontal position
-	pop eax							; get vertical position
-	pop ecx							; get color attribute
-	push esi							; push return address back on the stack
+	pop esi									; get return address for end ret
+	pop ebx									; get horizontal position
+	pop eax									; get vertical position
+	pop ecx									; get color attribute
+	push esi								; push return address back on the stack
+
+	; exit if we're writing outside the screen
+	mov edx, 0x00000000
+	mov dx, [tSystemInfo.VESAWidth]
+	cmp bx, dx
+	jae .done
+	mov dx, [tSystemInfo.VESAHeight]
+	cmp ax, dx
+	jae .done
 
 	; calculate write position
 	mov edx, 0x00000000
@@ -224,6 +243,7 @@ VESAPlot32:
 
 	; do the write
 	mov dword [eax], ecx
+.done:
 ret
 
 
@@ -241,17 +261,17 @@ VESAPrint24:
 	;
 	;  changes: eax, ebx, ecx, edx, ebp, edi, esi
 
-	pop edx							; get return address for end ret
-	pop ebx							; get horizontal position
-	pop eax							; get vertical position
-	pop ecx							; get text color
-	pop ebp							; get background color
-	pop esi							; get string address
-	push edx							; push return address back on the stack
+	pop edx									; get return address for end ret
+	pop ebx									; get horizontal position
+	pop eax									; get vertical position
+	pop ecx									; get text color
+	pop ebp									; get background color
+	pop esi									; get string address
+	push edx								; push return address back on the stack
 
 	; calculate write position into edi and save to the stack
 	mov edx, 0
-	mov dx, [tVESAModeInfo.XResolution] ; can probably be optimized to use bytes per scanline field to eliminate doing multiply
+	mov dx, [tVESAModeInfo.XResolution]		; can probably be optimized to use bytes per scanline field to eliminate doing multiply
 	mul edx
 	add ax, bx
 	mov edx, 3

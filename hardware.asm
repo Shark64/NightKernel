@@ -88,41 +88,6 @@ ret
 
 
 
-Random:
-	; Returns a random number
-	;  input:
-	;   n/a
-	;
-	;  output:
-	;   32-bit random number
-	;
-	;  changes: eax, ecx, edx
-
-	mov ecx, [tSystemInfo.secondsSinceBoot]
-	mov edx, [tSystemInfo.ticks]
-	add ecx, edx
-	mov edx, ecx
-	shr edx, 12
-	xor ecx, edx
-	mov edx, ecx
-	shl edx, 25
-	xor ecx, edx
-	mov edx, ecx
-	shr edx, 27
-	xor ecx, edx
-	mov eax, [tSystemInfo.ticks]
-	mul ecx
-	mov ecx, [tSystemInfo.mouseX]
-	add eax, ecx
-	add ecx, [tSystemInfo.mouseY]
-	add eax, ecx
-	pop edx
-	push eax
-	push edx
-ret
-
-
-
 PITInit:
 	; Init the PIT for our timing purposes
 	;  input:
@@ -140,6 +105,45 @@ PITInit:
 	xchg ah, al
 	out 0x40, al
 ret
+
+
+
+Random:
+	; Returns a random number using the XORShift method
+	;  input:
+	;   number limit
+	;
+	;  output:
+	;   32-bit random number between 0 and the number limit
+	;
+	;  changes: eax, ebx, ecx, edx
+
+	pop ecx
+	pop ebx
+
+	; use good ol' XORShift to get a random
+	mov eax, [.randomSeed]
+	mov edx, eax
+	shl eax, 13
+	xor eax, edx
+	mov edx, eax
+	shr eax, 17
+	xor eax, edx
+	mov edx, eax
+	shl eax, 5
+	xor eax, edx
+	mov [.randomSeed], eax
+
+	; use some modulo to make sure the random is below the requested number
+	mov edx, 0x00000000
+	div ebx
+	mov eax, edx
+
+	; throw the numbers on the stack and get going!
+	push eax
+	push ecx
+ret
+.randomSeed									dd 0x92D68CA2
 
 
 
