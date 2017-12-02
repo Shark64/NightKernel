@@ -37,51 +37,51 @@ MemoryInit:
 	; write memory manager globals
 	.starte820:
 
-	xor ebx, ebx						;ebx needs to be set to 0
-	xor bp, bp							;an entry count..........
-	mov edx, 0x0534D4150				;smap needs to be set into edx
-	mov eax, 0xE820					;eax needs to be E820
-	mov [es:di + 20], dword 1			; so we are forcing a valid ACPI here
-	mov ecx, 24						;ask for 24 bytes
-	int 0x15							;call the int
+	xor ebx, ebx								;ebx needs to be set to 0
+	xor bp, bp									;an entry count..........
+	mov edx, 0x0534D4150						;smap needs to be set into edx
+	mov eax, 0xE820								;eax needs to be E820
+	mov [es:di + 20], dword 1					; so we are forcing a valid ACPI here
+	mov ecx, 24									;ask for 24 bytes
+	int 0x15									;call the int
 	jc short .failed
 	mov edx, 0x0534D4150
-	cmp eax, edx						;eax gets reset to the 'smap' and edx is already that, so...
+	cmp eax, edx								;eax gets reset to the 'smap' and edx is already that, so...
 	jne short .failed
-	test ebx, ebx						;if ebx = 0 we failed, if ebx = 0 it's 1 entry long.
+	test ebx, ebx								;if ebx = 0 we failed, if ebx = 0 it's 1 entry long.
 	je short .failed
 	jmp short .next
 
 	.e820Continue:
-	mov eax, 0xe820					;eax gets overwritten every time
+	mov eax, 0xe820								;eax gets overwritten every time
 	mov [es:di + 20], dword 1
-	mov ecx, 24						;ecx gets overwritten as well
+	mov ecx, 24									;ecx gets overwritten as well
 	int 0x15
 	jc short .e820f
-	mov edx, 0x0534D4150				;repair the trashed register
+	mov edx, 0x0534D4150						;repair the trashed register
 
 	.next:
-	jcxz .skipentry					;skip the entry which are 0 long
-	cmp cl, 20							;did we got a 24 byte ACPI response
+	jcxz .skipentry								;skip the entry which are 0 long
+	cmp cl, 20									;did we got a 24 byte ACPI response
 	jbe short .notext
-	test [es:di + 20], DWORD 1			;if that's true is the ignore data bit clear
+	test [es:di + 20], DWORD 1					;if that's true is the ignore data bit clear
 	je short .skipentry
 
 	.notext:
-	mov ecx, [es:di + 8]				;get the lower memory region length
-	or ecx, [es:di + 12]				;or test for zero
+	mov ecx, [es:di + 8]						;get the lower memory region length
+	or ecx, [es:di + 12]						;or test for zero
 	jz .skipentry
 
 	.skipentry:
-	test ebx, ebx						;if it resets to 0 the list is done
+	test ebx, ebx								;if it resets to 0 the list is done
 	jne short .e820Continue
 
 	.e820f:
-	mov [memmap_ent], bp				;store the entry count
-	clc								;clear the carry
+	mov [memmap_ent], bp						;store the entry count
+	clc											;clear the carry
 	ret
 
-	.failed:							;function unsupported
+	.failed:									;function unsupported
 	stc
 	push kMeme820unsup
 	call PrintSimple16
@@ -96,9 +96,8 @@ bits 32
 
 
 
-MemoryGet:
-	; Returns the address of a block of memory of the specified size, or zero
-	; if a block of that size is unavailble
+MemAllocate:
+	; Returns the address of a block of memory of the specified size, or zero if a block of that size is unavailble
 	;  input:
 	;   requested memory size in KB
 	;
@@ -109,13 +108,140 @@ ret
 
 
 
-MemoryDispose:
-	; Notifies the memory manager that the block specified by the address given
-	; is now free for reuse
+MemCopy:
+	; Copies the specified number of bytes from one address to another
+	;  input:
+	;   source address
+	;   destination address
+	;   transfer length
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, ecx, edx, esi, edi
+
+	pop eax
+	pop esi
+	pop edi
+	pop ecx
+	push eax
+
+	.MemCopyLoop:
+		lodsb
+		mov byte [edi], al
+		inc edi
+	loop .MemCopyLoop
+ret
+
+
+
+MemDispose:
+	; Notifies the memory manager that the block specified by the address given is now free for reuse
 	;  input:
 	;   starting address of block (obtained with MemoryGet)
 	;
 	;  output:
 	;   n/a
+	;
+	; changes: eax, ebx, ecx, edx, esi, edi
 
+ret
+
+
+
+MemFill:
+	; Fills the range of memory given with the byte value specified
+	;  input:
+	;   starting fill address
+	;   fill length
+	;   fill character
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: ebx, ecx, esi, edi
+
+	pop edi
+	pop esi
+	pop ecx
+	pop ebx
+	push edi
+
+	mov edi, esi
+	add edi, ecx
+
+	.Loop:
+		cmp esi, edi
+		je .LoopDone
+		mov byte [esi], bl
+		inc esi
+	jmp .Loop
+	.LoopDone:
+ret
+
+
+
+MemSearchDWord:
+	; Searches the memory range specified for the given dword value
+	;  input:
+	;   search range start
+	;   search range end
+	;   dword for which to search
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, ecx, edx
+
+
+	pop eax
+	pop ecx
+	pop edx
+	pop ebx
+	push eax
+
+	.MemorySearchLoop:
+		; check if the dword we just loaded is a match
+		mov eax, [ecx]
+		cmp eax, ebx
+		je .MemorySearchLoopDone
+		; check if we're at the end of the search range
+		cmp ecx, edx
+		je .MemorySearchLoopDone
+		inc ecx
+	jmp .MemorySearchLoop
+	.MemorySearchLoopDone:
+ret
+
+
+
+MemSearchWord:
+	; Searches the memory range specified for the given word value
+	;  input:
+	;   search range start
+	;   search range end
+	;   word for which to search
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, ecx, edx
+
+	pop eax
+	pop ecx
+	pop edx
+	pop ebx
+	push eax
+
+	.MemorySearchLoop:
+		; check if the word we just loaded is a match
+		mov word ax, [ecx]
+		cmp ax, bx
+		je .MemorySearchLoopDone
+		; check if we're at the end of the search range
+		cmp ecx, edx
+		je .MemorySearchLoopDone
+		inc ecx
+	jmp .MemorySearchLoop
+	.MemorySearchLoopDone:
 ret

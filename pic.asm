@@ -34,10 +34,10 @@ PICDisableIRQs:
 	;
 	;  changes: al, dx
 
-	mov al, 0xFF                     ; disable IRQs
-	mov dx, [kPIC1DataPort]          ; set up PIC 1
+	mov al, 0xFF								; disable IRQs
+	mov dx, [kPIC1DataPort]						; set up PIC 1
 	out dx, al
-	mov dx, [kPIC2DataPort]          ; set up PIC 2
+	mov dx, [kPIC2DataPort]						; set up PIC 2
 	out dx, al
 ret
 
@@ -53,36 +53,36 @@ PICInit:
 	;
 	;  changes: al, dx
 
-	mov al, 0x11                     ; set ICW1
-	mov dx, [kPIC1CmdPort]           ; set up PIC 1
+	mov al, 0x11								; set ICW1
+	mov dx, [kPIC1CmdPort]						; set up PIC 1
 	out dx, al
-	mov dx, [kPIC2CmdPort]           ; set up PIC 2
+	mov dx, [kPIC2CmdPort]						; set up PIC 2
 	out dx, al
 
-	mov al, 0x20                     ; set base interrupt to 0x20 (ICW2)
+	mov al, 0x20								; set base interrupt to 0x20 (ICW2)
 	mov dx, [kPIC1DataPort]
 	out dx, al
 
-	mov al, 0x28                     ; set base interrupt to 0x28 (ICW2)
+	mov al, 0x28								; set base interrupt to 0x28 (ICW2)
 	mov dx, [kPIC2DataPort]
 	out dx, al
 
-	mov al, 0x04                     ; set ICW3 to cascade PICs together
+	mov al, 0x04								; set ICW3 to cascade PICs together
 	mov dx, [kPIC1DataPort]
 	out dx, al
-	mov al, 0x02                     ; set ICW3 to cascade PICs together
+	mov al, 0x02								; set ICW3 to cascade PICs together
 	mov dx, [kPIC2DataPort]
 	out dx, al
 
-	mov al, 0x05                     ; set PIC 1 to x86 mode with ICW4
+	mov al, 0x05								; set PIC 1 to x86 mode with ICW4
 	mov dx, [kPIC1DataPort]
 	out dx, al
 
-	mov al, 0x01                     ; set PIC 2 to x86 mode with ICW4
+	mov al, 0x01								; set PIC 2 to x86 mode with ICW4
 	mov dx, [kPIC2DataPort]
 	out dx, al
 
-	mov al, 0                        ; zero the data register
+	mov al, 0									; zero the data register
 	mov dx, [kPIC1DataPort]
 	out dx, al
 	mov dx, [kPIC2DataPort]
@@ -108,11 +108,11 @@ PICIntComplete:
 	;
 	;  changes: al, dx
 
-	mov al, 0x20                     ; sets the interrupt complete bit
-	mov dx, [kPIC1CmdPort]           ; write bit to PIC 1
+	mov al, 0x20								; sets the interrupt complete bit
+	mov dx, [kPIC1CmdPort]						; write bit to PIC 1
 	out dx, al
 
-	mov dx, [kPIC2CmdPort]           ; write bit to PIC 2
+	mov dx, [kPIC2CmdPort]						; write bit to PIC 2
 	out dx, al
 ret
 

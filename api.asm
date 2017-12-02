@@ -104,8 +104,8 @@ bits 32
 
 
 
-ConvertDecimalToString:
-	; Translates the value specified to a decimal number in string form
+ConvertToBinaryString:
+	; Translates the value specified to a binary number in a zero-padded 32 byte string
 	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
 	;       No terminating null is put on the end of the string - do that yourself.
 	;  input:
@@ -121,6 +121,7 @@ ConvertDecimalToString:
 	pop eax
 	pop esi
 	push esi
+	
 	push edx
 
 	; add to the buffer since we start from the right
@@ -251,7 +252,7 @@ PrintDebug:
 	; set up value print
 	push .scratchString
 	push ecx
-	call ConvertHexToString
+	call ConvertToHexString
 	pop ebx
 	pop eax
 	push eax
@@ -275,7 +276,7 @@ PrintDebug:
 	push eax
 	call [VESAPrint]
 ret
-.scratchString								times 10 db 0x00
+.scratchString														times 10 db 0x00
 
 
 
@@ -333,7 +334,7 @@ PrintSimple32:
 	;  output:
 	;   n/a
 	;
-	; changes:
+	; changes: 
 
 	pop dword [.tempAddress]
 	push 0xff000000
@@ -343,7 +344,7 @@ PrintSimple32:
 	call [VESAPrint]
 	push dword [.tempAddress]
 ret
-.tempAddress								dd 0x00000000
+.tempAddress														dd 0x00000000
 
 
 

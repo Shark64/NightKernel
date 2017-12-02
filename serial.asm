@@ -69,9 +69,9 @@ SerialGetBaud:
 	je .setPort1
 	jmp .selectDone
 
-	.divisorLatchLow					dw 0x0000
-	.divisorLatchHigh					dw 0x0000
-	.lineControl						dw 0x0000
+	.divisorLatchLow							dw 0x0000
+	.divisorLatchHigh							dw 0x0000
+	.lineControl								dw 0x0000
 
 	.setPort1:
 	mov word [.divisorLatchLow], 0x03F8
@@ -728,9 +728,9 @@ SerialSetBaud:
 	je .setPort1
 	jmp .selectDone
 
-	.divisorLatchLow					dw 0x0000
-	.divisorLatchHigh					dw 0x0000
-	.lineControl						dw 0x0000
+	.divisorLatchLow							dw 0x0000
+	.divisorLatchHigh							dw 0x0000
+	.lineControl								dw 0x0000
 
 	.setPort1:
 	mov word [.divisorLatchLow], 0x03F8

@@ -114,13 +114,13 @@ DebugMenu:
 		call KeyGet
 		pop eax
 
-		cmp al, 0x30						; choice 0
+		cmp al, 0x30							; choice 0
 		jne .TestFor1
 		call VESAClearScreen
 		jmp .Exit
 
 		.TestFor1:
-		cmp al, 0x31						; choice 1
+		cmp al, 0x31							; choice 1
 		jne .TestFor2
 		call VESAClearScreen
 		call .SystemInfo
@@ -128,7 +128,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor2:
-		cmp al, 0x32						; choice 2
+		cmp al, 0x32							; choice 2
 		jne .TestFor3
 		call VESAClearScreen
 		call .DiskInfo
@@ -136,7 +136,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor3:
-		cmp al, 0x33						; choice 3
+		cmp al, 0x33							; choice 3
 		jne .TestFor4
 		call VESAClearScreen
 		call .KernelInfo
@@ -144,7 +144,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor4:
-		cmp al, 0x34						; choice 4
+		cmp al, 0x34							; choice 4
 		jne .TestFor5
 		call VESAClearScreen
 		call .RAMBrowser
@@ -152,7 +152,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor5:
-		cmp al, 0x35						; choice 5
+		cmp al, 0x35							; choice 5
 		jne .TestFor6
 		call VESAClearScreen
 		call .MouseTest
@@ -160,7 +160,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor6:
-		cmp al, 0x36						; choice 6
+		cmp al, 0x36							; choice 6
 		jne .TestFor7
 		call VESAClearScreen
 		jmp .Exit
@@ -168,7 +168,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor7:
-		cmp al, 0x37						; choice 7
+		cmp al, 0x37							; choice 7
 		jne .TestFor8
 		call VESAClearScreen
 		jmp .Exit
@@ -176,7 +176,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor8:
-		cmp al, 0x38						; choice 8
+		cmp al, 0x38							; choice 8
 		jne .TestFor9
 		call VESAClearScreen
 		jmp .Exit
@@ -184,7 +184,7 @@ DebugMenu:
 		jmp .DrawMenu
 
 		.TestFor9:
-		cmp al, 0x39						; choice 9
+		cmp al, 0x39							; choice 9
 		jne .DebugLoop
 		call VESAClearScreen
 		jmp .Exit
@@ -194,17 +194,17 @@ DebugMenu:
 	jmp .DebugLoop
 	.Exit:
 ret
-.kDebugMenu									db 'Kernel Debug Menu', 0x00
-.kDebugText1								db '1 - System Info', 0x00
-.kDebugText2								db '2 - Disk Info', 0x00
-.kDebugText3								db '3 - Kernel Info', 0x00
-.kDebugText4								db '4 - RAM Browser', 0x00
-.kDebugText5								db '5 - Mouse Tracking Test', 0x00
-.kDebugText6								db '6 - Serial Test', 0x00
-.kDebugText7								db '7 - Time Info', 0x00
-.kDebugText8								db '8 - Video Info', 0x00
-.kDebugText9								db '9 - ', 0x00
-.kDebugText0								db '0 - Exit', 0x00
+.kDebugMenu										db 'Kernel Debug Menu', 0x00
+.kDebugText1									db '1 - System Info', 0x00
+.kDebugText2									db '2 - Disk Info', 0x00
+.kDebugText3									db '3 - Kernel Info', 0x00
+.kDebugText4									db '4 - RAM Browser', 0x00
+.kDebugText5									db '5 - Mouse Tracking Test', 0x00
+.kDebugText6									db '6 - Serial Test', 0x00
+.kDebugText7									db '7 - Time Info', 0x00
+.kDebugText8									db '8 - Video Info', 0x00
+.kDebugText9									db '9 - ', 0x00
+.kDebugText0									db '0 - Exit', 0x00
 
 
 
@@ -231,7 +231,7 @@ ret
 	mov eax, 0x00000000
 	mov byte al, [tSystemInfo.mouseButtons]
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push .mouseValue
 	push 0xFF000000
 	push 0xFF777777
@@ -243,7 +243,7 @@ ret
 	mov eax, 0x00000000
 	mov word ax, [tSystemInfo.mouseX]
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push .mouseValue
 	push 0xFF000000
 	push 0xFF777777
@@ -255,7 +255,7 @@ ret
 	mov eax, 0x00000000
 	mov word ax, [tSystemInfo.mouseY]
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push .mouseValue
 	push 0xFF000000
 	push 0xFF777777
@@ -267,7 +267,7 @@ ret
 	mov eax, 0x00000000
 	mov word ax, [tSystemInfo.mouseZ]
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push .mouseValue
 	push 0xFF000000
 	push 0xFF777777
@@ -292,7 +292,7 @@ ret
 	cmp al, 0x00
 	je .MouseTest
 ret
-.mouseValue									times 16 db 0x00
+.mouseValue										times 16 db 0x00
 
 .DrawMouse:
 	mov al, [tSystemInfo.mouseButtons]
@@ -579,9 +579,9 @@ ret
 	mov [.oldMouseX], eax
 	mov [.oldMouseY], ebx
 jmp .MouseTest
-.oldMouseX									dd 0x00000000
-.oldMouseY									dd 0x00000000
-.color										dd 0x00000000
+.oldMouseX										dd 0x00000000
+.oldMouseY										dd 0x00000000
+.color											dd 0x00000000
 
 
 
@@ -603,7 +603,7 @@ jmp .MouseTest
 		; print starting address for this line
 		push kPrintString
 		push dword [.startingAddress]
-		call ConvertHexToString
+		call ConvertToHexString
 		push kPrintString
 		push 0xFF000000
 		push 0xFF777777
@@ -662,7 +662,7 @@ jmp .MouseTest
 			mov [eax], bl
 
 			.NotInRange:
-			call ConvertHexToString
+			call ConvertToHexString
 			mov eax, kPrintString
 			add eax, 6
 			push eax
@@ -719,12 +719,12 @@ jmp .MouseTest
 	.LineLoopDone:
 	call KeyWait
 ret
-.startingAddress							dd 0x00000600
-.currentX									dd 0x00000018
-.currentY									dd 0x00000002
-.linesCompleted								db 0x00
-.ASCIIString								times 33 db 0x00
-.hexBytesPerLine							db 16
+.startingAddress								dd 0x00000600
+.currentX										dd 0x00000018
+.currentY										dd 0x00000002
+.linesCompleted									db 0x00
+.ASCIIString									times 33 db 0x00
+.hexBytesPerLine								db 16
 
 
 
@@ -762,17 +762,13 @@ ret
 	in al, dx
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
 	push 300
 	push 20
 	call [VESAPrint]
-
-	
-	
-	
 ret
 
 
@@ -793,7 +789,7 @@ ret
 	call [VESAPrint]
 	call KeyWait
 ret
-.systemInfoText								db 'System Information', 0x00
+.systemInfoText									db 'System Information', 0x00
 
 
 
@@ -802,7 +798,7 @@ ret
 	mov al, [tSystemInfo.hours]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -814,7 +810,7 @@ ret
 	mov al, [tSystemInfo.minutes]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -826,7 +822,7 @@ ret
 	mov al, [tSystemInfo.seconds]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -838,7 +834,7 @@ ret
 	mov al, [tSystemInfo.ticks]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -850,7 +846,7 @@ ret
 	mov al, [tSystemInfo.month]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -862,7 +858,7 @@ ret
 	mov al, [tSystemInfo.day]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -874,7 +870,7 @@ ret
 	mov al, [tSystemInfo.century]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -886,7 +882,7 @@ ret
 	mov al, [tSystemInfo.year]
 	push kPrintString
 	push eax
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
@@ -897,13 +893,47 @@ ret
 	; print seconds since boot just for the heck of it
 	push kPrintString
 	push dword [tSystemInfo.secondsSinceBoot]
-	call ConvertHexToString
+	call ConvertToHexString
 	push kPrintString
 	push 0xFF000000
 	push 0xFF777777
 	push 34
 	push 2
 	call [VESAPrint]
+ret
+
+
+
+RegDump:
+	; Quick register dump routine for debugging
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	; changes:
+
+	pushad
+	push edi
+	push esi
+	push edx
+	push ecx
+	push ebx
+	push eax
+	push kPrintString
+	push kRegDumpStr
+	call StringBuild
+	
+	push kPrintString
+	push 0xFF000000
+	push 0xFF777777
+	push 300
+	push 2
+	call [VESAPrint]
+
+	call KeyWait
+	popad
 ret
 
 

@@ -386,6 +386,7 @@ iretd
 ISR20:
 	; Programmable Interrupt Timer (PIT)
 	pushad
+	inc dword [tSystemInfo.ticksSinceBoot]
 	inc byte [tSystemInfo.ticks]
 	cmp byte [tSystemInfo.ticks], 0
 	jne .done
@@ -403,7 +404,7 @@ ISR20:
 	jne .done
 	mov byte [tSystemInfo.hours], 0
 	inc byte [tSystemInfo.day]
-	cmp byte [tSystemInfo.day], 30 ; this will need modified to account for the different number of days in the months
+	cmp byte [tSystemInfo.day], 30				; this will need modified to account for the different number of days in the months
 	jne .done
 	mov byte [tSystemInfo.day], 0
 	inc byte [tSystemInfo.month]

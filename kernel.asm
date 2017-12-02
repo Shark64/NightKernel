@@ -30,9 +30,8 @@
 [map all kernel.map]
 
 bits 16
-
-org 0x0600									; set origin point to where the FreeDOS bootloader loads this code
-cli											; turn off interrupts and skip the GDT in a jump to our main routine
+org 0x0600										; set origin point to where the FreeDOS bootloader loads this code
+cli												; turn off interrupts and skip the GDT in a jump to our main routine
 jmp main
 
 %include "gdt.asm"
@@ -49,14 +48,14 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-call MemoryInit								; init and probe RAM
+call MemoryInit									; init and probe RAM
 
 ; get that good ol' APM info and enable the interface
 call SetSystemInfoAPM
 call APMEnable
 
-call VESAInit								; init VESA
-call load_GDT								; load that GDT
+call VESAInit									; init VESA
+call load_GDT									; load that GDT
 
 ; enter protected mode. YAY!
 mov eax, cr0
@@ -80,10 +79,10 @@ mov es, ax
 mov ss, ax
 mov esp, 0x0009F800
 
-call IDTInit								; init our IDT
-%include "setints.asm"						; set interrupt handler addresses
-call SetSystemInfoVESA						; set the remaining important video stuff to the system struct
-call A20Enable								; enable the A20 line - one of the things we require for operation
+call IDTInit									; init our IDT
+%include "setints.asm"							; set interrupt handler addresses
+call SetSystemInfoVESA							; set the remaining important video stuff to the system struct
+call A20Enable									; enable the A20 line - one of the things we require for operation
 
 ; draw our lovely splash screen, if enabled
 mov eax, [kConfigBits]
@@ -91,6 +90,7 @@ and eax, 00000000000000000000000000000001b
 cmp eax, 00000000000000000000000000000001b
 jne .SkipLogo
 call LogoSplash
+
 .SkipLogo:
 
 ; setup and remap both PICs
@@ -99,18 +99,15 @@ call PICDisableIRQs
 call PICUnmaskAll
 call PITInit
 
-call SetSystemInfoRTC						; load the RTC values into the system struct
-call SetSystemInfoCPUID						; set some info from the CPU into the system struct
-call SetSystemInfoCPUSpeed					; write the CPU speed info to the system struct
-call MouseInit								; setup that mickey!
-call KeyboardInit							; setup keyboard
-call VESAClearScreen						; clear the screen
-sti											; let's get some interrupts firing!
+call SetSystemInfoRTC							; load the RTC values into the system struct
+call SetSystemInfoCPUID							; set some info from the CPU into the system struct
+call SetSystemInfoCPUSpeed						; write the CPU speed info to the system struct
+call MouseInit									; setup that mickey!
+call KeyboardInit								; setup keyboard
+call VESAClearScreen							; clear the screen
+sti												; let's get some interrupts firing!
 
 
-push kPrintString
-push 19881980
-call ConvertDecimalToString
 
 ; enter the infinite loop which runs the kernel
 InfiniteLoop:
@@ -120,16 +117,25 @@ jmp InfiniteLoop
 
 
 
-%include "api.asm"							; implements the kernel Application Programming Interface
-%include "debug.asm"						; implements the debugging menu
-%include "globals.asm"						; global variable setup
-%include "hardware.asm"						; routines for other miscellaneous hardware
-%include "idt.asm"							; Interrupt Descriptor Table
-%include "inthandl.asm"						; interrupt handlers
-%include "memory.asm"						; memory manager
-%include "pic.asm"							; Programmable Interrupt Controller routines
-%include "power.asm"						; Power Management (APM & ACPI) routines
-%include "ps2.asm"							; PS/2 keyboard and mouse routines
-%include "screen.asm"						; VESA and other screen routines
-%include "serial.asm"						; serial communication routines
-%include "logo.asm"							; logo data
+%include "api.asm"								; implements the kernel Application Programming Interface
+%include "debug.asm"							; implements the debugging menu
+%include "globals.asm"							; global variable setup
+%include "hardware.asm"							; routines for other miscellaneous hardware
+%include "idt.asm"								; Interrupt Descriptor Table
+%include "inthandl.asm"							; interrupt handlers
+%include "logo.asm"								; logo code
+%include "memory.asm"							; memory manager
+%include "pic.asm"								; Programmable Interrupt Controller routines
+%include "power.asm"							; Power Management (APM & ACPI) routines
+%include "ps2.asm"								; PS/2 keyboard and mouse routines
+%include "serial.asm"							; serial communication routines
+%include "strings.asm"							; string manipulation routines
+%include "vesa.asm"								; VESA and other screen routines
+
+iconLogo:
+incbin "icon_logo"
+iconLogoEnd:
+
+iconSadThing:
+incbin "icon_sadthing"
+iconSadThingEnd:
