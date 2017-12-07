@@ -34,7 +34,7 @@ org 0x0600										; set origin point to where the FreeDOS bootloader loads thi
 cli												; turn off interrupts and skip the GDT in a jump to our main routine
 jmp main
 
-%include "gdt.asm"
+%include "system/gdt.asm"
 
 main:
 ; init the stack segment
@@ -80,7 +80,7 @@ mov ss, ax
 mov esp, 0x0009F800
 
 call IDTInit									; init our IDT
-%include "setints.asm"							; set interrupt handler addresses
+%include "system/setints.asm"					; set interrupt handler addresses
 call SetSystemInfoVESA							; set the remaining important video stuff to the system struct
 call A20Enable									; enable the A20 line - one of the things we require for operation
 
@@ -117,25 +117,27 @@ jmp InfiniteLoop
 
 
 
-%include "api.asm"								; implements the kernel Application Programming Interface
-%include "debug.asm"							; implements the debugging menu
-%include "globals.asm"							; global variable setup
-%include "hardware.asm"							; routines for other miscellaneous hardware
-%include "idt.asm"								; Interrupt Descriptor Table
-%include "inthandl.asm"							; interrupt handlers
-%include "logo.asm"								; logo code
-%include "memory.asm"							; memory manager
-%include "pic.asm"								; Programmable Interrupt Controller routines
-%include "power.asm"							; Power Management (APM & ACPI) routines
-%include "ps2.asm"								; PS/2 keyboard and mouse routines
-%include "serial.asm"							; serial communication routines
-%include "strings.asm"							; string manipulation routines
-%include "vesa.asm"								; VESA and other screen routines
+%include "io/disks.asm"							; disk I/O routines
+%include "io/ps2.asm"							; PS/2 keyboard and mouse routines
+%include "io/serial.asm"						; serial communication routines
+%include "system/api.asm"						; implements the kernel Application Programming Interface
+%include "system/debug.asm"						; implements the debugging menu
+%include "system/globals.asm"					; global variable setup
+%include "system/hardware.asm"					; routines for other miscellaneous hardware
+%include "system/idt.asm"						; Interrupt Descriptor Table
+%include "system/inthandl.asm"					; interrupt handlers
+%include "system/memory.asm"					; memory manager
+%include "system/pci.asm"						; PCI support
+%include "system/pic.asm"						; Programmable Interrupt Controller routines
+%include "system/power.asm"						; Power Management (APM & ACPI) routines
+%include "system/strings.asm"					; string manipulation routines
+%include "video/logo.asm"						; logo code
+%include "video/vesa.asm"						; VESA and other screen routines
 
-iconLogo:
-incbin "icon_logo"
-iconLogoEnd:
+mediaLogo:
+incbin "media/logo"
+mediaLogoEnd:
 
-iconSadThing:
-incbin "icon_sadthing"
-iconSadThingEnd:
+mediaSadThing:
+incbin "media/sadthing"
+mediaSadThingEnd:

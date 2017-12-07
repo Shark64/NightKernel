@@ -99,12 +99,25 @@ bits 32
 MemAllocate:
 	; Returns the address of a block of memory of the specified size, or zero if a block of that size is unavailble
 	;  input:
-	;   requested memory size in KB
+	;   requested memory size in bytes
 	;
 	;  output:
 	;   address of requested block, or zero if call fails
 
+	; This routine temporarily uses a "dummy" allocation scheme; it simply allocates the amount of RAM requested beginning
+	; at the 2 MB mark and increasing upward with no error checking whatsoever. This will allow basic allocate calls to
+	; function for development purposes until the full paged memory manager is completed.
+
+	pop edx
+	pop ecx
+
+	mov eax, [.nextAllocation]
+	push eax
+	add eax, ecx
+	mov [.nextAllocation], eax
+	push edx
 ret
+.nextAllocation									dd 0x00200000
 
 
 

@@ -187,7 +187,7 @@ DebugMenu:
 		cmp al, 0x39							; choice 9
 		jne .DebugLoop
 		call VESAClearScreen
-		jmp .Exit
+		call DebugFeatureDemo
 		call VESAClearScreen
 		jmp .DrawMenu
 
@@ -203,7 +203,7 @@ ret
 .kDebugText6									db '6 - Serial Test', 0x00
 .kDebugText7									db '7 - Time Info', 0x00
 .kDebugText8									db '8 - Video Info', 0x00
-.kDebugText9									db '9 - ', 0x00
+.kDebugText9									db '9 - Feature Demo', 0x00
 .kDebugText0									db '0 - Exit', 0x00
 
 
@@ -904,6 +904,36 @@ ret
 
 
 
+DebugFeatureDemo:
+	; assemble all this stuff into a single string for later printing as a demo of our fancy new string routines!
+	push .samplestring3
+	push 150
+	push 00000000110111011101011010111010b
+	push 0x00beef00
+	push .samplestring2
+	push .samplestring1
+	push 16
+	push .tempstring2
+	push .tempstring
+	call StringBuild
+
+	; now print that string we just built
+	push .tempstring2
+	push 0xFF000000
+	push 0xFF777777
+	push 162
+	push 2
+	call [VESAPrint]
+	call KeyWait
+ret
+.tempstring										db 'Approximately %d seconds ago, the application %s has unexpectedly %s at address 0x%h with flags %b. Please reboot your %o %s.', 0x00
+.tempstring2									times 256 db 0x00
+.samplestring1									db 'FluffyCat', 0x00
+.samplestring2									db 'made pancakes', 0x00
+.samplestring3									db 'microwaves', 0x00
+
+
+
 RegDump:
 	; Quick register dump routine for debugging
 	;  input:
@@ -922,7 +952,7 @@ RegDump:
 	push ebx
 	push eax
 	push kPrintString
-	push kRegDumpStr
+	push .regDumpStr
 	call StringBuild
 	
 	push kPrintString
@@ -935,6 +965,7 @@ RegDump:
 	call KeyWait
 	popad
 ret
+.regDumpStr										db 'eax %h    ebx %h    ecx %h    edx %h    esi %h    edi %h', 0x00
 
 
 

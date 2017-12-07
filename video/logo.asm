@@ -90,8 +90,8 @@ LogoSplash:
 	; and call our handy-dandy icon drawing routine!
 	push ebx
 	push eax
-	push dword iconLogoEnd
-	push dword iconLogo
+	push dword mediaLogoEnd
+	push dword mediaLogo
 	call VESALoadIcon
 ret
 .temp											dd 0x00000000

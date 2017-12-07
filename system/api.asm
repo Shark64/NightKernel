@@ -120,31 +120,82 @@ ConvertToBinaryString:
 	pop edx
 	pop eax
 	pop esi
-	push esi
-	
 	push edx
 
-	; add to the buffer since we start from the right
-	add esi, 9
+	; clear the string to all zeroes
+	pushad
+	push 48
+	push 32
+	push esi
+	call MemFill
+	popad
+
+	; add to the buffer since we start from the right (max possible length - 1)
+	add esi, 31
 	
 	; set the divisor
-	mov ebx, 10
+	mov ebx, 2
 	.DecodeLoop:
-		mov edx, 0							; clear edx so we don't mess up the division
-		div ebx								; divide eax by 10
-		add dx, 48							; add 48 to the remainder to give us an ASCII character for this number
-		dec esi								; move to the next position in the buffer
+		mov edx, 0													; clear edx so we don't mess up the division
+		div ebx														; divide eax by 10
+		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
 		mov [esi], dl
+		dec esi														; move to the next position in the buffer
 		cmp eax, 0
-		jz .Exit							; if ax=0, end of the procedure
-		jmp .DecodeLoop						; else repeat
+		jz .Exit													; if ax=0, end of the procedure
+		jmp .DecodeLoop												; else repeat
 	.Exit:
 ret
 
 
 
-ConvertHexToString:
-	; Translates the value specified to a hexadecimal number in string form
+ConvertToDecimalString:
+	; Translates the value specified to a decimal number in a zero-padded 10 byte string
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	;       No terminating null is put on the end of the string - do that yourself.
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, edx, esi
+
+	pop edx
+	pop eax
+	pop esi
+	push edx
+
+	; clear the string to all zeroes
+	pushad
+	push 48
+	push 10
+	push esi
+	call MemFill
+	popad
+
+	; add to the buffer since we start from the right (max possible length - 1)
+	add esi, 9
+	
+	; set the divisor
+	mov ebx, 10
+	.DecodeLoop:
+		mov edx, 0													; clear edx so we don't mess up the division
+		div ebx														; divide eax by 10
+		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
+		mov [esi], dl
+		dec esi														; move to the next position in the buffer
+		cmp eax, 0
+		jz .Exit													; if ax=0, end of the procedure
+		jmp .DecodeLoop												; else repeat
+	.Exit:
+ret
+
+
+
+ConvertToHexString:
+	; Translates the value specified to a hexadecimal number in a zero-padded 8 byte string
 	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
 	;       No terminating null is put on the end of the string - do that yourself.
 	;  input:
@@ -221,6 +272,51 @@ ConvertHexToString:
 	mov al, [ecx]
 	mov byte[edi], al
 	inc edi
+ret
+
+
+
+ConvertToOctalString:
+	; Translates the value specified to an octal number in a zero-padded 11 byte string
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	;       No terminating null is put on the end of the string - do that yourself.
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, edx, esi
+
+	pop edx
+	pop eax
+	pop esi
+	push edx
+
+	; clear the string to all zeroes
+	pushad
+	push 48
+	push 11
+	push esi
+	call MemFill
+	popad
+
+	; add to the buffer since we start from the right (max possible length - 1)
+	add esi, 10
+	
+	; set the divisor
+	mov ebx, 8
+	.DecodeLoop:
+		mov edx, 0													; clear edx so we don't mess up the division
+		div ebx														; divide eax by 10
+		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
+		mov [esi], dl
+		dec esi														; move to the next position in the buffer
+		cmp eax, 0
+		jz .Exit													; if ax=0, end of the procedure
+		jmp .DecodeLoop												; else repeat
+	.Exit:
 ret
 
 

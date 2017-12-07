@@ -219,8 +219,8 @@ kMeme820unsup									db 'Could not detect memory, function unsupported', 0x00
 kVESAUnsupported								db 'VESA support not found', 0x00
 kFailed											db 'Failed to run kernel succesfully, see below.', 0x00
 kRebootMSG										db 'Rebooting...', 0x00
-kSadThing										db  0x27, 'Tis a sad thing that your process has ended here!', 0x00
-kRegDumpStr										db 'eax %h    ebx %h    ecx %h    edx %h    esi %h    edi %h', 0x00
+kSadThing										db 0x27, 'Tis a sad thing that your process has ended here!', 0x00
+kDebugger										db 'What a horrible Night to have a bug.', 0x00
 
 
 
@@ -515,8 +515,7 @@ tEvent:
 ; 0x000C0000		0x000DFFFF		128 KB						device-mounted ROMs
 ; 0x000E0000		0x0010FFEF		196591 bytes (191.98 KB)	BIOS ROM
 ; 0x0010FFF0		0x001FFFFF		983055 bytes (960.01 KB)    applications use
-; 0x00200000		0x002FFFFF		1 MB						memory allocation bitmap
-; 0x00300000		0xFFFFFFFF		?							application use
+; 0x00200000		0xFFFFFFFF		?							application use
 
 
 
@@ -532,7 +531,7 @@ tEvent:
 
 ; ConfigBits options
 ; 0					Show boot logo
-; 1					reserved
+; 1					Play startup sound
 ; 2					Enable debugging menu
 ; 3					reserved
 ; 4					reserved
@@ -578,3 +577,29 @@ tEvent:
 ; 20				Serial input received
 ; 40				Application is losing focus
 ; 41				Application is gaining focus
+
+
+
+; PCI Device Classes
+; 00	Unclassified device	
+; 01	Mass storage controller	
+; 02	Network controller	
+; 03	Display controller	
+; 04	Multimedia controller	
+; 05	Memory controller	
+; 06	Bridge	
+; 07	Communication controller	
+; 08	Generic system peripheral	
+; 09	Input device controller	
+; 0a	Docking station	
+; 0b	Processor	
+; 0c	Serial bus controller	
+; 0d	Wireless controller	
+; 0e	Intelligent controller	
+; 0f	Satellite communications controller	
+; 10	Encryption controller	
+; 11	Signal processing controller	
+; 12	Processing accelerators	
+; 13	Non-Essential Instrumentation	
+; 40	Coprocessor	
+; ff	Unassigned class
