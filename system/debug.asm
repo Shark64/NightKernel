@@ -2,21 +2,17 @@
 ; Copyright 1995 - 2018 by mercury0x000d
 ; debug.asm is a part of the Night Kernel
 
-; The Night Kernel is free software: you can redistribute it and/or
-; modify it under the terms of the GNU General Public License as published
-; by the Free Software Foundation, either version 3 of the License, or (at
-; your option) any later version.
+; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+; License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+; version.
 
-; The Night Kernel is distributed in the hope that it will be useful, but
-; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-; for more details.
+; The Night Kernel is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+; warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-; You should have received a copy of the GNU General Public License along
-; with the Night Kernel. If not, see <http://www.gnu.org/licenses/>.
+; You should have received a copy of the GNU General Public License along with the Night Kernel. If not, see
+; <http://www.gnu.org/licenses/>.
 
-; See the included file <GPL License.txt> for the complete text of the
-; GPL License by which this program is covered.
+; See the included file <GPL License.txt> for the complete text of the GPL License by which this program is covered.
 
 
 
@@ -33,82 +29,44 @@ DebugMenu:
 	;   n/a
 
 	.DrawMenu:
-	push .kDebugMenu
-	push 0xFF000000
-	push 0xFF7777FF
-	push 2
-	push 2
-	call [VESAPrint]
+	mov byte [textColor], 7
+	mov byte [backColor], 0
 
-	push .kDebugText1
-	push 0xFF000000
-	push 0xFF777777
-	push 34
-	push 2
-	call [VESAPrint]
+	mov byte [cursorX], 1
+	mov byte [cursorY], 1
+	push .kDebugMenu$
+	call Print32
 
-	push .kDebugText2
-	push 0xFF000000
-	push 0xFF777777
-	push 50
-	push 2
-	call [VESAPrint]
+	mov byte [cursorY], 3
+	push .kDebugText1$
+	call Print32
 
-	push .kDebugText3
-	push 0xFF000000
-	push 0xFF777777
-	push 66
-	push 2
-	call [VESAPrint]
+	push .kDebugText2$
+	call Print32
 
-	push .kDebugText4
-	push 0xFF000000
-	push 0xFF777777
-	push 82
-	push 2
-	call [VESAPrint]
+	push .kDebugText3$
+	call Print32
 
-	push .kDebugText5
-	push 0xFF000000
-	push 0xFF777777
-	push 98
-	push 2
-	call [VESAPrint]
+	push .kDebugText4$
+	call Print32
 
-	push .kDebugText6
-	push 0xFF000000
-	push 0xFF777777
-	push 114
-	push 2
-	call [VESAPrint]
+	push .kDebugText5$
+	call Print32
 
-	push .kDebugText7
-	push 0xFF000000
-	push 0xFF777777
-	push 130
-	push 2
-	call [VESAPrint]
+	push .kDebugText6$
+	call Print32
 
-	push .kDebugText8
-	push 0xFF000000
-	push 0xFF777777
-	push 146
-	push 2
-	call [VESAPrint]
+	push .kDebugText7$
+	call Print32
 
-	push .kDebugText9
-	push 0xFF000000
-	push 0xFF777777
-	push 162
-	push 2
-	call [VESAPrint]
+	push .kDebugText8$
+	call Print32
 
-	push .kDebugText0
-	push 0xFF000000
-	push 0xFF777777
-	push 178
-	push 2
-	call [VESAPrint]
+	push .kDebugText9$
+	call Print32
+
+	push .kDebugText0$
+	call Print32
 
 	.DebugLoop:
 		call KeyGet
@@ -116,95 +74,76 @@ DebugMenu:
 
 		cmp al, 0x30							; choice 0
 		jne .TestFor1
-		call VESAClearScreen
 		jmp .Exit
 
 		.TestFor1:
 		cmp al, 0x31							; choice 1
 		jne .TestFor2
-		call VESAClearScreen
 		call .SystemInfo
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor2:
 		cmp al, 0x32							; choice 2
 		jne .TestFor3
-		call VESAClearScreen
 		call .DiskInfo
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor3:
 		cmp al, 0x33							; choice 3
 		jne .TestFor4
-		call VESAClearScreen
-		call .KernelInfo
-		call VESAClearScreen
+		call .PCIDevices
 		jmp .DrawMenu
 
 		.TestFor4:
 		cmp al, 0x34							; choice 4
 		jne .TestFor5
-		call VESAClearScreen
 		call .RAMBrowser
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor5:
 		cmp al, 0x35							; choice 5
 		jne .TestFor6
-		call VESAClearScreen
 		call .MouseTest
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor6:
 		cmp al, 0x36							; choice 6
 		jne .TestFor7
-		call VESAClearScreen
 		jmp .Exit
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor7:
 		cmp al, 0x37							; choice 7
 		jne .TestFor8
-		call VESAClearScreen
 		jmp .Exit
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor8:
 		cmp al, 0x38							; choice 8
 		jne .TestFor9
-		call VESAClearScreen
 		jmp .Exit
-		call VESAClearScreen
 		jmp .DrawMenu
 
 		.TestFor9:
 		cmp al, 0x39							; choice 9
 		jne .DebugLoop
-		call VESAClearScreen
-		call DebugFeatureDemo
-		call VESAClearScreen
+		;call DebugFeatureDemo
 		jmp .DrawMenu
 
 	jmp .DebugLoop
 	.Exit:
 ret
-.kDebugMenu										db 'Kernel Debug Menu', 0x00
-.kDebugText1									db '1 - System Info', 0x00
-.kDebugText2									db '2 - Disk Info', 0x00
-.kDebugText3									db '3 - Kernel Info', 0x00
-.kDebugText4									db '4 - RAM Browser', 0x00
-.kDebugText5									db '5 - Mouse Tracking Test', 0x00
-.kDebugText6									db '6 - Serial Test', 0x00
-.kDebugText7									db '7 - Time Info', 0x00
-.kDebugText8									db '8 - Video Info', 0x00
-.kDebugText9									db '9 - Feature Demo', 0x00
-.kDebugText0									db '0 - Exit', 0x00
+.kDebugMenu$									db 'Kernel Debug Menu', 0x00
+.kDebugText1$									db '1 - System Info', 0x00
+.kDebugText2$									db '2 - Disk Info', 0x00
+.kDebugText3$									db '3 - PCI Devices', 0x00
+.kDebugText4$									db '4 - RAM Browser', 0x00
+.kDebugText5$									db '5 - Mouse Tracking Test', 0x00
+.kDebugText6$									db '6 - Serial Test', 0x00
+.kDebugText7$									db '7 - Time Info', 0x00
+.kDebugText8$									db '8 - Video Info', 0x00
+.kDebugText9$									db '9 - Feature Demo', 0x00
+.kDebugText0$									db '0 - Exit', 0x00
 
 
 
@@ -214,517 +153,370 @@ ret
 
 
 
-.KernelInfo:
-	push tSystemInfo.kernelCopyright
-	push 0xFF000000
-	push 0xFF777777
-	push 2
-	push 2
-	call [VESAPrint]
-ret
-
-
-
 .MouseTest:
-	; print mouse position
-	push .mouseValue
-	mov eax, 0x00000000
-	mov byte al, [tSystemInfo.mouseButtons]
-	push eax
-	call ConvertToHexString
-	push .mouseValue
-	push 0xFF000000
-	push 0xFF777777
-	push 2
-	push 2
-	call [VESAPrint]
-
-	push .mouseValue
-	mov eax, 0x00000000
-	mov word ax, [tSystemInfo.mouseX]
-	push eax
-	call ConvertToHexString
-	push .mouseValue
-	push 0xFF000000
-	push 0xFF777777
-	push 2
-	push 102
-	call [VESAPrint]
-
-	push .mouseValue
-	mov eax, 0x00000000
-	mov word ax, [tSystemInfo.mouseY]
-	push eax
-	call ConvertToHexString
-	push .mouseValue
-	push 0xFF000000
-	push 0xFF777777
-	push 2
-	push 202
-	call [VESAPrint]
- 
-	push .mouseValue
-	mov eax, 0x00000000
-	mov word ax, [tSystemInfo.mouseZ]
-	push eax
-	call ConvertToHexString
-	push .mouseValue
-	push 0xFF000000
-	push 0xFF777777
-	push 2
-	push 302
-	call [VESAPrint]
-	
-	; see if the mouse moved
-	mov eax, 0x00000000
-	mov ebx, 0x00000000
-	mov ax, [tSystemInfo.mouseX]
-	mov bx, [tSystemInfo.mouseY]
-	mov ecx, [.oldMouseX]
-	mov edx, [.oldMouseY]
-	cmp ax, cx
-	jne .DrawMouse
-	cmp bx, dx
-	jne .DrawMouse
-
-	call KeyGet
-	pop eax
-	cmp al, 0x00
-	je .MouseTest
+;	; print mouse position
+;	push .mouseValue
+;	mov eax, 0x00000000
+;	mov byte al, [tSystem.mouseButtons]
+;	push eax
+;	call ConvertToHexString
+;	push .mouseValue
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 2
+;	push 2
+;	call [VESAPrint]
+;
+;	push .mouseValue
+;	mov eax, 0x00000000
+;	mov word ax, [tSystem.mouseX]
+;	push eax
+;	call ConvertToHexString
+;	push .mouseValue
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 2
+;	push 102
+;	call [VESAPrint]
+;
+;	push .mouseValue
+;	mov eax, 0x00000000
+;	mov word ax, [tSystem.mouseY]
+;	push eax
+;	call ConvertToHexString
+;	push .mouseValue
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 2
+;	push 202
+;	call [VESAPrint]
+; 
+;	push .mouseValue
+;	mov eax, 0x00000000
+;	mov word ax, [tSystem.mouseZ]
+;	push eax
+;	call ConvertToHexString
+;	push .mouseValue
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 2
+;	push 302
+;	call [VESAPrint]
+;	
+;	; see if the mouse moved
+;	mov eax, 0x00000000
+;	mov ebx, 0x00000000
+;	mov ax, [tSystem.mouseX]
+;	mov bx, [tSystem.mouseY]
+;	mov ecx, [.oldMouseX]
+;	mov edx, [.oldMouseY]
+;	cmp ax, cx
+;	jne .DrawMouse
+;	cmp bx, dx
+;	jne .DrawMouse
+;
+;	call KeyGet
+;	pop eax
+;	cmp al, 0x00
+;	je .MouseTest
 ret
-.mouseValue										times 16 db 0x00
-
+;.mouseValue										times 16 db 0x00
+;
 .DrawMouse:
-	mov al, [tSystemInfo.mouseButtons]
-	cmp al, 0x00
-	jne .DrawNewCursor
-	.EraseOldCursor:
-	mov eax, [.oldMouseX]
-	mov ebx, [.oldMouseY]
-	dec eax
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec eax
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec eax
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec eax
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	mov eax, [.oldMouseX]
-	mov ebx, [.oldMouseY]
-	dec ebx
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec ebx
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec ebx
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec ebx
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	mov eax, [.oldMouseX]
-	mov ebx, [.oldMouseY]
-	inc eax
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc eax
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc eax
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc eax
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	mov eax, [.oldMouseX]
-	mov ebx, [.oldMouseY]
-	inc ebx
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc ebx
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc ebx
-	pushad
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc ebx
-	push 0x00000000
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	.DrawNewCursor:
-	mov ah, [tSystemInfo.mouseButtons]
-	mov ebx, 0x00000000
-	.RedTest:
-	mov al, ah
-	and al, 0x01
-	cmp al, 0x01
-	jne .GreenTest
-	or ebx, 0x00FF0000
-
-	.GreenTest:
-	mov al, ah
-	and al, 0x04
-	cmp al, 0x04
-	jne .BlueTest
-	or ebx, 0x0000FF00
-
-	.BlueTest:
-	mov al, ah
-	and al, 0x02
-	cmp al, 0x02
-	jne .DoneTest
-	or ebx, 0x000000FF
-
-	.DoneTest:
-	cmp ebx, 0x00000000
-	jne .DrawCursor
-	mov ebx, 0x00777777
-	.DrawCursor:
-	mov dword [.color], ebx
-
-	; draw the cursor
-	mov eax, 0x00000000
-	mov ebx, 0x00000000
-	mov ax, [tSystemInfo.mouseX]
-	mov bx, [tSystemInfo.mouseY]
-	dec eax
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec eax
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec eax
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec eax
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	mov eax, 0x00000000
-	mov ebx, 0x00000000
-	mov ax, [tSystemInfo.mouseX]
-	mov bx, [tSystemInfo.mouseY]
-	dec ebx
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec ebx
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec ebx
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	dec ebx
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	mov eax, 0x00000000
-	mov ebx, 0x00000000
-	mov ax, [tSystemInfo.mouseX]
-	mov bx, [tSystemInfo.mouseY]
-	inc eax
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc eax
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc eax
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc eax
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	mov eax, 0x00000000
-	mov ebx, 0x00000000
-	mov ax, [tSystemInfo.mouseX]
-	mov bx, [tSystemInfo.mouseY]
-	inc ebx
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc ebx
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc ebx
-	pushad
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-	popad
-	inc ebx
-	push dword [.color]
-	push ebx
-	push eax
-	call [VESAPlot]
-
-	; update mouse tracking locals
-	mov eax, 0x00000000
-	mov ebx, 0x00000000
-	mov ax, [tSystemInfo.mouseX]
-	mov bx, [tSystemInfo.mouseY]
-	mov [.oldMouseX], eax
-	mov [.oldMouseY], ebx
+;	mov al, [tSystem.mouseButtons]
+;	cmp al, 0x00
+;	jne .DrawNewCursor
+;	.EraseOldCursor:
+;	mov eax, [.oldMouseX]
+;	mov ebx, [.oldMouseY]
+;	dec eax
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec eax
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec eax
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec eax
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	mov eax, [.oldMouseX]
+;	mov ebx, [.oldMouseY]
+;	dec ebx
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec ebx
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec ebx
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec ebx
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	mov eax, [.oldMouseX]
+;	mov ebx, [.oldMouseY]
+;	inc eax
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc eax
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc eax
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc eax
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	mov eax, [.oldMouseX]
+;	mov ebx, [.oldMouseY]
+;	inc ebx
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc ebx
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc ebx
+;	pusha
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc ebx
+;	push 0x00000000
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	.DrawNewCursor:
+;	mov ah, [tSystem.mouseButtons]
+;	mov ebx, 0x00000000
+;	.RedTest:
+;	mov al, ah
+;	and al, 0x01
+;	cmp al, 0x01
+;	jne .GreenTest
+;	or ebx, 0x00FF0000
+;
+;	.GreenTest:
+;	mov al, ah
+;	and al, 0x04
+;	cmp al, 0x04
+;	jne .BlueTest
+;	or ebx, 0x0000FF00
+;
+;	.BlueTest:
+;	mov al, ah
+;	and al, 0x02
+;	cmp al, 0x02
+;	jne .DoneTest
+;	or ebx, 0x000000FF
+;
+;	.DoneTest:
+;	cmp ebx, 0x00000000
+;	jne .DrawCursor
+;	mov ebx, 0x00777777
+;	.DrawCursor:
+;	mov dword [.color], ebx
+;
+;	; draw the cursor
+;	mov eax, 0x00000000
+;	mov ebx, 0x00000000
+;	mov ax, [tSystem.mouseX]
+;	mov bx, [tSystem.mouseY]
+;	dec eax
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec eax
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec eax
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec eax
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	mov eax, 0x00000000
+;	mov ebx, 0x00000000
+;	mov ax, [tSystem.mouseX]
+;	mov bx, [tSystem.mouseY]
+;	dec ebx
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec ebx
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec ebx
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	dec ebx
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	mov eax, 0x00000000
+;	mov ebx, 0x00000000
+;	mov ax, [tSystem.mouseX]
+;	mov bx, [tSystem.mouseY]
+;	inc eax
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc eax
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc eax
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc eax
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	mov eax, 0x00000000
+;	mov ebx, 0x00000000
+;	mov ax, [tSystem.mouseX]
+;	mov bx, [tSystem.mouseY]
+;	inc ebx
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc ebx
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc ebx
+;	pusha
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;	popa
+;	inc ebx
+;	push dword [.color]
+;	push ebx
+;	push eax
+;	call [VESAPlot]
+;
+;	; update mouse tracking locals
+;	mov eax, 0x00000000
+;	mov ebx, 0x00000000
+;	mov ax, [tSystem.mouseX]
+;	mov bx, [tSystem.mouseY]
+;	mov [.oldMouseX], eax
+;	mov [.oldMouseY], ebx
 jmp .MouseTest
-.oldMouseX										dd 0x00000000
-.oldMouseY										dd 0x00000000
-.color											dd 0x00000000
+;.oldMouseX										dd 0x00000000
+;.oldMouseY										dd 0x00000000
+;.color											dd 0x00000000
 
 
 
 .RAMBrowser:
-	; init locals
-	mov byte [.linesCompleted], 0x00
-	
-	; draw RAM editor grid
-	mov byte [.linesCompleted], 0x00
-	.LineLoop:
-		; calculate starting positions for this line
-		mov eax, 0x00000000
-		mov ebx, 0x00000000
-		mov ax, 16
-		mov bl, [.linesCompleted]
-		mul bx
-		mov [.currentY], eax
-
-		; print starting address for this line
-		push kPrintString
-		push dword [.startingAddress]
-		call ConvertToHexString
-		push kPrintString
-		push 0xFF000000
-		push 0xFF777777
-		mov eax, [.currentY]
-		push eax
-		push 2
-		call [VESAPrint]
-
-		; clear the ASCII equivalent string to all periods
-		mov ecx, 0x00000000
-		mov cl, byte [.hexBytesPerLine]
-		.ClearString:
-			mov eax, .ASCIIString
-			add eax, ecx
-			dec eax
-			mov byte [eax], 46			
-		loop .ClearString
-
-		mov ecx, 0x00000000
-		mov cl, byte [.hexBytesPerLine]
-		.PrintBytes:
-			; calculate byte position for line
-			mov eax, 0x00000000
-			mov ax, 24
-			mul cx
-			add eax, 64
-			mov [.currentX], eax
-
-			; print individual bytes for this line
-			; start by pushing the counter, 'cause these upcoming calls will definitely stomp all over it
-			push ecx
-			
-			; push buffer string address
-			push kPrintString
-			
-			; get the byte from the appropriate location in RAM
-			mov eax, dword [.startingAddress]
-			add eax, ecx
-			dec eax
-			mov ebx, dword [eax]
-			
-			; push that byte
-			push ebx
-
-			; add that byte to the ASCII string if it's in printable range
-			cmp bl, 32
-			jb .NotInRange
-			
-			cmp bl, 127
-			ja .NotInRange
-
-			.IsInRange:
-			mov eax, .ASCIIString
-			add eax, ecx
-			dec eax
-			mov [eax], bl
-
-			.NotInRange:
-			call ConvertToHexString
-			mov eax, kPrintString
-			add eax, 6
-			push eax
-
-			; push print colors
-			push 0xFF000000
-			push 0xFF777777
-			
-			; push Y value
-			mov eax, [.currentY]
-			push eax
-			
-			; push X value
-			mov eax, [.currentX]
-			push eax
-			call [VESAPrint]
-
-			; retrieve the saved counter
-			pop ecx
-		loop .PrintBytes
-
-		; print the ASCII equivalent string
-		push .ASCIIString
-		push 0xFF000000
-		push 0xFF7777FF
-		mov eax, [.currentY]
-		push eax
-
-
-
-		mov eax, 0x00000000
-		mov al, [.hexBytesPerLine]
-		mov ebx, 24
-		mul ebx
-		
-		add eax, [.currentX]
-		add eax, 16
-		push eax
-
-
-
-		call [VESAPrint]
-
-		; update starting address
-		mov eax, 0x00000000
-		mov al, [.hexBytesPerLine]
-		add dword [.startingAddress], eax
-
-		; see if we're done filling the screen with text yet
-		inc byte [.linesCompleted]
-		cmp byte [.linesCompleted], 48
-		je .LineLoopDone
-	jmp .LineLoop
-	.LineLoopDone:
 	call KeyWait
+	pop eax
 ret
-.startingAddress								dd 0x00000600
-.currentX										dd 0x00000018
-.currentY										dd 0x00000002
-.linesCompleted									db 0x00
-.ASCIIString									times 33 db 0x00
-.hexBytesPerLine								db 16
 
 
 
@@ -750,7 +542,7 @@ ret
 	pop edx
 
 
-	push tSystemInfo.kernelCopyright
+	push tSystem.copyright$
 	call PrintSerial
 
 	push kCRLF
@@ -760,220 +552,506 @@ ret
 	mov eax, 0x00000000
 	mov dx, 0x03F8
 	in al, dx
-	push kPrintString
+	push kPrintText$
 	push eax
 	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 300
-	push 20
-	call [VESAPrint]
+	mov byte [cursorX], 1
+	mov byte [cursorY], 5
+	mov byte [textColor], 7
+	mov byte [backColor], 0
+	push kPrintText$
+	call Print32
 ret
 
 
 
 .SystemInfo:
-	push .systemInfoText
-	push 0xFF000000
-	push 0xFF7777FF
-	push 2
-	push 2
-	call [VESAPrint]
+	call ClearScreen32
 
-	push tSystemInfo.CPUIDBrandString
-	push 0xFF000000
-	push 0xFF777777
-	push 34
-	push 2
-	call [VESAPrint]
+	mov byte [textColor], 7
+	mov byte [backColor], 0
+	push .systemInfoText$
+	call Print32
+
+	mov byte [cursorY], 3
+	push tSystem.CPUIDBrand$
+	call Print32
+
+	push tSystem.copyright$
+	call Print32
+
 	call KeyWait
+	pop eax
+	call ClearScreen32
 ret
-.systemInfoText									db 'System Information', 0x00
+.systemInfoText$								db 'System Information', 0x00
+
+
+
+.PCIDevices:
+	call ClearScreen32
+
+	mov byte [textColor], 7
+	mov byte [backColor], 0
+	push .PCIInfoText$
+	call Print32
+
+	; see if we have to print data on all devices of on a specific device
+	cmp dword [.currentDevice], 0
+	jne .PrintSpecificDevice
+	
+		; if we get here, the counter is 0 so we print all devices
+	
+		; build and print the device count string
+		push dword [tSystem.PCIDeviceCount]
+		push kPrintText$
+		push .PCIDeviceCountText$
+		call StringBuild
+	
+		push kPrintText$
+		call Print32
+		
+		; print the device description header
+		push .PCIDeviceDescriptionText1$
+		call Print32
+	
+		mov ecx, 1
+		.PCIListAllLoop:
+			pusha
+		
+			; get info on the first device
+			push PCIDeviceInfo
+			push ecx
+			call PCIReadDeviceNumber
+			pop dword [.PCIFunction]
+			pop dword [.PCIDevice]
+			pop dword [.PCIBus]
+		
+			; now we print the data for this device
+		
+			; first calculate the address of the string which describes this device
+			mov edx, 0x00000000
+			mov eax, 36
+			mul byte [PCIDeviceInfo.PCIClass]
+			mov ecx, PCIClass
+			add eax, ecx
+			push eax
+			; build the rest of the PCI data into line 1 for this device
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIRevision]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIProgIf]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCISubclass]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIClass]
+			push eax
+			
+			mov eax, 0x00000000
+			mov ax, [PCIDeviceInfo.PCIDeviceID]
+			push eax
+			
+			mov eax, 0x00000000
+			mov ax, [PCIDeviceInfo.PCIVendorID]
+			push eax
+			push dword [.PCIFunction]
+			push dword [.PCIDevice]
+			push dword [.PCIBus]
+			push kPrintText$
+			push .format1$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+		
+			popa
+			inc ecx
+			
+		cmp ecx, dword [tSystem.PCIDeviceCount]
+		jbe .PCIListAllLoop
+		jmp .GetInputLoop
+	
+		; here we print info for just one specific device
+		.PrintSpecificDevice:
+			call ClearScreen32
+	
+			; build and print the device count string
+			push dword [tSystem.PCIDeviceCount]
+			push dword [.currentDevice]
+			push kPrintText$
+			push .PCIDeviceListingText$
+			call StringBuild
+		
+			push kPrintText$
+			call Print32
+	
+			inc byte [cursorY]
+			
+			; print the device description header
+			push .PCIDeviceDescriptionText1$
+			call Print32
+	
+			mov ecx, dword [.currentDevice]
+			pusha
+		
+			; get info on the first device
+			push PCIDeviceInfo
+			push ecx
+			call PCIReadDeviceNumber
+			pop dword [.PCIFunction]
+			pop dword [.PCIDevice]
+			pop dword [.PCIBus]
+		
+			; now we print line 1 of the data for this device
+		
+			; first calculate the address of the string which describes this device
+			mov edx, 0x00000000
+			mov eax, 36
+			mul byte [PCIDeviceInfo.PCIClass]
+			mov ecx, PCIClass
+			add eax, ecx
+			push eax
+			; build the rest of the PCI data into line 1 for this device
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIRevision]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIProgIf]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCISubclass]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIClass]
+			push eax
+			
+			mov eax, 0x00000000
+			mov ax, [PCIDeviceInfo.PCIDeviceID]
+			push eax
+			
+			mov eax, 0x00000000
+			mov ax, [PCIDeviceInfo.PCIVendorID]
+			push eax
+			push dword [.PCIFunction]
+			push dword [.PCIDevice]
+			push dword [.PCIBus]
+			push kPrintText$
+			push .format1$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+	
+			inc byte [cursorY]
+	
+			; print the first three BARs
+			push dword [PCIDeviceInfo.PCIBAR2]
+			push dword [PCIDeviceInfo.PCIBAR1]
+			push dword [PCIDeviceInfo.PCIBAR0]
+			push kPrintText$
+			push .format2$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+	
+			; print the other three BARs
+			push dword [PCIDeviceInfo.PCIBAR5]
+			push dword [PCIDeviceInfo.PCIBAR4]
+			push dword [PCIDeviceInfo.PCIBAR3]
+			push kPrintText$
+			push .format3$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+
+			inc byte [cursorY]
+
+			; process the miscellaneous PCI infos, starting with the device description header
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIBIST]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIHeaderType]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCILatencyTimer]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCICacheLineSize]
+			push eax
+			
+			push kPrintText$
+			push .format4$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+
+			inc byte [cursorY]
+
+			; more data and stuffs
+			mov eax, 0x00000000
+			mov ax, [PCIDeviceInfo.PCISubsystemID]
+			push eax
+			
+			mov eax, 0x00000000
+			mov ax, [PCIDeviceInfo.PCISubsystemVendorID]
+			push eax
+			
+			push dword [PCIDeviceInfo.PCICardbusCISPointer]
+			
+			push kPrintText$
+			push .format5$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+	
+			inc byte [cursorY]
+
+			; even moar data and thingz
+			push dword [PCIDeviceInfo.PCIExpansionROMBaseAddress]
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCICapabilitiesPointer]
+			push eax
+			
+			push kPrintText$
+			push .format6$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+	
+			inc byte [cursorY]
+
+			; SO. MUCH. DATA.
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIMaxLatency]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIMaxGrant]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIInterruptPin]
+			push eax
+			
+			mov eax, 0x00000000
+			mov al, [PCIDeviceInfo.PCIInterruptLine]
+			push eax
+			
+			push kPrintText$
+			push .format7$
+			call StringBuild
+		
+			; print the string we just built
+			push kPrintText$
+			call Print32
+
+			popa
+			
+		.GetInputLoop:
+		call KeyWait
+		pop eax
+	
+		; see what was pressed
+		cmp eax, 0x39
+		je .PageUp
+	
+		cmp eax, 0x33
+		je .PageDown
+	
+		cmp eax, 0x31
+		je .End
+
+jmp .GetInputLoop
+
+.PageUp:
+	dec dword [.currentDevice]
+	cmp dword [.currentDevice], 0xFFFFFFFF
+	jne .PCIDevices
+	inc dword [.currentDevice]
+jmp .GetInputLoop
+
+.PageDown:
+	inc dword [.currentDevice]
+	mov eax, dword [tSystem.PCIDeviceCount]
+	cmp dword [.currentDevice], eax
+	jbe .PCIDevices
+	dec dword [.currentDevice]
+jmp .GetInputLoop
+
+.End:
+	; set this for next time
+	mov dword [.currentDevice], 0
+
+	; clear the screen and exit
+	call ClearScreen32
+ret
+
+
+
+.PCIInfoText$									db 'PCI Devices', 0x00
+.PCIDeviceCountText$							db '^d PCI devices found', 0x00
+.PCIDeviceListingText$							db 'Device ^d of ^d', 0x00
+.PCIDeviceDescriptionText1$						db 'Bus Dev  Fn  Vend  Dev   Cl  Sc  PI  Rv  Description', 0x00
+.format1$										db '^p2^h  ^p2^h   ^p1^h   ^p4^h  ^h  ^p2^h  ^h  ^h  ^h  ^s', 0x00
+.format2$										db '^p8BAR0 ^h        BAR1 ^h        BAR2 ^h', 0x00
+.format3$										db '^p8BAR3 ^h        BAR4 ^h        BAR5 ^h', 0x00
+.format4$										db '^p2Cache Line Size ^h    Latency Timer ^h    Header Type ^h    BIST ^h', 0x00
+.format5$										db '^p8Cardbus CIS Pointer ^h    ^p4Subsystem Vendor ^h    Subsystem ^h', 0x00
+.format6$										db '^p8Expansion ROM Base Address ^h    Capabilities Pointer ^p2^h', 0x00
+.format7$										db '^p2Interrupt Line ^h    Interrupt Pin ^h    Max Grant ^h    Max Latency ^h', 0x00
+.PCIBus											dd 0x00000000
+.PCIDevice										dd 0x00000000
+.PCIFunction									dd 0x00000000
+.currentDevice									dd 0x00000000
 
 
 
 .TimeInfo:
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.hours]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 180
-	push 20
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.minutes]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 180
-	push 120
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.seconds]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 180
-	push 220
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.ticks]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 180
-	push 320
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.month]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 200
-	push 20
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.day]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 200
-	push 120
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.century]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 200
-	push 220
-	call [VESAPrint]
-
-	mov eax, 0x00000000
-	mov al, [tSystemInfo.year]
-	push kPrintString
-	push eax
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 200
-	push 320
-	call [VESAPrint]
-
-	; print seconds since boot just for the heck of it
-	push kPrintString
-	push dword [tSystemInfo.secondsSinceBoot]
-	call ConvertToHexString
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 34
-	push 2
-	call [VESAPrint]
+;	mov eax, 0x00000000
+;	mov al, [tSystem.hours]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 180
+;	push 20
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.minutes]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 180
+;	push 120
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.seconds]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 180
+;	push 220
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.ticks]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 180
+;	push 320
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.month]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 200
+;	push 20
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.day]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 200
+;	push 120
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.century]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 200
+;	push 220
+;	call [VESAPrint]
+;
+;	mov eax, 0x00000000
+;	mov al, [tSystem.year]
+;	push kPrintText$
+;	push eax
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 200
+;	push 320
+;	call [VESAPrint]
+;
+;	; print seconds since boot just for the heck of it
+;	push kPrintText$
+;	push dword [tSystem.secondsSinceBoot]
+;	call ConvertToHexString
+;	push kPrintText$
+;	push 0xFF000000
+;	push 0xFF777777
+;	push 34
+;	push 2
+;	call [VESAPrint]
 ret
-
-
-
-DebugFeatureDemo:
-	; assemble all this stuff into a single string for later printing as a demo of our fancy new string routines!
-	push .samplestring3
-	push 150
-	push 00000000110111011101011010111010b
-	push 0x00beef00
-	push .samplestring2
-	push .samplestring1
-	push 16
-	push .tempstring2
-	push .tempstring
-	call StringBuild
-
-	; now print that string we just built
-	push .tempstring2
-	push 0xFF000000
-	push 0xFF777777
-	push 162
-	push 2
-	call [VESAPrint]
-	call KeyWait
-ret
-.tempstring										db 'Approximately %d seconds ago, the application %s has unexpectedly %s at address 0x%h with flags %b. Please reboot your %o %s.', 0x00
-.tempstring2									times 256 db 0x00
-.samplestring1									db 'FluffyCat', 0x00
-.samplestring2									db 'made pancakes', 0x00
-.samplestring3									db 'microwaves', 0x00
-
-
-
-RegDump:
-	; Quick register dump routine for debugging
-	;  input:
-	;   n/a
-	;
-	;  output:
-	;   n/a
-	;
-	; changes:
-
-	pushad
-	push edi
-	push esi
-	push edx
-	push ecx
-	push ebx
-	push eax
-	push kPrintString
-	push .regDumpStr
-	call StringBuild
-	
-	push kPrintString
-	push 0xFF000000
-	push 0xFF777777
-	push 300
-	push 2
-	call [VESAPrint]
-
-	call KeyWait
-	popad
-ret
-.regDumpStr										db 'eax %h    ebx %h    ecx %h    edx %h    esi %h    edi %h', 0x00
 
 
 
 VideoInfo:
 	; testing DebugPrint - print the address in memory of the VESA OEM String and the string itself
-	push dword [tSystemInfo.VESAOEMVendorNamePointer]
-	push tSystemInfo.VESAOEMVendorNamePointer
+	push dword [tSystem.VESAOEMVendorNamePointer]
+	push tSystem.VESAOEMVendorNamePointer
 	push 64
 	push 2
 	call PrintSimple32
 ret
+
+
+
+kDebugger$										db 'What a horrible Night to have a bug.', 0x00

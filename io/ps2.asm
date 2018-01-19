@@ -2,21 +2,17 @@
 ; Copyright 1995 - 2018 by mercury0x000d
 ; ps2.asm is a part of the Night Kernel
 
-; The Night Kernel is free software: you can redistribute it and/or
-; modify it under the terms of the GNU General Public License as published
-; by the Free Software Foundation, either version 3 of the License, or (at
-; your option) any later version.
+; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+; License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+; version.
 
-; The Night Kernel is distributed in the hope that it will be useful, but
-; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-; for more details.
+; The Night Kernel is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+; warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-; You should have received a copy of the GNU General Public License along
-; with the Night Kernel. If not, see <http://www.gnu.org/licenses/>.
+; You should have received a copy of the GNU General Public License along with the Night Kernel. If not, see
+; <http://www.gnu.org/licenses/>.
 
-; See the included file <GPL License.txt> for the complete text of the
-; GPL License by which this program is covered.
+; See the included file <GPL License.txt> for the complete text of the GPL License by which this program is covered.
 
 
 
@@ -46,9 +42,9 @@ KeyboardInit:
 	mov bh, 0x00
 	.loop:
 		; check the keyboard status
-		pushad
+		pusha
 		call PS2ControllerWaitDataRead
-		popad
+		popa
 		in al, 0x60
 		cmp al, 0xAA
 		je .resetDone
@@ -58,7 +54,7 @@ KeyboardInit:
 	.resetDone:
 
 	; now we set the custom stuff
-	mov ebx, [tSystemInfo.delayValue]
+	mov ebx, [tSystem.delayValue]
 	shr ebx, 2
 	push ebx
 
@@ -150,7 +146,7 @@ KeyboardInit:
 	in al, 0x60
 	call PS2ControllerWaitDataRead
 	in al, 0x60
-	mov edx, tSystemInfo.keyboardType
+	mov edx, tSystem.keyboardType
 	inc edx
 	mov [edx] ,al
 	call PS2ControllerWaitDataRead
@@ -240,15 +236,16 @@ KeyWait:
 	;  output:
 	;   n/a
 	;
-	;  changes: eax, ecx, edx
-	
-	mov ebx, 0x00000000
+	;  changes: eax, ecx, edx, esi
 
 	.KeyLoop:
 		call KeyGet
 		pop eax
 		cmp al, 0x00
 	je .KeyLoop
+	pop ecx
+	push eax
+	push ecx
 ret
 
 
@@ -398,7 +395,7 @@ MouseInit:
 	call PS2ControllerWaitDataRead
 	in al, 0x60
 
-	mov byte [tSystemInfo.mouseID], al
+	mov byte [tSystem.mouseID], al
 
 	; see if this is one of those newfangled wheel mice
 	; if it is, we skip the next section where we reapply default settings
@@ -418,13 +415,13 @@ MouseInit:
 
 	.skipDefaultSettings:
 	; here we set the packet size
-	mov byte al, [tSystemInfo.mouseID]
+	mov byte al, [tSystem.mouseID]
 	cmp al, 0x03
 	je .fancyMouse
-	mov byte [tSystemInfo.mousePacketByteSize], 0x03
+	mov byte [tSystem.mousePacketByteSize], 0x03
 	jmp .donePacketSetting
 	.fancyMouse:
-	mov byte [tSystemInfo.mousePacketByteSize], 0x04
+	mov byte [tSystem.mousePacketByteSize], 0x04
 	.donePacketSetting:
 
 	; select PS/2 device 2 to send next data byte to mouse
@@ -444,17 +441,17 @@ MouseInit:
 	out 0x64, al
 
 	; limit mouse horizontally
-	mov ax, [tSystemInfo.VESAWidth]
+	mov ax, [tSystem.VESAWidth]
 	shr ax, 1
-	mov word [tSystemInfo.mouseX], ax
+	mov word [tSystem.mouseX], ax
 
 	; limit mouse vertically
-	mov ax, [tSystemInfo.VESAHeight]
+	mov ax, [tSystem.VESAHeight]
 	shr ax, 1
-	mov word [tSystemInfo.mouseY], ax
+	mov word [tSystem.mouseY], ax
 
 	; init mouse wheel index
-	mov word [tSystemInfo.mouseZ], 0x7777
+	mov word [tSystem.mouseZ], 0x7777
 ret
 
 
@@ -469,10 +466,10 @@ PS2ControllerWaitDataRead:
 	;
 	;  changes: al, ebx, ecx
 
-	mov dword [tSystemInfo.lastError], 0x00000000
+	mov dword [tSystem.lastError], 0x00000000
 
 	; set timeout value for roughly a couple seconds
-	mov ebx, [tSystemInfo.delayValue]
+	mov ebx, [tSystem.delayValue]
 	shr ebx, 8
 	mov ecx, 0x00000000
 
@@ -487,7 +484,7 @@ PS2ControllerWaitDataRead:
 		cmp ebx, ecx
 	jne .waitLoop
 	; if we get here, we've timed out
-	mov dword [tSystemInfo.lastError], 0x0000FF00
+	mov dword [tSystem.lastError], 0x0000FF00
 	.done:
 ret
 
@@ -504,10 +501,10 @@ PS2ControllerWaitDataWrite:
 	;
 	;  changes: ax, ebx, ecx
 
-	mov dword [tSystemInfo.lastError], 0x00000000
+	mov dword [tSystem.lastError], 0x00000000
 
 	; set timeout value for roughly a couple seconds
-	mov ebx, [tSystemInfo.delayValue]
+	mov ebx, [tSystem.delayValue]
 	shr ebx, 8
 	mov ecx, 0x00000000
 

@@ -2,21 +2,17 @@
 ; Copyright 1995 - 2018 by mercury0x000d
 ; hardware.asm is a part of the Night Kernel
 
-; The Night Kernel is free software: you can redistribute it and/or
-; modify it under the terms of the GNU General Public License as published
-; by the Free Software Foundation, either version 3 of the License, or (at
-; your option) any later version.
+; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+; License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+; version.
 
-; The Night Kernel is distributed in the hope that it will be useful, but
-; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-; for more details.
+; The Night Kernel is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+; warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-; You should have received a copy of the GNU General Public License along
-; with the Night Kernel. If not, see <http://www.gnu.org/licenses/>.
+; You should have received a copy of the GNU General Public License along with the Night Kernel. If not, see
+; <http://www.gnu.org/licenses/>.
 
-; See the included file <GPL License.txt> for the complete text of the
-; GPL License by which this program is covered.
+; See the included file <GPL License.txt> for the complete text of the GPL License by which this program is covered.
 
 
 
@@ -34,19 +30,24 @@ A20Enable:
 	;   n/a
 
 	in al, 0x92
-	or al, 0x02
+	or al, 00000010b
 	out 0x92, al
 
 	; verify it worked
+	mov al, 0x00
 	in al, 0x92
 	and al, 0x02
 	cmp al, 0
 	jnz .success
 
 	; it failed, so we have to say so
-	push kFastA20Fail
-	call PrintSimple16
-	jmp $
+	push 4
+	push 0
+	push fastA20Fail$
+	call Print32
+	call PrintRegs32
+	;jmp $
+
 	.success:
 ret
 
@@ -65,7 +66,7 @@ CPUSpeedDetect:
 	mov ebx, 0x00000000
 	mov ecx, 0x00000000
 	mov edx, 0x00000000
-	mov al, [tSystemInfo.ticks]
+	mov al, [tSystem.ticks]
 	mov ah, al
 	dec ah
 	.loop1:
@@ -78,7 +79,7 @@ CPUSpeedDetect:
 		pop edx
 		pop ecx
 		pop ebx
-		mov al, [tSystemInfo.ticks]
+		mov al, [tSystem.ticks]
 		cmp al, ah
 	jne .loop1
 	pop ebx
@@ -164,3 +165,7 @@ Reboot:
 
 	; and now, for the return we'll never reach...
 ret
+
+
+
+fastA20Fail$									db 'Cannot start. Attempt to use Fast A20 Enable failed.', 0x00
