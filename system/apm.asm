@@ -139,7 +139,7 @@ APM10_Connect16BitPMInterface:
     jc .alreadyconnected
     jmp .no_error
     
-    .alreadyconnected:
+    .alreadyconnected:      ; APM is already connected, not an "error"
     cmp ah, 0x02
     jne APMError
     
@@ -171,7 +171,7 @@ APM10_Connect32BitPMInterface:
     jc .alreadyconnected
     jmp .no_error
     
-    .alreadyconnected:
+    .alreadyconnected:          ; If already connected, not an "error"
     cmp ah, 0x02
     jne APMError
     
@@ -185,12 +185,7 @@ APM10_DisconnectInterface:
     xor bx, bx
     int 0x15
     
-    jc .disconnect_error
-    jmp .no_error
-    
-    .disconnect_error:
-    cmp ah, 0x03
-    jne APMError
+    jc APMError
     
     .no_error:
     
@@ -233,7 +228,7 @@ APM10_SetPowerStateToStandBy:
     mov cx, 0x0001
     int 0x15
     
-    jc APMError
+    jc APMError             ; assume all errors are fatal
 ret
 
 APM10_SetPowerStateToSuspend:
@@ -263,7 +258,7 @@ APM12_SetPowerStateToOff:
     mov cx, 0x0002
     int 0x15
     
-    jc APMError
+    jc APMError             ; assume all errors are fatal
 ret
     
 APM10_SetPowerState:
@@ -274,7 +269,7 @@ APM10_SetPowerState:
     mov ax, 0x5307    
     int 0x15
     
-    jc APMError
+    jc APMError                ; assume all errors are fatal
 ret
 
 ;    Values for APM event code:
@@ -298,7 +293,7 @@ ret
 ;    02xxh  OEM-defined APM events
 ;    0300h-FFFFh reserved
 
-    APM10_TogglePowerManagement:
+APM10_TogglePowerManagement:
     ; BX = device ID for all devices power-managed by APM
     ; 0001h (APM v1.1+)
     ; FFFFh (APM v1.0)
@@ -314,7 +309,7 @@ ret
     mov ax, 0x5308
     int 0x15
     
-    jc APMError
+    jc APMError         ; assume all errors are fatal
 ret
 
 APM10_RestorePowerOnDefaults:
@@ -334,7 +329,7 @@ APM10_RestorePowerOnDefaults:
     mov ax, 0x5309
     int 0x15
     
-    jc APMError
+    jc APMError             ; assume all errors are fatal
 
 ret   
  
@@ -395,7 +390,7 @@ APM10_GetPowerStatus:
     mov ax, 0x530A
     int 0x15
     
-    jc APMError
+    jc APMError             ; assume all errors are fatal
         
 ret
 
