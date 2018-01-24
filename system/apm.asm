@@ -293,7 +293,8 @@ ret
 ;    02xxh  OEM-defined APM events
 ;    0300h-FFFFh reserved
 
-APM10_TogglePowerManagement:
+
+APM10_DisablePowerManagement:
     ; BX = device ID for all devices power-managed by APM
     ; 0001h (APM v1.1+)
     ; FFFFh (APM v1.0)
@@ -307,6 +308,27 @@ APM10_TogglePowerManagement:
     ;  AH = error code (01h,03h,09h,0Ah,0Bh)
 
     mov ax, 0x5308
+    xor cx, cx
+    int 0x15
+    
+    jc APMError         ; assume all errors are fatal
+ret
+
+APM10_EnablePowerManagement:
+    ; BX = device ID for all devices power-managed by APM
+    ; 0001h (APM v1.1+)
+    ; FFFFh (APM v1.0)
+    ; CX = new state
+    ; 0000h disabled
+    ; 0001h enabled
+    ;
+    ; Return:
+    ;  CF clear if successful
+    ;  CF set on error
+    ;  AH = error code (01h,03h,09h,0Ah,0Bh)
+
+    mov ax, 0x5308
+    mov cx, 0x0001
     int 0x15
     
     jc APMError         ; assume all errors are fatal
@@ -425,20 +447,41 @@ APM11_GetPowerState:
     
 ret
 
+; Advanced Power Management v1.1+ - EN/DISABLE DEVICE POWER MANAGEMENT
+;
+; Input:
+;   BX = device ID
+;   CX = function
+;     0000h disable power management
+;     0001h enable power management
+;
+;  Return:
+;   CF clear if successful
+;   CF set on error
+;   AH = error code (01h,03h,09h,0Ah,0Bh)
+;
+;  Desc: Specify whether automatic power management should be active for a given device
 
-APM11_ToggleDevicePowerManagement:
-    ; Enable/Disable Power Management for a device
-    ;BX = device ID 
-    ;CX = function
-    ;0000h disable power management
-    ;0001h enable power management
+APM11_DisableDevicePowerManagement:
     
     mov ax, 0x530d
+    xor cx, cx
     int 0x15
     
     jc APMError
     
 ret
+
+APM11_EnableDevicePowerManagement:
+    
+    mov ax, 0x530d
+    mov cx, 0x0001
+    int 0x15
+    
+    jc APMError
+    
+ret
+
     
 
 APM11_DriverVersion:
@@ -458,3 +501,259 @@ APM11_DriverVersion:
     jc APMError
     
 ret
+
+; Advanced Power Management v1.1+ - ENGAGE/DISENGAGE POWER MANAGEMENT
+
+;    APM11_DisenagePowerManagement
+;    APM11_EngagePowerManagement
+;    
+;
+;    BX = device ID
+;    CX = function
+;        0000h disengage power management
+;        0001h engage power management
+;
+;  Return:
+;    CF clear if successful
+;    
+;    CF set on error
+;    AH = error code (01h,09h) (see #00473)
+;
+;   Notes: Unlike AX=5308h, this call does not affect the functioning of the APM BIOS. 
+;   When cooperative power management is disengaged, the APM BIOS performs automatic power 
+;   management of the system or device
+
+APM11_DisengagePowerManagement:
+    
+    mov ax, 0x530f
+    xor cx, cx
+    int 0x15
+    
+    jc APMError
+ 
+ret
+
+APM11_EngagePowerManagement:
+    
+    mov ax, 0x530f
+    mov cx, 0x0001
+    int 0x15
+    
+    jc APMError
+    
+ret
+
+APM12_GetCapabilities:
+    ; BX - device ID (0000h) other values reserved
+    
+    ; Return:
+    ;    CF clear if successful
+    ;    BL = number of battery units supported (00h if no system batteries)
+    ;    CX = capabilities flags
+    ;    CF set on error
+    ;    AH = error code (01h,09h,86h)   
+    ;    
+    ; Bitfields for APM v1.2 capabilities flags:
+    ;
+    ; Bit(s)  Description     (Table 00480)
+    ;    15-8   reserved
+    ;    7      PCMCIA Ring Indicator will wake up system from suspend mode
+    ;    6      PCMCIA Ring Indicator will wake up system from standby mode
+    ;    5      Resume on Ring Indicator will wake up system from suspend mode
+    ;    4      Resume on Ring Indicator will wake up system from standby mode
+    ;    3      resume timer will wake up system from suspend mode
+    ;    2      resume timer will wake up system from standby mode
+    ;    1      can enter global suspend state
+    ;    0      can enter global standby state
+    ;
+    ;  Notes: This function is supported via the INT 15, 16-bit protected mode, and 32-bit protected mode interfaces; 
+    ;  it does not require that a connection be established prior to use. This function will return the capabilities 
+    ;  currently in effect, not any new settings which have been made but do not take effect until a system restart    
+    ;
+    
+    mov ax, 0x5310
+    xor bx, bx
+    int 0x15
+    
+    jc APMError
+ 
+ret
+
+; Advanced Power Management v1.2 - GET/SET/DISABLE RESUME TIMER
+;
+;
+;    APM12_DisableTimer
+;    APM12_GetResumeTimer
+;    APM12_SetResumeTimer
+;
+;
+;   The following functions use the information below
+;    BX = device ID
+;        0000h (APM BIOS)
+;        other reserved
+;    CL = function
+;        00h disable Resume Timer
+;        01h get Resume Timer
+;        02h set Resume Timer
+;    CH = resume time, seconds (BCD)
+;    DL = resume time, minutes (BCD)
+;    DH = resume time, hours (BCD)
+;    SI = resume date (BCD), high byte = month, low byte = day
+;    DI = resume date, year (BCD)
+;
+;  Return:
+;    CF clear if successful
+;
+;    ---if getting timer---
+;    CH = resume time, seconds (BCD)
+;    DL = resume time, minutes (BCD)
+;    DH = resume time, hours (BCD)
+;    SI = resume date (BCD), high byte = month, low byte = day   
+;    DI = resume date, year (BCD)
+;    
+;    CF set on error
+;    AH = error code (03h,09h,0Ah,0Bh,0Ch,0Dh,86h)
+;
+APM12_DisableResumeTimer:
+
+    mov ax, 0x5311
+    xor bx, bx
+    xor cl, cl
+    
+    int 0x15
+    
+    jc APMError
+ret
+
+APM12_GetResumeTimer:
+
+    mov ax, 0x5311
+    xor bx, bx
+    mov cl, 0x02
+    
+    int 0x15
+    
+    jc APMError
+ret
+        
+APM12_SetResumeTimer:
+
+    mov ax, 0x5311
+    xor bx, bx
+    mov cl, 0x02
+    
+    int 0x15
+    
+    jc APMError
+ret        
+  
+;  Advanced Power Management v1.2 - ENABLE/DISABLE RESUME ON RING
+;
+;   APM12_EnableResumeOnRing
+;   APM12_DisableResumeOnRing
+;   APM12_GetResumeOnRingStatus
+;   
+;  Input:
+;    BX = device ID
+;        0000h (APM BIOS)
+;        other reserved
+;    CL = function
+;        00h disable Resume on Ring Indicator
+;        01h enable Resume on Ring Indicator
+;        02h get Resume on Ring Indicator status
+;
+;  Return:
+;    CF clear if successful
+;    CX = resume status (0000h disabled, 0001h enabled)
+;    CF set on error
+;    AH = error code (03h,09h,0Ah,0Bh,0Ch,86h)
+;
+;  Notes: This function is supported via the INT 15, 
+;  16-bit protected mode, and 32-bit protected mode interfaces
+
+APM12_DisableResumeOnRing:
+    ;
+    mov ax, 0x5312
+    xor bx, bx
+    mov cl, 0x00
+    int 0x15
+    
+    jc APMError
+ret
+
+APM12_EnableResumeOnRing:
+;
+    mov ax, 0x5312
+    xor bx, bx
+    mov cl, 0x01
+    int 0x15
+    
+    jc APMError
+ret
+
+APM12_GetResumeOnRingStatus:
+;
+    mov ax, 0x5312
+    xor bx, bx
+    mov cl, 0x03
+    int 0x15
+    
+    jc APMError
+ret
+
+;   Advanced Power Management v1.2 - ENABLE/DISABLE TIMER-BASED REQUESTS
+;
+;    APM12_DisableTimerBasedRequests
+;    APM12_EnableTimerBasedRequests
+;    APM12_GetTimerBasedRequestStatus
+;
+;   Input:
+;    AX = 5313h
+;    BX = device ID (see #00474)
+;        0000h (APM BIOS)
+;        other reserved
+;    CL = function
+;        00h disable timer-based requests
+;        01h enable timer-based requests
+;        02h get timer-based requests status
+;
+;   Return:
+;    CF clear if successful
+;    CX = timer-based requests status (0000h disabled, 0001h enabled)
+;    CF set on error
+;    AH = error code (03h,09h,0Ah,0Bh,86h) (see #00473)
+;
+;   Notes: This function is supported via the INT 15, 16-bit protected mode, 
+;   and 32-bit protected mode interfaces. Some BIOSes set AH on return even when 
+;   successful
+
+APM12_DisableTimerBasedRequests:
+    ;
+    mov ax, 0x5313
+    xor bx, bx
+    mov cl, 0x00
+    int 15
+    
+    jc APMError
+ret
+
+APM12_EnableTimerBasedRequests:
+    ;
+    mov ax, 0x5313
+    xor bx, bx
+    mov cl, 0x01
+    int 15
+    
+    jc APMError
+ret
+
+APM12_GetTimerBasedRequestStatus:
+    ;
+    mov ax, 0x5313
+    xor bx, bx
+    mov cl, 0x02
+    int 15
+    
+    jc APMError
+ret
+
