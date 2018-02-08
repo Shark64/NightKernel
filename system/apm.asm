@@ -96,6 +96,10 @@ APM10_InstallationCheck:
     int 0x15
     
     jc APMError
+    
+    cmp bx, 0x504d
+    jne APMError
+    
 ret
 
 APM10_ConnectRMInterface:
@@ -203,8 +207,6 @@ APM10_CPUIdle:
    
  ret
 
-APMError:
-ret
 
 APM10_CPUBusy:
     ; CPU Busy
@@ -729,22 +731,31 @@ ret
 
 APM12_DisableTimerBasedRequests:
     ;
+    push ax
+    push bx
     mov ax, 0x5313
     xor bx, bx
     mov cl, 0x00
     int 15
     
     jc APMError
+    pop bx
+    pop ax
 ret
 
 APM12_EnableTimerBasedRequests:
     ;
+    
+    push ax
+    push bx
     mov ax, 0x5313
     xor bx, bx
     mov cl, 0x01
     int 15
     
     jc APMError
+    pop bx
+    pop ax
 ret
 
 APM12_GetTimerBasedRequestStatus:
@@ -757,3 +768,5 @@ APM12_GetTimerBasedRequestStatus:
     jc APMError
 ret
 
+APMError:
+ret
