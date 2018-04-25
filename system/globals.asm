@@ -50,8 +50,8 @@ tSystem:
 	.delayValue									dd 0x00000000
 	.lastError									dd 0x00000000
 	.keyboardType								dw 0x0000
-	.PCISupport									db 0x00
-	.PCIDeviceCount								db 0x00000000
+	.PCITableAddress							dd 0x00000000				; will be zero if no PCI support
+	.PCIDeviceCount								dd 0x00000000
 	.multicoreAvailable							db 0x00
 	.CPUIDVendor$								times 16 db 0x00
 	.CPUIDBrand$								times 64 db 0x00

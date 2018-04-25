@@ -1,4 +1,3 @@
-
 ; Night Kernel
 ; Copyright 1995 - 2018 by mercury0x000d
 ; Kernel.asm is a part of the Night Kernel
@@ -143,13 +142,25 @@ sti
 ; find out how many PCI devices we have and save that info to the system struct
 push progressTextD$
 call Print32
-call PCIGetDeviceCount
-pop dword [tSystem.PCIDeviceCount]
+call PCIInitBus
 
 ; clear the screen and start!
 push progressTextE$
 call Print32
 call ClearScreen32
+
+
+
+;DiskInitLoop:
+;	; get the device number
+;
+;	; get data on it
+;
+;	; get the disk I/O 
+;
+;loop DiskInitLoop
+
+
 
 ; enter the infinite loop which runs the kernel
 InfiniteLoop:
@@ -171,7 +182,7 @@ progressText9$									db 'Load system data to the info struct', 0x00
 progressTextA$									db 'MouseInit', 0x00
 progressTextB$									db 'KeyboardInit', 0x00
 progressTextC$									db 'Enabling interrupts', 0x00
-progressTextD$									db 'Probing PCI interface', 0x00
+progressTextD$									db 'Shadowing PCI register space', 0x00
 progressTextE$									db 'Setup complete', 0x00
 
 

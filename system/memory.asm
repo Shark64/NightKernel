@@ -193,6 +193,21 @@ ret
 
 
 
+MemResize:
+	; Resizes the specified block of RAM to the new size specified
+	;  input:
+	;	
+	;
+	;  output:
+	;   
+	;
+	; changes: 
+
+	
+ret
+
+
+
 MemSearchDWord:
 	; Searches the memory range specified for the given dword value
 	;  input:

@@ -20,6 +20,118 @@ bits 32
 
 
 
+
+
+IDECmd:
+	; Reads sectors from disk using the CHS method
+	;  input:
+	;   CHS address of starting sector
+	;		Cylinder is first two bytes of register, beginning with MSB (up to 65535)
+	;		Head is next byte (0 - 15)
+	;		Sector is LSB (0 is reserved; value is usually 1 - 63 for 31.5 GB disks, can be up to 255 for 127.5 GB disks)
+	;	number of sectors to read
+	;	Memory buffer address to which data will be written
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax, ebx, ecx, edx, edi
+
+	pop eax
+	pop ebx
+
+	mov word [ATARegData], ax
+	add word [ATARegData], 0x00
+	mov word [ATARegError], ax
+	add word [ATARegError], 0x01
+	mov word [ATARegFeatures], ax
+	add word [ATARegFeatures], 0x01
+	mov word [ATARegSecCount0], ax
+	add word [ATARegSecCount0], 0x02
+	mov word [ATARegLBA0], ax
+	add word [ATARegLBA0], 0x03
+	mov word [ATARegLBA1], ax
+	add word [ATARegLBA1], 0x04
+	mov word [ATARegLBA2], ax
+	add word [ATARegLBA2], 0x05
+	mov word [ATARegHDDevSel], ax
+	add word [ATARegHDDevSel], 0x06
+	mov word [ATARegCommand], ax
+	add word [ATARegCommand], 0x07
+	mov word [ATARegStatus], ax
+	add word [ATARegStatus], 0x07
+	mov word [ATARegSecCount1], ax
+	add word [ATARegSecCount1], 0x08
+	mov word [ATARegLBA3], ax
+	add word [ATARegLBA3], 0x09
+	mov word [ATARegLBA4], ax
+	add word [ATARegLBA4], 0x0A
+	mov word [ATARegLBA5], ax
+	add word [ATARegLBA5], 0x0B
+	mov word [ATARegControl], bx
+	add word [ATARegControl], 0x02
+	mov word [ATARegAltStatus], bx
+	add word [ATARegAltStatus], 0x02
+	mov word [ATARegDevAddress], bx
+	add word [ATARegDevAddress], 0x03
+
+ret
+ATARegData										dw 0x0000
+ATARegError										dw 0x0000
+ATARegFeatures									dw 0x0000
+ATARegSecCount0									dw 0x0000
+ATARegLBA0										dw 0x0000
+ATARegLBA1										dw 0x0000
+ATARegLBA2										dw 0x0000
+ATARegHDDevSel									dw 0x0000
+ATARegCommand									dw 0x0000
+ATARegStatus									dw 0x0000
+ATARegSecCount1									dw 0x0000
+ATARegLBA3										dw 0x0000
+ATARegLBA4										dw 0x0000
+ATARegLBA5										dw 0x0000
+ATARegControl									dw 0x0000
+ATARegAltStatus									dw 0x0000
+ATARegDevAddress								dw 0x0000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 DiskATACHSRead:
 	; Reads sectors from disk using the CHS method
 	;  input:

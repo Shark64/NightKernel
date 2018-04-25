@@ -229,12 +229,12 @@ ret
 
 
 KeyWait:
-	; Waits until a key is pressed
+	; Waits until a key is pressed, then returns that key
 	;  input:
 	;   n/a
 	;
 	;  output:
-	;   n/a
+	;   key code
 	;
 	;  changes: eax, ecx, edx, esi
 

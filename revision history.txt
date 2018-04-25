@@ -1,0 +1,143 @@
+4/25/2018, 0.0F Update - Final PCI system
+- Added version information to kernel info screen
+- Changed PCI system to load device data into RAM and source all subsequent register reads from there
+- Made minor changes to folder structure
+- Other minor changes
+
+
+
+1/19/2018, 0.0E Update - Now runs on real hardware!
+- Added automatic sequential highlighted printing to PrintRegsVESA() (formerly RegDump) for extra ease of use
+- Added PCI bus probing to kernel startup so it only needs done once because it takes so long
+- Added PCI device info dump to debug menu
+- Added PCIGetDeviceCount to return the total number of PCI devices (functions) in the system
+- Added text color and location features Print16 and Print32 complete with autoscrolling text as the bottom of the screen is reached
+- Added HomeCursor()
+- Added handlers for breakpoint, invalid opcode and GPF exceptions
+- Removed VESA support in favor of later having a dedicated graphics driver handle video
+- Changed PrintRegs() (formerly RegDump) to not use StringBuild() to do its job, since I needed PrintRegs() to debug StringBuild() O.O
+- Changed initial boot code in kernel.asm to print small diagnostic messages to assist debugging on real hardware
+- Changed the preferred method of clearing strings from MemCopy-ing an already cleared string over the working one to simply using MemFill to fill the string space with zeros to eliminate the wasted space of the blank strings
+- Changed the token used in StringBuild() to ^ instead of %. Why? Mac throwback! 8-)
+- Changed text printing routines to work identically in both 16 and 32 bit mode
+- Changed the formatting of the GPL text in the beginning of every. Single. File.
+- Fixed a read after end of string bug in BuildString() which gave weird results with tokens
+- Moved some data out of globals.asm and into the respective files with related routines and removed some unused data to tidy up the globals
+
+
+
+12/6/2017, 0.0D Update - Milestone 1
+- Added beginning of framework for PCI support (Exelyx C code which will be rewritten in assembly)
+- Moved some code around
+- Polished LBA code
+- Slight modifications to the Debug code
+- Structured the project into directories
+- Tested and polished the dummy memory allocation routine
+
+
+
+12/2/2017, 0.0C Update
+- Changed screen.asm to vesa.asm
+- Added ConvertToOctalString() and ConvertToBinaryString() to api.asm
+- Added ticksSinceBoot system variable for easier timing of events over spans of more than one second
+- Added strings.asm
+- Added MemFill() and MemCopy() to memory.asm
+- Added VESALoadIcon() to vesa.asm
+- Added RegDump() to debug.asm for more debugging ease
+
+
+
+11/8/2017, 0.0B Update
+- Modified Random() to return numbers within a requested limit
+- Added a starfield to the boot screen (Makes a nice test for Random()'s new feature! :) )
+- Made boot screen selectable by ConfigBits (Also made it disabled by default for now. See the notes at the bottom of globals.asm for details on what ConfigBits can control.)
+- Identified (and thus far did nothing about) a bug where the kernel throws an Invalid Opcode exception at 0008:0000001F when started with insufficient video RAM
+- Cleaned up kernel.asm and moved some IDT setup code that used to be there to idt.asm
+- Added a crosshair cursor (and a couple other surprises) to the Mouse Tracking Test
+- Modified VESAPlot() to clip pixels outside the LFB (Writing to memory outside your target is a Very Bad Thing)
+- Added the beginning of a RAM browser to the debug menu for inspecting memory without relying on the VirtualBox debugger
+- Added ConvertDecimalToString()
+
+
+
+11/3/2017, 0.0A Update
+-Fixed bug in VESAInit() where setting VESA mode fails silently if video hardware does not support VESA (The error message for the VESA init failing was being printed using VESA. Yes, that is as bad as it sounds. :) )
+-Fixed bug in VESAPlot32() where 16-bit registers were being used instead of 32-bit causing graphical errors when drawing at certain points on the screen
+-Fixed error message printing in A20Enable()
+-Changed infinite loops (except the main one!) to a simple "jmp $"
+-Added beginning of serial communication routines (Existing routines transmit data, but still need to add interrupt handlers that actually do something useful. Also only really works on port 1 for now.)
+-Added pushad/popad to all unused interrupt handlers for future sanity
+-Added VESAClearScreen()
+-Added boot logo
+-Added TimerWait()
+-Added the beginnings of a debug menu (debug.asm)
+-Beautification of teh codez1! (Tabs > spaces, kids.)
+-Added GPL License.txt since this is kiiiiinda an open-source project and all
+
+
+
+10/23/2017, 0.09 Update
+-added 32-bit random number generator "Random()"
+-added internal time maintenence based on rtc values at boot
+-added PrintSimple16() and PrintSimple32()
+-added files for upcoming work on deeper hardware management
+
+
+
+10/21/2017, 0.08 Cleanup
+-split some code from hardware.asm into pic.asm, ps2.asm and screen.asm
+-split some code from kernel.asm into api.asm and hardware.asm
+-updated all copyright dates and copyright message
+-merged build.sh and debug.sh into one script
+-modified buildrun.sh to mount the floppy image on its own instead of relying on VirtualBox to already be configured with a specific image to allow more flexibility
+...and EVERYTHING STILL WORKS! :D
+
+
+
+8/31/2016, 0.08 Update
+-Fixed a horribly insidious bug in which the correct VESAPrint function pointer is not used if the address of the low byte of the VESAPrint32 function address happens to be 0x18
+-Added limiters on mouse position counters
+-Added a DebugPrint as a quick debug aid
+-Added jmp $ instructions to all exception handlers which are unimplemented as of yet to make it apparent if the system happens to fall into one. You can't miss a blantant hang lol
+
+
+
+8/17/2016, 0.07 Update
+-Finished mouse support
+
+
+
+8/14/2016, 0.06 Update
+-Fixed copyright dates
+-Modified timer tick interrupt
+-Beginning of mouse interface
+-Added background color option to VESAPrint
+-Added seconds since boot display to aid in seeing if anything has hung
+-Added some FAT structures
+
+
+
+8/7/2016, v0.05 Update
+-Added 24 bit color support
+-Made VESAPrint and VESAPlot function pointers to handle different underlying color depth routines
+-Added key buffer, basic keyboard interrupt handler and key fetch routine
+-Enabled interrupts - We've finally gone live!
+-Various minor fixups and corrections
+
+
+
+8/6/2016, v0.04 update bugfixes
+-Fixed Maarten's memory code
+-Added PrintFail for printing pre-VESA init fatal errors
+-other little fixups
+
+
+
+8/3/2016, v0.04 update
+Condensed code files and added:
+-beginning of VESA support
+-text drawing in 32-bit graphics modes
+-auto detect best mode and set
+-Fast A20 enable
+-introduced system info structure
+-Maarten's memory code
