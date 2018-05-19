@@ -20,8 +20,8 @@ ddskel:
 				                                    ;  Bit  2         0       - Dev is NUL
 				                                    ;  Bit  1         0       - Dev is STO (standard output)
 				                                    ;  Bit  0         0       - Dev is STI (standard input)
-                    dw      offset strategy
-                    dw      offset commands
+                    dw      strategy
+                    dw      commands
     device_name     db      '<DDSKEL>'               ; device driver name
 ;
 ; Additional driver data
@@ -29,7 +29,7 @@ ddskel:
 
     pkt_ptr         dd      0                       ; packet pointer storagre
 
-    disp_tbl        dw      offset Init             ; 0 - Initialize driver
+    disp_tbl        dw      Init             	    ; 0 - Initialize driver
                     dw      ErrExit                 ; 1 - Build DPB
                     dw      ErrExit                 ; 2 - Media ID
                     dw      ErrExit                 ; 3 - IOCTL Read
@@ -76,7 +76,7 @@ ddskel:
                     push    bp
                     mov     ax, cs                  ; set DS to this segment
                     mov     ds, ax
-                    les     bx, pkt_ptr             ; Point ES:BX to packet
+                    les     bx, [pkt_ptr]             ; Point ES:BX to packet
                     mov     al, [es:bx+2]           ; get function code
                     cmp     al, Nbr_codes           ; is it supported?
                     jae     ErrExit                 ; exit with error
@@ -115,17 +115,17 @@ ddskel:
                         ; jump to fail if there is an error
 
                     mov ax, ErrExit
-                    mov disp_tbl, ax            ; make Init illegal next time
+                    mov [disp_tbl], ax            ; make Init illegal next time
 
                     mov ax, 0x100               ; set DONE bit for status
                     jmp okay
     
     failed:         mov ax, 0x8100              ; set ERROR and DONE
 
-    okay:           les bx, pkt_ptr             ; Release init space for use
+    okay:           les bx, [pkt_ptr]             ; Release init space for use
 
                     ; assume es:nothing
 
-                    mov [es:bx+0x0e], Init
+                    mov [es:bx+0x0e], word Init
                     mov [es:bx+0x10], cs
                     jmp Exit     
