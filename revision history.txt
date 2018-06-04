@@ -1,4 +1,10 @@
-6/4/2018, 0.10 Update
+6/4/2018, 0.10 Update - Stupid little fixes
+- Changed major and minor version numbers to byte size in globals.asm
+- Fixed a bug in the newly optimized PCI device name table where the date being written to screen wasn't coming from the right place. And also saved around 300 bytes!
+
+
+
+6/4/2018, 0.10 Update - List Manager, 50-line text mode support
 - Added 50-line text mode support. Nice for viewing those beautiful diagnostic messages at boot!
 - Added allocation for 8 KiB main stack (size set by global value)
 - Added configbits setting for screen lines at startup

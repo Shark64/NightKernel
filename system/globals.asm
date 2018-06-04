@@ -27,8 +27,8 @@ kPrintText$										times 256 db 0x00
 
 ; structures
 tSystem:
-	.versionMajor								dd 0x00000000
-	.versionMinor								dd 0x00000010
+	.versionMajor								db 0x00
+	.versionMinor								db 0x10
 	.copyright$									db 'Night Kernel, copyright 1995 - 2018', 0x00
 	.memoryInstalledBytes						dd 0x00000000
 	.memoryInitialAvailableBytes				dd 0x00000000

@@ -40,91 +40,91 @@ DebugMenu:
 		mov dword [PCITable.PCIClassTable], edx
 
 		; write all the strings to the list area
-		push dword 36
+		push dword 20
 		push PCITable.PCI00$
 		push dword 0
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 24
 		push PCITable.PCI01$
 		push dword 1
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 19
 		push PCITable.PCI02$
 		push dword 2
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 19
 		push PCITable.PCI03$
 		push dword 3
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 22
 		push PCITable.PCI04$
 		push dword 4
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 18
 		push PCITable.PCI05$
 		push dword 5
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 14
 		push PCITable.PCI06$
 		push dword 6
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 32
 		push PCITable.PCI07$
 		push dword 7
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 26
 		push PCITable.PCI08$
 		push dword 8
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 13
 		push PCITable.PCI09$
 		push dword 9
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 16
 		push PCITable.PCI0A$
 		push dword 10
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 10
 		push PCITable.PCI0B$
 		push dword 11
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 15
 		push PCITable.PCI0C$
 		push dword 12
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 20
 		push PCITable.PCI0D$
 		push dword 13
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 27
 		push PCITable.PCI0E$
 		push dword 14
 		push dword [PCITable.PCIClassTable]
@@ -136,37 +136,37 @@ DebugMenu:
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 22
 		push PCITable.PCI10$
 		push dword 16
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 29
 		push PCITable.PCI11$
 		push dword 17
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 23
 		push PCITable.PCI12$
 		push dword 18
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 30
 		push PCITable.PCI13$
 		push dword 19
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 12
 		push PCITable.PCI40$
 		push dword 64
 		push dword [PCITable.PCIClassTable]
 		call LMItemAddAtSlot
 
-		push dword 36
+		push dword 17
 		push PCITable.PCIFF$
 		push dword 255
 		push dword [PCITable.PCIClassTable]
@@ -309,8 +309,14 @@ ret
 	call Print32
 
 	; build the version string
-	push dword [tSystem.versionMinor]
-	push dword [tSystem.versionMajor]
+	mov eax, 0x00000000
+	mov al, byte [tSystem.versionMinor]
+	push eax
+
+	mov al, byte [tSystem.versionMajor]
+	push eax
+	
+
 	push kPrintText$
 	push .versionFormat$
 	call StringBuild
@@ -405,7 +411,8 @@ ret
 								mov edx, 0x00000000
 								mov eax, 36
 								mul byte [PCIDeviceInfo.PCIClass]
-								mov ebx, PCITable.PCI00$
+								mov ebx, [PCITable.PCIClassTable]
+								add ebx, 20
 								add eax, ebx
 								push eax
 
@@ -970,25 +977,25 @@ PCIDeviceInfo:
 .PCIRegisters									times 192 db 0x00
 PCITable:
 .PCIClassTable									dd 0x00000000
-.PCI00$											db 'Unclassified device                ', 0x00
-.PCI01$											db 'Mass Storage Controller            ', 0x00
-.PCI02$											db 'Network Controller                 ', 0x00
-.PCI03$											db 'Display Controller                 ', 0x00
-.PCI04$											db 'Multimedia Controller              ', 0x00
-.PCI05$											db 'Memory Controller                  ', 0x00
-.PCI06$											db 'Bridge Device                      ', 0x00
-.PCI07$											db 'Simple Communication Controller    ', 0x00
-.PCI08$											db 'Generic System Peripheral          ', 0x00
-.PCI09$											db 'Input Device                       ', 0x00
-.PCI0A$											db 'Docking Station                    ', 0x00
-.PCI0B$											db 'Processor                          ', 0x00
-.PCI0C$											db 'USB Controller                     ', 0x00
-.PCI0D$											db 'Wireless Controller                ', 0x00
-.PCI0E$											db 'Intelligent I/O Controller         ', 0x00
+.PCI00$											db 'Unclassified device', 0x00
+.PCI01$											db 'Mass Storage Controller', 0x00
+.PCI02$											db 'Network Controller', 0x00
+.PCI03$											db 'Display Controller', 0x00
+.PCI04$											db 'Multimedia Controller', 0x00
+.PCI05$											db 'Memory Controller', 0x00
+.PCI06$											db 'Bridge Device', 0x00
+.PCI07$											db 'Simple Communication Controller', 0x00
+.PCI08$											db 'Generic System Peripheral', 0x00
+.PCI09$											db 'Input Device', 0x00
+.PCI0A$											db 'Docking Station', 0x00
+.PCI0B$											db 'Processor', 0x00
+.PCI0C$											db 'USB Controller', 0x00
+.PCI0D$											db 'Wireless Controller', 0x00
+.PCI0E$											db 'Intelligent I/O Controller', 0x00
 .PCI0F$											db 'Satellite Communications Controller', 0x00
-.PCI10$											db 'Encryption Controller              ', 0x00
-.PCI11$											db 'Signal Processing Controller       ', 0x00
-.PCI12$											db 'Processing Accelerator             ', 0x00
-.PCI13$											db 'Non-Essential Instrumentation      ', 0x00
-.PCI40$											db 'Coprocessor                        ', 0x00
-.PCIFF$											db 'Unassigned class                   ', 0x00
+.PCI10$											db 'Encryption Controller', 0x00
+.PCI11$											db 'Signal Processing Controller', 0x00
+.PCI12$											db 'Processing Accelerator', 0x00
+.PCI13$											db 'Non-Essential Instrumentation', 0x00
+.PCI40$											db 'Coprocessor', 0x00
+.PCIFF$											db 'Unassigned class', 0x00
