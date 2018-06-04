@@ -17,26 +17,23 @@
 
 
 ; vars 'n' such
-kTrue											dd 0x00000001
+kTrue											dd 0x11111111
 kFalse											dd 0x00000000
-kCRLF											db 0x0d, 0x0a, 0x00
+kKernelStack									dd 8192
 kHexDigits										db '0123456789ABCDEF'
-kKeyBufferWrite									db 0x00
-kKeyBufferRead									db 0x00
-kKeyBuffer										times 256 db 0x00
-kSadThing$										db 0x27, 'Tis a sad thing that your process has ended here!', 0x00
 kPrintText$										times 256 db 0x00
 
 
 
 ; structures
 tSystem:
-	.versionMajor								dw 0x0000
-	.versionMinor								dw 0x000E
+	.versionMajor								dd 0x00000000
+	.versionMinor								dd 0x00000010
 	.copyright$									db 'Night Kernel, copyright 1995 - 2018', 0x00
-	.memoryTotalKB								dd 0x00000000
-	.memoryAvailableKB							dd 0x00000000
-	.memoryBlockPointer							dd 0x00000000
+	.memoryInstalledBytes						dd 0x00000000
+	.memoryInitialAvailableBytes				dd 0x00000000
+	.memoryCurrentAvailableBytes				dd 0x00000000
+	.memoryBlockAddress							dd 0x00000000
 	.hours										db 0x00
 	.minutes									db 0x00
 	.seconds									db 0x00
@@ -60,20 +57,6 @@ tSystem:
 	.APMVersionMajor							db 0x00
 	.APMVersionMinor							db 0x00
 	.APMFeatures								dw 0x0000
-	.VESAVersionMajor							db 0x00
-	.VESAVersionMinor							db 0x00
-	.VESAOEMStringPointer						dd 0x00000000
-	.VESACapabilities							dd 0x00000000
-	.VESAWidth									dw 0x0000
-	.VESAHeight									dw 0x0000
-	.VESAColorDepth								db 0x00
-	.VESAVideoRAMKB								dd 0x00000000
-	.VESAOEMSoftwareRevision					dw 0x0000
-	.VESAOEMVendorNamePointer					dd 0x00000000
-	.VESAOEMProductNamePointer					dd 0x00000000
-	.VESAOEMProductRevisionPointer				dd 0x00000000
-	.VESAOEMDataStringsPointer					dd 0x00000000
-	.VESALFBAddress								dd 0x00000000
 	.mouseAvailable								db 0x00
 	.mouseButtonCount							db 0x00
 	.mouseID									db 0x00
@@ -82,6 +65,8 @@ tSystem:
 	.mouseX										dw 0x0000
 	.mouseY										dw 0x0000
 	.mouseZ										dw 0x0000
+	.mouseXLimit								dd 0x00000000
+	.mouseYLimit								dd 0x00000000
 	.mousePacketByteSize						db 0x00
 	.mousePacketByteCount						db 0x00
 	.mousePacketByte1							db 0x00
@@ -89,62 +74,7 @@ tSystem:
 	.mousePacketByte3							db 0x00
 	.mousePacketByte4							db 0x00
 	.configBitsHint$							db 'ConfigBits'
-	.configBits									dd 0x00000002
-
-tVESAInfoBlock:
-	.VBESignature$								db 'VBE2'
-	.VBEVersionMinor							db 0x00
-	.VBEVersionMajor							db 0x00
-	.OEMStringOffset							dw 0x0000
-	.OEMStringSegment							dw 0x0000
-	.Capabilities								times 4 db 0x00
-	.VideoModeListOffset						dw 0x0000
-	.VideoModeListSegment						dw 0x0000
-	.TotalMemory								dw 0x0000
-	.OEMSoftwareRev								dw 0x0000
-	.OEMVendorNameOffset						dw 0x0000
-	.OEMVendorNameSegment						dw 0x0000
-	.OEMProductNameOffset						dw 0x0000
-	.OEMProductNameSegment						dw 0x0000
-	.OEMProductRevOffset						dw 0x0000
-	.OEMProductRevSegment						dw 0x0000
-	.Reserved									times 222 db 0x00
-	.OEMData									times 256 db 0x00
-
-tVESAModeInfo:
-	.ModeAttributes								dw 0x0000
-	.WinAAttributes								db 0x00
-	.WinBAttributes								db 0x00
-	.WinGranularity								dw 0x0000
-	.WinSize									dw 0x0000
-	.WinASegment								dw 0x0000
-	.WinBSegment								dw 0x0000
-	.WinFuncPtr									dd 0x00000000
-	.BytesPerScanline							dw 0x0000
-	.XResolution								dw 0x0000
-	.YResolution								dw 0x0000
-	.XCharSize									db 0x00
-	.YCharSize									db 0x00
-	.NumberOfPlanes								db 0x00
-	.BitsPerPixel								db 0x00
-	.NumberOfBanks								db 0x00
-	.MemoryModel								db 0x00
-	.BankSize									db 0x00
-	.NumberOfImagePages							db 0x00
-	.ReservedA									db 0x00
-	.RedMaskSize								db 0x00
-	.RedFieldPosition							db 0x00
-	.GreenMaskSize								db 0x00
-	.GreenFieldPosition							db 0x00
-	.BlueMaskSize								db 0x00
-	.BlueFieldPosition							db 0x00
-	.RsvdMaskSize								db 0x00
-	.RsvdFieldPosition							db 0x00
-	.DirectColorModeInfo						db 0x00
-	.PhysBasePtr								dd 0x00000000
-	.OffScreenMemOffset							dd 0x00000000
-	.OffScreenMemSize							dw 0x0000
-	.ReservedB									times 206 db 0x00
+	.configBits									dd 00000000000000000000000000000111b
 
 tMBR:
 	.BootCode									times 446 db 0x00
@@ -202,9 +132,6 @@ tFAT16BootSector:
 
 ; arrays
 kKeyTable:										db '  1234567890-=  qwertyuiop[]  asdfghjkl; ` \zxcvbnm,0/ *               789-456+1230.  '
-
-
-
 tEvent:
 
 
@@ -213,28 +140,24 @@ tEvent:
 
 
 
-; Memory Map
+; Memory Map (obsolete?)
 ; Start				End				Size						Description
-; 0x00000000		0x000003FF		1 KB						interrupt vector table
+; 0x00000000		0x000003FF		1 KiB						interrupt vector table
 ; 0x00000400		0x000004FF		256 bytes					BIOS data area (remapped here from CMOS)
-; 0x00000500		0x000005FF		256 bytes					unused
-; 0x00000600		0x00007BFF		30207 bytes (29.49 KB)		kernel space (kernel is loaded here by freeDOS bootloader)
+; 0x00000500		0x000005FF		256 bytes					temporary stack
+; 0x00000600		0x00007BFF		30207 bytes (29.49 KiB)		kernel space (kernel is loaded here by freeDOS bootloader)
 ; 0x00007C00		0x00007DFF		512 bytes					bootloader (copied here by BIOS, can be overwritten)
-; 0x00007E00		0x0008F7FF		555520 bytes (542.50 KB)	available, unused
-; 0x0008F800		0x0009F7FF		64 KB						IDT
-; 0x0009F800		0x0009FBFF		1 KB						stack
-; 0x0009FC00		0x0009FFFF		1 KB						extended BIOS data area
-; 0x000A0000		0x000AFFFF		64 KB						video buffer for EGA/VGA graphics modes
-; 0x000B0000		0x000B7FFF		32 KB						video buffer for EGA/VGA graphics modes
-; 0x000B8000		0x000BFFFF		32 KB						video buffer for color text and CGA graphics
-; 0x000C0000		0x000DFFFF		128 KB						device-mounted ROMs
-; 0x000E0000		0x0010FFEF		196591 bytes (191.98 KB)	BIOS ROM
-; 0x0010FFF0		0x001FFFFF		983055 bytes (960.01 KB)    applications use
-; 0x00200000		0xFFFFFFFF		?							application use
+; 0x00007E00		0x0009FBFF		622080 bytes (607.50 KiB)	available, unused
+; 0x0009FC00		0x0009FFFF		1 KiB						extended BIOS data area
+; 0x000A0000		0x000AFFFF		64 KiB						video buffer for EGA/VGA graphics modes
+; 0x000B0000		0x000B7FFF		32 KiB						video buffer for EGA/VGA graphics modes
+; 0x000B8000		0x000BFFFF		32 KiB						video buffer for color text and CGA graphics
+; 0x000C0000		0x000DFFFF		128 KiB						device-mounted ROMs
+; 0x000E0000		0x0010FFEF		196591 bytes (191.98 KiB)	BIOS ROM
 
 
 
-; Result Codes
+; Result Codes for API routines
 ; 0xF000			Success, no error
 ; 0xF001			Value specified is too low
 ; 0xF002			Value specified is too high
@@ -245,9 +168,9 @@ tEvent:
 
 
 ; ConfigBits options
-; 0					Show boot logo
-; 1					Play startup sound
-; 2					Enable debugging menu
+; 0					Enable debugging menu
+; 1					Verbose boot
+; 2					use 50-line text mode instead of 25-line mode
 ; 3					reserved
 ; 4					reserved
 ; 5					reserved

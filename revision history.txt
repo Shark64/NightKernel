@@ -1,3 +1,33 @@
+6/4/2018, 0.10 Update
+- Added 50-line text mode support. Nice for viewing those beautiful diagnostic messages at boot!
+- Added allocation for 8 KiB main stack (size set by global value)
+- Added configbits setting for screen lines at startup
+- Added CRC32() to misc.asm for data checksumming
+- Added mouseXLimit and mouseYLimit to the system struct (replaces old method of using the current VESA screen resolution)
+- Added PCIDriverLoad() and PCIDriverSearch() for the upcoming driver addition
+- Added the beginning of Night's first driver, IDE Controller.asm!
+- Added the List Manager (api/lists.asm) to manage lists of things; something the kernel will often need to do
+- Changed Debug menu PCI device list to now use List Manager to build its list live and cut the wasted space from hard-coding
+- Changed IDT memory to be allocated instead of using a static address
+- Changed MemoryInit() to respect the BIOS memory map and no longer allocate at an arbitrary address
+- Cleaned up interrupt code and merged 3 files (setints.asm, inthandle.asm, idt.asm) into a single file: interrupts.asm
+- Incorporated disks.asm into IDE driver
+- Made boot-time diagnostic messages and debug menu obey configbits settings
+- Made new folder (api) for accessory code to be used by the kernel and be made available via the Night API
+- Minor change to structure of all function descriptions
+- Moved ConvertToHexString16() from screen.asm to strings.asm
+- Moved keyboard-related globals to ps2.asm
+- Moved strings.asm from system folder to api folder
+- Moved temporary stack (the only stack we've been using up to this point!) from 0x9F800 to 0x600
+- Optimized MemCopy to transfer 16 bytes at a time instead of just one
+- Optimized text scrolling algorithm to copy in 16-byte chunks, giving a 76.5% speed increase
+- Removed kCRLF from the globals, as it's no longer used
+- Removed VESA structs from the globals since we don't have VESA support anymore :/
+- Renamed system/api.asm to api/misc.asm
+- Trimmed unused routines (PrintDebug, PrintSimple, SetSystemVESA) from misc.asm
+
+
+
 4/25/2018, 0.0F Update - Final PCI system
 - Added version information to kernel info screen
 - Changed PCI system to load device data into RAM and source all subsequent register reads from there

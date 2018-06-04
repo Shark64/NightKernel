@@ -23,6 +23,7 @@ bits 16
 
 APMEnable:
 	; Activates the APM interface for all devices managed by the APM BIOS
+	;
 	;  input:
 	;   n/a
 	;
@@ -40,6 +41,7 @@ ret
 
 APMDisable:
 	; Disables the APM interface for all devices managed by the APM BIOS
+	;
 	;  input:
 	;   n/a
 	;
@@ -61,6 +63,7 @@ bits 32
 
 APMShutdown:
 	; Shuts down the PC via the APM intereface
+	;
 	;  input:
 	;   n/a
 	;

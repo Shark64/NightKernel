@@ -22,11 +22,156 @@ bits 32
 
 DebugMenu:
 	; Implements the in-kernel debugging menu
+	;
 	;  input:
 	;   n/a
 	;
 	;  output:
 	;   n/a
+
+	; create a new list to hold the PCI device labels if necessary
+	cmp byte [.flag], 1
+	je .DrawMenu
+
+		push dword 36								; size of each element
+		push dword 256								; number of elements
+		call LMListNew
+		pop edx
+		mov dword [PCITable.PCIClassTable], edx
+
+		; write all the strings to the list area
+		push dword 36
+		push PCITable.PCI00$
+		push dword 0
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI01$
+		push dword 1
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI02$
+		push dword 2
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI03$
+		push dword 3
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI04$
+		push dword 4
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI05$
+		push dword 5
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI06$
+		push dword 6
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI07$
+		push dword 7
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI08$
+		push dword 8
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI09$
+		push dword 9
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI0A$
+		push dword 10
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI0B$
+		push dword 11
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI0C$
+		push dword 12
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI0D$
+		push dword 13
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI0E$
+		push dword 14
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI0F$
+		push dword 15
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI10$
+		push dword 16
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI11$
+		push dword 17
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI12$
+		push dword 18
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI13$
+		push dword 19
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCI40$
+		push dword 64
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+
+		push dword 36
+		push PCITable.PCIFF$
+		push dword 255
+		push dword [PCITable.PCIClassTable]
+		call LMItemAddAtSlot
+		mov byte [.flag], 1
 
 	.DrawMenu:
 	mov byte [textColor], 7
@@ -133,6 +278,7 @@ DebugMenu:
 	jmp .DebugLoop
 	.Exit:
 ret
+.flag											db 0x00
 .kDebugMenu$									db 'Kernel Debug Menu', 0x00
 .kDebugText1$									db '1 - System Info', 0x00
 .kDebugText2$									db '2 - PCI Devices', 0x00
@@ -162,6 +308,17 @@ ret
 	push tSystem.copyright$
 	call Print32
 
+	; build the version string
+	push dword [tSystem.versionMinor]
+	push dword [tSystem.versionMajor]
+	push kPrintText$
+	push .versionFormat$
+	call StringBuild
+
+	; print the version string
+	push kPrintText$
+	call Print32
+
 	; print the CPU string
 	push tSystem.CPUIDBrand$
 	call Print32
@@ -174,6 +331,7 @@ ret
 	call ClearScreen32
 ret
 .systemInfoText$								db 'System Information', 0x00
+.versionFormat$									db 'Version ^p2^h.^h', 0x00
 
 
 
@@ -247,7 +405,7 @@ ret
 								mov edx, 0x00000000
 								mov eax, 36
 								mul byte [PCIDeviceInfo.PCIClass]
-								mov ebx, PCIClass
+								mov ebx, PCITable.PCI00$
 								add eax, ebx
 								push eax
 
@@ -345,7 +503,7 @@ ret
 			mov edx, 0x00000000
 			mov eax, 36
 			mul byte [PCIDeviceInfo.PCIClass]
-			mov ecx, PCIClass
+			mov ecx, PCITable.PCI00$
 			add eax, ecx
 			push eax
 			; build the rest of the PCI data into line 1 for this device
@@ -676,6 +834,7 @@ ret
 
 PCIReadDeviceNumber:
 	; Returns data for the PCI devices specified
+	;
 	;  input:
 	;   Device number (obtain count of devices first from PCIGetDeviceCount())
 	;	PCI info struct address
@@ -773,18 +932,10 @@ ret
 
 
 
-VideoInfo:
-	; testing DebugPrint - print the address in memory of the VESA OEM String and the string itself
-	push dword [tSystem.VESAOEMVendorNamePointer]
-	push tSystem.VESAOEMVendorNamePointer
-	push 64
-	push 2
-	call PrintSimple32
-ret
-
-
-
 kDebugger$										db 'What a horrible Night to have a bug.', 0x00
+kSadThing$										db 0x27, 'Tis a sad thing that your process has ended here!', 0x00
+
+
 
 ; struct to hold all data about a single PCI device for the system menu
 PCIDeviceInfo:
@@ -817,260 +968,27 @@ PCIDeviceInfo:
 .PCIMaxGrant									db 0x00
 .PCIMaxLatency									db 0x00
 .PCIRegisters									times 192 db 0x00
-PCIClass:
-.00$											db 'Unclassified device                ', 0x00
-.01$											db 'Mass Storage Controller            ', 0x00
-.02$											db 'Network Controller                 ', 0x00
-.03$											db 'Display Controller                 ', 0x00
-.04$											db 'Multimedia Controller              ', 0x00
-.05$											db 'Memory Controller                  ', 0x00
-.06$											db 'Bridge Device                      ', 0x00
-.07$											db 'Simple Communication Controller    ', 0x00
-.08$											db 'Generic System Peripheral          ', 0x00
-.09$											db 'Input Device                       ', 0x00
-.0A$											db 'Docking Station                    ', 0x00
-.0B$											db 'Processor                          ', 0x00
-.0C$											db 'USB Controller                     ', 0x00
-.0D$											db 'Wireless Controller                ', 0x00
-.0E$											db 'Intelligent I/O Controller         ', 0x00
-.0F$											db 'Satellite Communications Controller', 0x00
-.10$											db 'Encryption Controller              ', 0x00
-.11$											db 'Signal Processing Controller       ', 0x00
-.12$											db 'Processing Accelerator             ', 0x00
-.13$											db 'Non-Essential Instrumentation      ', 0x00
-.14$											db '                                   ', 0x00
-.15$											db '                                   ', 0x00
-.16$											db '                                   ', 0x00
-.17$											db '                                   ', 0x00
-.18$											db '                                   ', 0x00
-.19$											db '                                   ', 0x00
-.1A$											db '                                   ', 0x00
-.1B$											db '                                   ', 0x00
-.1C$											db '                                   ', 0x00
-.1D$											db '                                   ', 0x00
-.1E$											db '                                   ', 0x00
-.1F$											db '                                   ', 0x00
-.20$											db '                                   ', 0x00
-.21$											db '                                   ', 0x00
-.22$											db '                                   ', 0x00
-.23$											db '                                   ', 0x00
-.24$											db '                                   ', 0x00
-.25$											db '                                   ', 0x00
-.26$											db '                                   ', 0x00
-.27$											db '                                   ', 0x00
-.28$											db '                                   ', 0x00
-.29$											db '                                   ', 0x00
-.2A$											db '                                   ', 0x00
-.2B$											db '                                   ', 0x00
-.2C$											db '                                   ', 0x00
-.2D$											db '                                   ', 0x00
-.2E$											db '                                   ', 0x00
-.2F$											db '                                   ', 0x00
-.30$											db '                                   ', 0x00
-.31$											db '                                   ', 0x00
-.32$											db '                                   ', 0x00
-.33$											db '                                   ', 0x00
-.34$											db '                                   ', 0x00
-.35$											db '                                   ', 0x00
-.36$											db '                                   ', 0x00
-.37$											db '                                   ', 0x00
-.38$											db '                                   ', 0x00
-.39$											db '                                   ', 0x00
-.3A$											db '                                   ', 0x00
-.3B$											db '                                   ', 0x00
-.3C$											db '                                   ', 0x00
-.3D$											db '                                   ', 0x00
-.3E$											db '                                   ', 0x00
-.3F$											db '                                   ', 0x00
-.40$											db 'Coprocessor                        ', 0x00
-.41$											db '                                   ', 0x00
-.42$											db '                                   ', 0x00
-.43$											db '                                   ', 0x00
-.44$											db '                                   ', 0x00
-.45$											db '                                   ', 0x00
-.46$											db '                                   ', 0x00
-.47$											db '                                   ', 0x00
-.48$											db '                                   ', 0x00
-.49$											db '                                   ', 0x00
-.4A$											db '                                   ', 0x00
-.4B$											db '                                   ', 0x00
-.4C$											db '                                   ', 0x00
-.4D$											db '                                   ', 0x00
-.4E$											db '                                   ', 0x00
-.4F$											db '                                   ', 0x00
-.50$											db '                                   ', 0x00
-.51$											db '                                   ', 0x00
-.52$											db '                                   ', 0x00
-.53$											db '                                   ', 0x00
-.54$											db '                                   ', 0x00
-.55$											db '                                   ', 0x00
-.56$											db '                                   ', 0x00
-.57$											db '                                   ', 0x00
-.58$											db '                                   ', 0x00
-.59$											db '                                   ', 0x00
-.5A$											db '                                   ', 0x00
-.5B$											db '                                   ', 0x00
-.5C$											db '                                   ', 0x00
-.5D$											db '                                   ', 0x00
-.5E$											db '                                   ', 0x00
-.5F$											db '                                   ', 0x00
-.60$											db '                                   ', 0x00
-.61$											db '                                   ', 0x00
-.62$											db '                                   ', 0x00
-.63$											db '                                   ', 0x00
-.64$											db '                                   ', 0x00
-.65$											db '                                   ', 0x00
-.66$											db '                                   ', 0x00
-.67$											db '                                   ', 0x00
-.68$											db '                                   ', 0x00
-.69$											db '                                   ', 0x00
-.6A$											db '                                   ', 0x00
-.6B$											db '                                   ', 0x00
-.6C$											db '                                   ', 0x00
-.6D$											db '                                   ', 0x00
-.6E$											db '                                   ', 0x00
-.6F$											db '                                   ', 0x00
-.70$											db '                                   ', 0x00
-.71$											db '                                   ', 0x00
-.72$											db '                                   ', 0x00
-.73$											db '                                   ', 0x00
-.74$											db '                                   ', 0x00
-.75$											db '                                   ', 0x00
-.76$											db '                                   ', 0x00
-.77$											db '                                   ', 0x00
-.78$											db '                                   ', 0x00
-.79$											db '                                   ', 0x00
-.7A$											db '                                   ', 0x00
-.7B$											db '                                   ', 0x00
-.7C$											db '                                   ', 0x00
-.7D$											db '                                   ', 0x00
-.7E$											db '                                   ', 0x00
-.7F$											db '                                   ', 0x00
-.80$											db '                                   ', 0x00
-.81$											db '                                   ', 0x00
-.82$											db '                                   ', 0x00
-.83$											db '                                   ', 0x00
-.84$											db '                                   ', 0x00
-.85$											db '                                   ', 0x00
-.86$											db '                                   ', 0x00
-.87$											db '                                   ', 0x00
-.88$											db '                                   ', 0x00
-.89$											db '                                   ', 0x00
-.8A$											db '                                   ', 0x00
-.8B$											db '                                   ', 0x00
-.8C$											db '                                   ', 0x00
-.8D$											db '                                   ', 0x00
-.8E$											db '                                   ', 0x00
-.8F$											db '                                   ', 0x00
-.90$											db '                                   ', 0x00
-.91$											db '                                   ', 0x00
-.92$											db '                                   ', 0x00
-.93$											db '                                   ', 0x00
-.94$											db '                                   ', 0x00
-.95$											db '                                   ', 0x00
-.96$											db '                                   ', 0x00
-.97$											db '                                   ', 0x00
-.98$											db '                                   ', 0x00
-.99$											db '                                   ', 0x00
-.9A$											db '                                   ', 0x00
-.9B$											db '                                   ', 0x00
-.9C$											db '                                   ', 0x00
-.9D$											db '                                   ', 0x00
-.9E$											db '                                   ', 0x00
-.9F$											db '                                   ', 0x00
-.A0$											db '                                   ', 0x00
-.A1$											db '                                   ', 0x00
-.A2$											db '                                   ', 0x00
-.A3$											db '                                   ', 0x00
-.A4$											db '                                   ', 0x00
-.A5$											db '                                   ', 0x00
-.A6$											db '                                   ', 0x00
-.A7$											db '                                   ', 0x00
-.A8$											db '                                   ', 0x00
-.A9$											db '                                   ', 0x00
-.AA$											db '                                   ', 0x00
-.AB$											db '                                   ', 0x00
-.AC$											db '                                   ', 0x00
-.AD$											db '                                   ', 0x00
-.AE$											db '                                   ', 0x00
-.AF$											db '                                   ', 0x00
-.B0$											db '                                   ', 0x00
-.B1$											db '                                   ', 0x00
-.B2$											db '                                   ', 0x00
-.B3$											db '                                   ', 0x00
-.B4$											db '                                   ', 0x00
-.B5$											db '                                   ', 0x00
-.B6$											db '                                   ', 0x00
-.B7$											db '                                   ', 0x00
-.B8$											db '                                   ', 0x00
-.B9$											db '                                   ', 0x00
-.BA$											db '                                   ', 0x00
-.BB$											db '                                   ', 0x00
-.BC$											db '                                   ', 0x00
-.BD$											db '                                   ', 0x00
-.BE$											db '                                   ', 0x00
-.BF$											db '                                   ', 0x00
-.C0$											db '                                   ', 0x00
-.C1$											db '                                   ', 0x00
-.C2$											db '                                   ', 0x00
-.C3$											db '                                   ', 0x00
-.C4$											db '                                   ', 0x00
-.C5$											db '                                   ', 0x00
-.C6$											db '                                   ', 0x00
-.C7$											db '                                   ', 0x00
-.C8$											db '                                   ', 0x00
-.C9$											db '                                   ', 0x00
-.CA$											db '                                   ', 0x00
-.CB$											db '                                   ', 0x00
-.CC$											db '                                   ', 0x00
-.CD$											db '                                   ', 0x00
-.CE$											db '                                   ', 0x00
-.CF$											db '                                   ', 0x00
-.D0$											db '                                   ', 0x00
-.D1$											db '                                   ', 0x00
-.D2$											db '                                   ', 0x00
-.D3$											db '                                   ', 0x00
-.D4$											db '                                   ', 0x00
-.D5$											db '                                   ', 0x00
-.D6$											db '                                   ', 0x00
-.D7$											db '                                   ', 0x00
-.D8$											db '                                   ', 0x00
-.D9$											db '                                   ', 0x00
-.DA$											db '                                   ', 0x00
-.DB$											db '                                   ', 0x00
-.DC$											db '                                   ', 0x00
-.DD$											db '                                   ', 0x00
-.DE$											db '                                   ', 0x00
-.DF$											db '                                   ', 0x00
-.E0$											db '                                   ', 0x00
-.E1$											db '                                   ', 0x00
-.E2$											db '                                   ', 0x00
-.E3$											db '                                   ', 0x00
-.E4$											db '                                   ', 0x00
-.E5$											db '                                   ', 0x00
-.E6$											db '                                   ', 0x00
-.E7$											db '                                   ', 0x00
-.E8$											db '                                   ', 0x00
-.E9$											db '                                   ', 0x00
-.EA$											db '                                   ', 0x00
-.EB$											db '                                   ', 0x00
-.EC$											db '                                   ', 0x00
-.ED$											db '                                   ', 0x00
-.EE$											db '                                   ', 0x00
-.EF$											db '                                   ', 0x00
-.F0$											db '                                   ', 0x00
-.F1$											db '                                   ', 0x00
-.F2$											db '                                   ', 0x00
-.F3$											db '                                   ', 0x00
-.F4$											db '                                   ', 0x00
-.F5$											db '                                   ', 0x00
-.F6$											db '                                   ', 0x00
-.F7$											db '                                   ', 0x00
-.F8$											db '                                   ', 0x00
-.F9$											db '                                   ', 0x00
-.FA$											db '                                   ', 0x00
-.FB$											db '                                   ', 0x00
-.FC$											db '                                   ', 0x00
-.FD$											db '                                   ', 0x00
-.FE$											db '                                   ', 0x00
-.FF$											db 'Unassigned class                   ', 0x00
+PCITable:
+.PCIClassTable									dd 0x00000000
+.PCI00$											db 'Unclassified device                ', 0x00
+.PCI01$											db 'Mass Storage Controller            ', 0x00
+.PCI02$											db 'Network Controller                 ', 0x00
+.PCI03$											db 'Display Controller                 ', 0x00
+.PCI04$											db 'Multimedia Controller              ', 0x00
+.PCI05$											db 'Memory Controller                  ', 0x00
+.PCI06$											db 'Bridge Device                      ', 0x00
+.PCI07$											db 'Simple Communication Controller    ', 0x00
+.PCI08$											db 'Generic System Peripheral          ', 0x00
+.PCI09$											db 'Input Device                       ', 0x00
+.PCI0A$											db 'Docking Station                    ', 0x00
+.PCI0B$											db 'Processor                          ', 0x00
+.PCI0C$											db 'USB Controller                     ', 0x00
+.PCI0D$											db 'Wireless Controller                ', 0x00
+.PCI0E$											db 'Intelligent I/O Controller         ', 0x00
+.PCI0F$											db 'Satellite Communications Controller', 0x00
+.PCI10$											db 'Encryption Controller              ', 0x00
+.PCI11$											db 'Signal Processing Controller       ', 0x00
+.PCI12$											db 'Processing Accelerator             ', 0x00
+.PCI13$											db 'Non-Essential Instrumentation      ', 0x00
+.PCI40$											db 'Coprocessor                        ', 0x00
+.PCIFF$											db 'Unassigned class                   ', 0x00

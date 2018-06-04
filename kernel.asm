@@ -30,13 +30,12 @@ org 0x0600										; set origin point to where the FreeDOS bootloader loads thi
 cli												; turn off interrupts and skip the GDT in a jump to our main routine
 jmp main
 
-%include "system/gdt.asm"
 
 main:
 ; init the stack segment
 mov ax, 0x0000
 mov ss, ax
-mov sp, 0x05F0
+mov sp, 0x0600
 
 mov ax, 0x0000
 mov ds, ax
@@ -44,41 +43,106 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-; set text mode
+; set hardware text mode
 mov ah, 0x00
 mov al, 0x03
 int 0x10
 
-; hide the cursor
+; check the configbits to see if we should use 50 lines
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000100b
+cmp eax, 000000000000000000000000000000100b
+jne .stickWith25
+
+	; if we get here, we should shift to 50-line mode
+	; first we update the constants
+	mov byte [kMaxLines], 50
+	mov word [kBytesPerScreen], 8000
+
+	; now we set 8x8 character mode
+	mov ax, 0x1112
+	int 0x10
+
+; ...or we can jump here to avoid setting that beautugly 50-line mode
+.stickWith25:
+
+; hide the hardware cursor
 mov ah, 0x01
 mov cx, 0x2707
 int 0x10
 
-; init and probe RAM
+; set kernel cursor location
 mov byte [textColor], 7
 mov byte [backColor], 0
-push progressText1$
+
+
+
+; init and probe RAM
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint01
+
+push progressText01$
 call Print16
+
+.NoPrint01:
 call MemoryInit
 
+
+
 ; get that good ol' APM info
-push progressText2$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint02
+
+push progressText02$
 call Print16
+
+.NoPrint02:
 call SetSystemAPM
 
+
+
 ; enable the APM interface
-push progressText3$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint03
+
+push progressText03$
 call Print16
+
+.NoPrint03:
 call APMEnable
 
+
+
 ; load that GDT
-push progressText4$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint04
+
+push progressText04$
 call Print16
+
+.NoPrint04:
 call LoadGDT
 
+
+
 ; enter protected mode. YAY!
-push progressText5$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint05
+
+push progressText05$
 call Print16
+
+.NoPrint05:
 mov eax, cr0
 or eax, 00000001b
 mov cr0, eax
@@ -86,119 +150,242 @@ mov cr0, eax
 ; jump to start the kernel in 32-bit mode
 jmp 0x08:KernelStart
 
-
-
 bits 32
 
-
-
 KernelStart:
-; init the registers
+; init the registers, including the temporary stack
 mov ax, 0x0010
 mov ds, ax
 mov es, ax
 mov ss, ax
-mov esp, 0x0009F800
+mov esp, 0x0009FB00
 
-push progressText6$
-call Print32
-call IDTInit									; init our IDT
-%include "system/setints.asm"					; set interrupt handler addresses
 
-push progressText7$
+
+
+; enable the A20 line - one of the things we require for operation
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint06
+
+push progressText06$
 call Print32
-call A20Enable									; enable the A20 line - one of the things we require for operation
+
+.NoPrint06:
+call A20Enable
+
+
+
+; now that we have a temporary stack and access to all the memory addresses,
+; let's allocate some RAM for the real stack
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint07
+
+push progressText07$
+call Print32
+
+.NoPrint07:
+push dword [kKernelStack]
+call MemAllocate
+pop eax
+mov ebx, [kKernelStack]
+add eax, ebx
+mov esp, eax
+
+
+
+; set up our interrupt handlers and IDT
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint08
+
+push progressText08$
+call Print32
+
+.NoPrint08:
+call IDTInit
+call InterruptHandlerSetAddresses
+
+
 
 ; setup and remap both PICs
-push progressText8$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint09
+
+push progressText09$
 call Print32
+
+.NoPrint09:
 call PICInit
 call PICDisableIRQs
 call PICUnmaskAll
 call PITInit
 
+
+
 ; load system data into the info struct
-push progressText9$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint0A
+
+push progressText0A$
 call Print32
+
+.NoPrint0A:
 call SetSystemRTC							; load the RTC values into the system struct
 call SetSystemCPUID							; set some info from the CPU into the system struct
 call SetSystemCPUSpeed						; write the CPU speed info to the system struct
 
+
+
 ; setup that mickey!
-push progressTextA$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint0B
+
+push progressText0B$
 call Print32
+
+.NoPrint0B:
 call MouseInit
 
+
+
 ; setup keyboard
-push progressTextB$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint0C
+
+push progressText0C$
 call Print32
+
+.NoPrint0C:
 call KeyboardInit
 
+
+
 ; let's get some interrupts firing!
-push progressTextC$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint0D
+
+push progressText0D$
 call Print32
+
+.NoPrint0D:
 sti
 
+
+
 ; find out how many PCI devices we have and save that info to the system struct
-push progressTextD$
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint0E
+
+push progressText0E$
 call Print32
+
+.NoPrint0E:
 call PCIInitBus
 
-; clear the screen and start!
-push progressTextE$
+
+
+; load drivers for PCI devices
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint0F
+
+push progressText0F$
 call Print32
+
+.NoPrint0F:
+;call PCILoadDrivers
+
+
+
+; clear the screen and start!
+mov eax, [tSystem.configBits]
+and eax, 000000000000000000000000000000010b
+cmp eax, 000000000000000000000000000000010b
+jne .NoPrint10
+
+push progressText10$
+call Print32
+
+.NoPrint10:
 call ClearScreen32
 
 
 
-;DiskInitLoop:
-;	; get the device number
-;
-;	; get data on it
-;
-;	; get the disk I/O 
-;
-;loop DiskInitLoop
+
 
 
 
 ; enter the infinite loop which runs the kernel
 InfiniteLoop:
 	; do stuff here, i guess... :)
+
+	mov eax, [tSystem.configBits]
+	and eax, 000000000000000000000000000000001b
+	cmp eax, 000000000000000000000000000000001b
+	jne .SkipDebugMenu
+
 	call DebugMenu
+
+	.SkipDebugMenu:
 jmp InfiniteLoop
 
 
 
-progressText1$									db 'MemoryInit', 0x00
-progressText2$									db 'SetSystemAPM', 0x00
-progressText3$									db 'APMEnable', 0x00
-progressText4$									db 'LoadGDT', 0x00
-progressText5$									db 'Entering Protected Mode', 0x00
-progressText6$									db 'IDTInit', 0x00
-progressText7$									db 'A20Enable', 0x00
-progressText8$									db 'Remaping PICs', 0x00
-progressText9$									db 'Load system data to the info struct', 0x00
-progressTextA$									db 'MouseInit', 0x00
-progressTextB$									db 'KeyboardInit', 0x00
-progressTextC$									db 'Enabling interrupts', 0x00
-progressTextD$									db 'Shadowing PCI register space', 0x00
-progressTextE$									db 'Setup complete', 0x00
+progressText01$									db 'MemoryInit', 0x00
+progressText02$									db 'SetSystemAPM', 0x00
+progressText03$									db 'APMEnable', 0x00
+progressText04$									db 'LoadGDT', 0x00
+progressText05$									db 'Entering Protected Mode', 0x00
+progressText06$									db 'A20Enable', 0x00
+progressText07$									db 'Stack setup', 0x00
+progressText08$									db 'IDTInit', 0x00
+progressText09$									db 'Remaping PICs', 0x00
+progressText0A$									db 'Load system data to the info struct', 0x00
+progressText0B$									db 'MouseInit', 0x00
+progressText0C$									db 'KeyboardInit', 0x00
+progressText0D$									db 'Enabling interrupts', 0x00
+progressText0E$									db 'Shadowing PCI register space', 0x00
+progressText0F$									db 'Loading drivers', 0x00
+progressText10$									db 'Setup complete', 0x00
 
 
 
-%include "io/disks.asm"							; disk I/O routines
+; includes for system routines
+%include "api/misc.asm"							; implements the kernel Application Programming Interface
+%include "api/lists.asm"						; list manager routines
+%include "api/strings.asm"						; string manipulation routines
 %include "io/ps2.asm"							; PS/2 keyboard and mouse routines
 %include "io/serial.asm"						; serial communication routines
-%include "system/api.asm"						; implements the kernel Application Programming Interface
 %include "system/debug.asm"						; implements the debugging menu
+%include "system/gdt.asm"						; Global Descriptor Table code
 %include "system/globals.asm"					; global variable setup
 %include "system/hardware.asm"					; routines for other miscellaneous hardware
-%include "system/idt.asm"						; Interrupt Descriptor Table
-%include "system/inthandle.asm"					; interrupt handlers
+%include "system/interrupts.asm"				; IDT routines and interrupt handlers
 %include "system/memory.asm"					; memory manager
 %include "system/pci.asm"						; PCI support
 %include "system/pic.asm"						; Programmable Interrupt Controller routines
 %include "system/power.asm"						; Power Management (APM & ACPI) routines
-%include "system/strings.asm"					; string manipulation routines
 %include "video/screen.asm"						; screen printing routine
+
+
+
+; includes for drivers
+%include "drivers/IDE Controller.asm"			; this should be obvious...

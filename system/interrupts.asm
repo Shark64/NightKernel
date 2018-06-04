@@ -1,6 +1,6 @@
 ; Night Kernel
 ; Copyright 1995 - 2018 by mercury0x000d
-; inthandl.asm is a part of the Night Kernel
+; interrupts.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 ; License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -16,11 +16,418 @@
 
 
 
-IntUnsupported:
+bits 32
+
+
+
+IDTInit:
+	; Initializes the kernel IDT
+	;
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax
+
+	; allocate 64 KiB for the IDT
+	push dword 65536
+	call MemAllocate
+	pop eax
+	mov dword [kIDTPtr], eax
+
+	; set the proper value into the IDT struct
+	mov dword [tIDT.base], eax
+
+	; set all the handler slots to the "unsupported routine" handler for sanity
+	mov ecx, 0x00000100
+	setupOneVector:
+		; preserve our counter
+		push ecx
+
+		; map the interrupt
+		push 0x8e
+		push InterruptUnsupported
+		push 0x08
+		push ecx
+		call IDTWrite
+
+		; restore our counter
+		pop ecx
+	loop setupOneVector
+
+	; activate that IDT!
+	lidt [tIDT]
+ret
+
+tIDT:
+.limit											dw 2047
+.base											dd 0x00000000
+
+
+
+IDTWrite:
+	; Formats the passed data and writes it to the IDT in the slot specified
+	;
+	;  input:
+	;   IDT index
+	;   ISR selector
+	;   ISR base address
+	;   flags
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax, ebx, ecx, edx, edi, esi
+
+	; save return address
+	pop esi
+
+	pop ebx										; get destination IDT index
+	mov eax, 8									; calc the destination offset into the IDT
+	mul ebx
+	mov edi, [kIDTPtr]							; get IDT's base address
+	add edi, eax								; calc the actual write address
+
+	pop ebx										; get ISR selector
+
+	pop ecx										; get ISR base address
+
+	mov eax, 0x0000FFFF
+	and eax, ecx								; get low word of base address in eax
+	mov word [edi], ax							; write low word
+	add edi, 2									; adjust the destination pointer
+
+	mov word [edi], bx							; write selector
+	add edi, 2									; adjust the destination pointer again
+
+	mov al, 0x00
+	mov byte [edi], al							; write null (reserved byte)
+	inc edi										; adjust the destination pointer again
+
+	pop edx										; get the flags
+	mov byte [edi], dl							; and write those flags!
+	inc edi										; guess what we're doing here :D
+
+	shr ecx, 16									; shift base address right 16 bits to
+												; get high word in position
+	mov eax, 0x0000FFFF
+	and eax, ecx								; get high word of base address in eax
+	mov word [edi], ax							; write high word
+
+	push esi									; restore ret address
+ret
+
+
+
+InterruptHandlerSetAddresses:
+	; Sets the interrupt handler addresses into the IDT
+	;
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: eax
+
+	push 0x8e
+	push ISR00
+	push 0x08
+	push 0x00
+	call IDTWrite
+
+	push 0x8e
+	push ISR01
+	push 0x08
+	push 0x01
+	call IDTWrite
+
+	push 0x8e
+	push ISR02
+	push 0x08
+	push 0x02
+	call IDTWrite
+
+	push 0x8e
+	push ISR03
+	push 0x08
+	push 0x03
+	call IDTWrite
+
+	push 0x8e
+	push ISR04
+	push 0x08
+	push 0x04
+	call IDTWrite
+
+	push 0x8e
+	push ISR05
+	push 0x08
+	push 0x05
+	call IDTWrite
+
+	push 0x8e
+	push ISR06
+	push 0x08
+	push 0x06
+	call IDTWrite
+
+	push 0x8e
+	push ISR07
+	push 0x08
+	push 0x07
+	call IDTWrite
+
+	push 0x8e
+	push ISR08
+	push 0x08
+	push 0x08
+	call IDTWrite
+
+	push 0x8e
+	push ISR09
+	push 0x08
+	push 0x09
+	call IDTWrite
+
+	push 0x8e
+	push ISR0A
+	push 0x08
+	push 0x0A
+	call IDTWrite
+
+	push 0x8e
+	push ISR0B
+	push 0x08
+	push 0x0B
+	call IDTWrite
+
+	push 0x8e
+	push ISR0C
+	push 0x08
+	push 0x0C
+	call IDTWrite
+
+	push 0x8e
+	push ISR0D
+	push 0x08
+	push 0x0D
+	call IDTWrite
+
+	push 0x8e
+	push ISR0E
+	push 0x08
+	push 0x0E
+	call IDTWrite
+
+	push 0x8e
+	push ISR0F
+	push 0x08
+	push 0x0F
+	call IDTWrite
+
+	push 0x8e
+	push ISR10
+	push 0x08
+	push 0x10
+	call IDTWrite
+
+	push 0x8e
+	push ISR11
+	push 0x08
+	push 0x11
+	call IDTWrite
+
+	push 0x8e
+	push ISR12
+	push 0x08
+	push 0x12
+	call IDTWrite
+
+	push 0x8e
+	push ISR13
+	push 0x08
+	push 0x13
+	call IDTWrite
+
+	push 0x8e
+	push ISR14
+	push 0x08
+	push 0x14
+	call IDTWrite
+
+	push 0x8e
+	push ISR15
+	push 0x08
+	push 0x15
+	call IDTWrite
+
+	push 0x8e
+	push ISR16
+	push 0x08
+	push 0x16
+	call IDTWrite
+
+	push 0x8e
+	push ISR17
+	push 0x08
+	push 0x17
+	call IDTWrite
+
+	push 0x8e
+	push ISR18
+	push 0x08
+	push 0x18
+	call IDTWrite
+
+	push 0x8e
+	push ISR19
+	push 0x08
+	push 0x19
+	call IDTWrite
+
+	push 0x8e
+	push ISR1A
+	push 0x08
+	push 0x1A
+	call IDTWrite
+
+	push 0x8e
+	push ISR1B
+	push 0x08
+	push 0x1B
+	call IDTWrite
+
+	push 0x8e
+	push ISR1C
+	push 0x08
+	push 0x1C
+	call IDTWrite
+
+	push 0x8e
+	push ISR1D
+	push 0x08
+	push 0x1D
+	call IDTWrite
+
+	push 0x8e
+	push ISR1E
+	push 0x08
+	push 0x1E
+	call IDTWrite
+
+	push 0x8e
+	push ISR1F
+	push 0x08
+	push 0x1F
+	call IDTWrite
+
+	push 0x8e
+	push ISR20
+	push 0x08
+	push 0x20
+	call IDTWrite
+
+	push 0x8e
+	push ISR21
+	push 0x08
+	push 0x21
+	call IDTWrite
+
+	push 0x8e
+	push ISR22
+	push 0x08
+	push 0x22
+	call IDTWrite
+
+	push 0x8e
+	push ISR23
+	push 0x08
+	push 0x23
+	call IDTWrite
+
+	push 0x8e
+	push ISR24
+	push 0x08
+	push 0x24
+	call IDTWrite
+
+	push 0x8e
+	push ISR25
+	push 0x08
+	push 0x25
+	call IDTWrite
+
+	push 0x8e
+	push ISR26
+	push 0x08
+	push 0x26
+	call IDTWrite
+
+	push 0x8e
+	push ISR27
+	push 0x08
+	push 0x27
+	call IDTWrite
+
+	push 0x8e
+	push ISR28
+	push 0x08
+	push 0x28
+	call IDTWrite
+
+	push 0x8e
+	push ISR29
+	push 0x08
+	push 0x29
+	call IDTWrite
+
+	push 0x8e
+	push ISR2A
+	push 0x08
+	push 0x2A
+	call IDTWrite
+
+	push 0x8e
+	push ISR2B
+	push 0x08
+	push 0x2B
+	call IDTWrite
+
+	push 0x8e
+	push ISR2C
+	push 0x08
+	push 0x2C
+	call IDTWrite
+
+	push 0x8e
+	push ISR2D
+	push 0x08
+	push 0x2D
+	call IDTWrite
+
+	push 0x8e
+	push ISR2E
+	push 0x08
+	push 0x2E
+	call IDTWrite
+
+	push 0x8e
+	push ISR2F
+	push 0x08
+	push 0x2F
+	call IDTWrite
+ret
+
+
+
+InterruptUnsupported:
 	pusha
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	push kUnsupportedInt$
-	call PrintSimple32
+	call PrintRegs32
 	call PICIntComplete
 	popa
 iretd
@@ -78,7 +485,7 @@ ISR03:
 	mov byte [textColor], 14
 	mov byte [backColor], 7
 	push kPrintText$
-	call Print32
+	call Print16
 
 	push 1
 	push dword [exceptionAddress]
@@ -698,7 +1105,7 @@ ISR2C:
 	; movement was positive
 	add ebx, eax
 	; see if the mouse position would be beyond the right side of the screen, correct if necessary
-	mov ax, [tSystem.VESAWidth]
+	mov ax, [tSystem.mouseXLimit]
 	cmp ebx, eax
 	jae .mouseXPositiveAdjust
 	.mouseXDone:
@@ -716,7 +1123,7 @@ ISR2C:
 	neg al
 	add ebx, eax
 	; see if the mouse position would be beyond the bottom of the screen, correct if necessary
-	mov ax, [tSystem.VESAHeight]
+	mov ax, [tSystem.mouseYLimit]
 	cmp ebx, eax
 	jae .mouseYPositiveAdjust
 	jmp .mouseYDone
@@ -763,7 +1170,7 @@ iretd
 jmp .mouseXDone
 
 .mouseXPositiveAdjust:
-	mov word bx, [tSystem.VESAWidth]
+	mov word bx, [tSystem.mouseXLimit]
 	dec bx
 jmp .mouseXDone
 
@@ -772,7 +1179,7 @@ jmp .mouseXDone
 jmp .mouseYDone
 
 .mouseYPositiveAdjust:
-	mov word bx, [tSystem.VESAHeight]
+	mov word bx, [tSystem.mouseYLimit]
 	dec bx
 jmp .mouseYDone
 
@@ -814,3 +1221,4 @@ iretd
 kUnsupportedInt$								db 'An unsupported interrupt has been called', 0x00
 exceptionSelector								dd 0x00000000
 exceptionAddress								dd 0x00000000
+kIDTPtr											dd 0x00000000

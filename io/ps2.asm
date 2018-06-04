@@ -22,6 +22,7 @@ bits 32
 
 KeyboardInit:
 	; Initializes the PS/2 keyboard
+	;
 	;  input:
 	;   n/a
 	;
@@ -162,6 +163,7 @@ ret
 
 KeyboardNumLockSet:
 	; Handles the internals of turning on Num Lock - sets the flag and turns on the LED
+	;
 	;  input:
 	;   n/a
 	;
@@ -188,6 +190,7 @@ ret
 
 KeyGet:
 	; Returns the oldest key in the key buffer, or null if it's empty
+	;
 	;  input:
 	;   n/a
 	;
@@ -230,6 +233,7 @@ ret
 
 KeyWait:
 	; Waits until a key is pressed, then returns that key
+	;
 	;  input:
 	;   n/a
 	;
@@ -252,6 +256,7 @@ ret
 
 MouseInit:
 	; Initializes the PS/2 mouse
+	;
 	;  input:
 	;   n/a
 	;
@@ -440,13 +445,13 @@ MouseInit:
 	mov al, 0xAE
 	out 0x64, al
 
-	; limit mouse horizontally
-	mov ax, [tSystem.VESAWidth]
+	; limit mouse horizontally (I guess 640 pixels by defualt should work?)
+	mov ax, 640
 	shr ax, 1
 	mov word [tSystem.mouseX], ax
 
-	; limit mouse vertically
-	mov ax, [tSystem.VESAHeight]
+	; limit mouse vertically (480 pixels sounds good I suppose)
+	mov ax, 480
 	shr ax, 1
 	mov word [tSystem.mouseY], ax
 
@@ -458,6 +463,7 @@ ret
 
 PS2ControllerWaitDataRead:
 	; Reads data from the PS/2 controller
+	;
 	;  input:
 	;   n/a
 	;
@@ -493,6 +499,7 @@ ret
 PS2ControllerWaitDataWrite:
 	; Waits with timeout until the PS/2 controller is ready to accept data, then returns
 	; Note: Uses the system delay value for timeout since interrupts may be disabled upon calling
+	;
 	;  input:
 	;   n/a
 	;
@@ -523,3 +530,11 @@ PS2ControllerWaitDataWrite:
 	jmp .done
 	.done:
 ret
+
+
+
+; globals
+; make the key buffer allocated in the future
+kKeyBufferWrite									db 0x00
+kKeyBufferRead									db 0x00
+kKeyBuffer										times 256 db 0x00

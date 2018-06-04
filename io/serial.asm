@@ -18,6 +18,7 @@
 
 SerialGetBaud:
 	; Returns the current baud rate of the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -132,6 +133,7 @@ ret
 
 SerialGetIER:
 	; Returns the Interrupt Enable Register for the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -209,6 +211,7 @@ ret
 
 SerialGetIIR:
 	; Returns the Interrupt Identification Register for the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -286,6 +289,7 @@ ret
 
 SerialGetLSR:
 	; Returns the Line Status Register for the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -363,6 +367,7 @@ ret
 
 SerialGetMSR:
 	; Returns the Modem Status Register for the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -440,6 +445,7 @@ ret
 
 SerialGetParity:
 	; Returns the current parity setting of the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -524,6 +530,7 @@ ret
 
 SerialGetStopBits:
 	; Returns the current number of stop bits for the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -603,6 +610,7 @@ ret
 
 SerialGetWordSize:
 	; Returns the current number of data word bits for the specified serial port
+	;
 	;  input:
 	;   port number
 	;
@@ -682,6 +690,7 @@ ret
 
 SerialSetBaud:
 	; Returns the current baud rate of the specified serial port
+	;
 	;  input:
 	;   port number
 	;   baud rate
@@ -789,6 +798,7 @@ ret
 
 SerialSetIER:
 	; Sets the Interrupt Enable Register for the specified serial port
+	;
 	;  input:
 	;   port number
 	;   IER
@@ -864,6 +874,7 @@ ret
 
 SerialSetParity:
 	; Sets the parity of the specified serial port
+	;
 	;  input:
 	;   port number
 	;   parity code
@@ -953,6 +964,7 @@ ret
 
 SerialSetStopBits:
 	; Returns the current number of stop bits for the specified serial port
+	;
 	;  input:
 	;   port number
 	;   number of stop bits (1 or 2)
@@ -1038,6 +1050,7 @@ ret
 
 SerialSetWordSize:
 	; Returns the current number of data word bits for the specified serial port
+	;
 	;  input:
 	;   port number
 	;

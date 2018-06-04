@@ -16,14 +16,128 @@
 
 
 
+bits 16
+
+
+
+ConvertByteToHexString16:
+	; Translates the byte value specified to a hexadecimal number in a zero-padded 2 byte string in real mode
+	;
+	;  input:
+	;   numeric byte value
+	;   string address
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: al, cx, si, di
+
+	pop cx
+	pop si
+	pop di
+	push cx
+
+	; handle digit 1
+	mov cx, 0x00F0
+	and cx, si
+	shr cx, 4
+	add cx, kHexDigits
+	push si
+	mov si, cx
+	mov al, [si]
+	pop si
+	mov byte[di], al
+	inc di
+
+	; handle digit 2
+	mov cx, 0x000F
+	and cx, si
+	add cx, kHexDigits
+	push si
+	mov si, cx
+	mov al, [si]
+	pop si
+	mov byte[di], al
+ret
+
+
+
+ConvertWordToHexString16:
+	; Translates the word value specified to a hexadecimal number in a zero-padded 4 byte string in real mode
+	;
+	;  input:
+	;   numeric word value
+	;   string address
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: al, cx, si, di
+
+	pop cx
+	pop si
+	pop di
+	push cx
+
+	; handle digit 1
+	mov cx, 0xF000
+	and cx, si
+	shr cx, 12
+	add cx, kHexDigits
+	push si
+	mov si, cx
+	mov al, [si]
+	pop si
+	mov byte[di], al
+	inc di
+
+	; handle digit 2
+	mov cx, 0x0F00
+	and cx, si
+	shr cx, 8
+	add cx, kHexDigits
+	push si
+	mov si, cx
+	mov al, [si]
+	pop si
+	mov byte[di], al
+	inc di
+
+	; handle digit 3
+	mov cx, 0x00F0
+	and cx, si
+	shr cx, 4
+	add cx, kHexDigits
+	push si
+	mov si, cx
+	mov al, [si]
+	pop si
+	mov byte[di], al
+	inc di
+
+	; handle digit 4
+	mov cx, 0x000F
+	and cx, si
+	add cx, kHexDigits
+	push si
+	mov si, cx
+	mov al, [si]
+	pop si
+	mov byte[di], al
+	inc di
+ret
+
+
+
 bits 32
 
 
 
 ConvertToBinaryString:
 	; Translates the value specified to a binary number in a zero-padded 32 byte string
-	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!z
 	;       No terminating null is put on the end of the string - do that yourself.
+	;
 	;  input:
 	;   numeric value
 	;   string address
@@ -69,6 +183,7 @@ ConvertToDecimalString:
 	; Translates the value specified to a decimal number in a zero-padded 10 byte string
 	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
 	;       No terminating null is put on the end of the string - do that yourself.
+	;
 	;  input:
 	;   numeric value
 	;   string address
@@ -114,6 +229,7 @@ ConvertToHexString:
 	; Translates the value specified to a hexadecimal number in a zero-padded 8 byte string
 	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
 	;       No terminating null is put on the end of the string - do that yourself.
+	;
 	;  input:
 	;   numeric value
 	;   string address
@@ -198,6 +314,7 @@ ConvertToOctalString:
 	; Translates the value specified to an octal number in a zero-padded 11 byte string
 	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
 	;       No terminating null is put on the end of the string - do that yourself.
+	;
 	;  input:
 	;   numeric value
 	;   string address
@@ -241,6 +358,7 @@ ret
 
 StringBuild:
 	; Builds a string out of the specified arguments
+	;
 	;  input:
 	;   formatting string address
 	;   destination string address
@@ -535,6 +653,7 @@ jmp .TokenDone
 
 StringCaseLower:
 	; Converts a string to lower case
+	;
 	;  input:
 	;   string starting address
 	;
@@ -573,6 +692,7 @@ ret
 
 StringCaseUpper:
 	; Converts a string to upper case
+	;
 	;  input:
 	;   string starting address
 	;
@@ -609,39 +729,9 @@ ret
 
 
 
-StringFill:
-	; Fills the entire string specified with the character specified
-	;  input:
-	;   string starting address
-	;   fill character
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, ecx
-
-	pop eax
-	pop ecx
-	pop ebx
-	push eax
-
-	.StringLoop:
-		mov byte al, [ecx]
-
-		cmp al, 0x00
-		je .StringLoopDone
-
-		mov [ecx], bl
-
-		inc ecx
-	jmp .StringLoop
-	.StringLoopDone:
-ret
-
-
-
 StringDelete:
 	; Deletes the character at the location specified from the string
+	;
 	;  input:
 	;   string starting address
 	;   character position to remove
@@ -686,8 +776,41 @@ ret
 
 
 
+StringFill:
+	; Fills the entire string specified with the character specified
+	;
+	;  input:
+	;   string starting address
+	;   fill character
+	;
+	;  output:
+	;   n/a
+	;
+	; changes: eax, ebx, ecx
+
+	pop eax
+	pop ecx
+	pop ebx
+	push eax
+
+	.StringLoop:
+		mov byte al, [ecx]
+
+		cmp al, 0x00
+		je .StringLoopDone
+
+		mov [ecx], bl
+
+		inc ecx
+	jmp .StringLoop
+	.StringLoopDone:
+ret
+
+
+
 StringInsert:
 	; Inserts a character into the string at the location specified
+	;
 	;  input:
 	;   main string address
 	;   insert string address
@@ -787,6 +910,7 @@ ret
 
 StringLength:
 	; Returns the length of the string specified
+	;
 	;  input:
 	;   string starting address
 	;
@@ -818,6 +942,7 @@ ret
 
 StringReplaceChars:
 	; Replaces all occurrances of the specified character with another character specified
+	;
 	;  input:
 	;   string starting address
 	;   character to be replaced
@@ -856,6 +981,7 @@ ret
 
 StringReplaceCharsInRange:
 	; Replaces any character within the range of ASCII codes specified with the specified character
+	;
 	;  input:
 	;   string starting address
 	;   start of ASCII range
@@ -906,6 +1032,7 @@ ret
 
 StringTrimLeft:
 	; Trims any occurrances of the character specified off the left side of the string
+	;
 	;  input:
 	;   string starting address
 	;   ASCII code of the character to be trimmed
@@ -962,6 +1089,7 @@ ret
 
 StringTrimRight:
 	; Trims any occurrances of the character specified off the right side of the string
+	;
 	;  input:
 	;   string starting address
 	;   ASCII code of the character to be trimmed

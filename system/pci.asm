@@ -22,6 +22,7 @@ bits 32
 
 PCIDetect:
 	; Pokes the 32-bit I/O register at 0x0CF8 to see if there's a PCI controller there
+	;
 	;  input:
 	;   n/a
 	;
@@ -60,8 +61,40 @@ ret
 
 
 
+PCIDriverSearch:
+	; Scans all the drivers in the kernel to see if any match the class/subclass/progif given
+	;
+	;  input:
+	;   PCI Class value
+	;   PCI Subclass value
+	;   PCI ProgIf value
+	;
+	;  output:
+	;   Match code
+	;
+	;  changes: eax, ebx, ecx, edx
+
+	pop eax
+	pop dword [.PCIBus]
+	pop dword [.PCIDevice]
+	pop dword [.PCIFunction]
+	push eax
+
+jmp $
+	; push the return value on the stack and exit
+	pop eax
+	push ebx
+	push eax
+ret
+.PCIBus											dd 0x00000000
+.PCIDevice										dd 0x00000000
+.PCIFunction									dd 0x00000000
+
+
+
 PCIGetDeviceCount:
 	; Returns the total number of devices (functions) across all PCI busses in the system
+	;
 	;  input:
 	;   n/a
 	;
@@ -74,8 +107,133 @@ ret
 
 
 
+PCILoadDrivers:
+	; Loads drivers for all PCI devices
+	;
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+	;
+	;  changes: 
+
+	; cycle through all busses and load drivers for all device functions found
+	mov ecx, 0
+	.ProbeBusLoop:
+		mov [.PCIBus], ecx
+		mov ecx, 0
+		.ProbeDeviceLoop:
+			mov [.PCIDevice], ecx
+			mov ecx, 0
+			.ProbeFunctionLoop:
+				mov [.PCIFunction], ecx
+
+				; load the first register (vendor and device IDs) for this device
+				pusha
+				push 0
+				push ecx
+				push dword [.PCIDevice]
+				push dword [.PCIBus]
+				call PCILiveRead
+				pop dword [.temp]
+				popa
+
+				; if the vendor ID is 0xFFFF, it's invalid
+				cmp word [.temp], 0xFFFF
+				je .InfoSkip
+					; if we get here, the device is valid
+					; save all values
+					pusha
+
+					; maybe make these three separate routines in the future for handiness?
+					; get the class, subclass, and progif values for this device so we can search for a suitable driver
+					push dword 0x00000002
+					push dword [.PCIFunction]
+					push dword [.PCIDevice]
+					push dword [.PCIBus]
+					call PCIReadDWord
+					pop eax
+
+					; juggle the bytes here to transfer the proper data into our variables
+					shr eax, 8
+					mov ebx, eax
+					and ebx, 0x000000FF
+					mov dword [.PCIProgIf], ebx
+
+					shr eax, 8
+					mov ebx, eax
+					and ebx, 0x000000FF
+					mov dword [.PCISubclass], ebx
+
+					shr eax, 8
+					mov ebx, eax
+					and ebx, 0x000000FF
+					mov dword [.PCIClass], ebx
+
+
+
+					; search for precise driver first for this exact class/subclass/prog if 
+					push dword [.PCIFunction]
+					push dword [.PCIDevice]
+					push dword [.PCIBus]
+					call PCIDriverSearch
+					pop eax
+					; test the result of the search
+
+					; didn't find one, so search for a driver that handles the entire subclass (all prog if values)
+					push dword [.PCIFunction]
+					push dword [.PCIDevice]
+					push dword [.PCIBus]
+					call PCIDriverSearch
+					pop eax
+					; test the result of the search
+
+					; still nothing?!? ok, search for a driver for the entire class (all subclasses and prog if values)
+					push dword [.PCIFunction]
+					push dword [.PCIDevice]
+					push dword [.PCIBus]
+					call PCIDriverSearch
+					pop eax
+					; test the result of the search
+
+					; what?? ok, fine. there's just no driver in the kernel for this device
+
+					; restore the previous values
+					popa
+
+				.InfoSkip:
+			inc ecx
+			cmp ecx, 8
+			jne .ProbeFunctionLoop
+
+		mov ecx, [.PCIDevice]
+		inc ecx
+		cmp ecx, 32
+		jne .ProbeDeviceLoop
+
+	mov ecx, [.PCIBus]
+	inc ecx
+	cmp ecx, 256
+	jne .ProbeBusLoop
+
+	jmp $
+
+ret
+.PCIBus											dd 0x00000000
+.PCIDevice										dd 0x00000000
+.PCIFunction									dd 0x00000000
+.writeAddress									dd 0x00000000
+.temp											dd 0x00000000
+.PCIClass										dd 0x00000000
+.PCISubclass									dd 0x00000000
+.PCIProgIf										dd 0x00000000
+
+
+
 PCIInitBus:
 	; Scans all PCI busses and shadows all data to RAM
+	;
 	;  input:
 	;   n/a
 	;
@@ -122,11 +280,7 @@ PCIInitBus:
 				cmp word [.temp], 0xFFFF
 				je .InfoSkip
 					; if we get here, the device is valid, so let's copy all the registers
-
 					mov eax, [.temp]
-					pusha
-					call PrintRegs32
-					popa
 
 					; preserve our loop counter
 					push ecx
@@ -243,6 +397,7 @@ ret
 
 PCILiveRead:
 	; Reads a 32-bit register value from the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -299,6 +454,7 @@ ret
 
 PCILiveWrite:
 	; Writes a 32-bit value to the target PCI register specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -356,6 +512,7 @@ ret
 
 PCIReadAll:
 	; Gets all info for the specified PCI device and fills it into the struct at the given address
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -420,6 +577,7 @@ ret
 
 PCIReadByte:
 	; Reads a byte register from the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -439,6 +597,7 @@ ret
 
 PCIReadWord:
 	; Reads a word register from the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -458,6 +617,7 @@ ret
 
 PCIReadDWord:
 	; Reads a dword register from the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -592,6 +752,7 @@ ret
 
 PCIWriteByte:
 	; Writes a byte value to the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -609,6 +770,7 @@ ret
 
 PCIWriteWord:
 	; Writes a word value to the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device
@@ -626,6 +788,7 @@ ret
 
 PCIWriteDword:
 	; Writes a dword value to the PCI target specified
+	;
 	;  input:
 	;   PCI Bus
 	;	PCI Device

@@ -22,6 +22,7 @@ bits 32
 
 PICDisableIRQs:
 	; Disables all IRQ lines across both PICs
+	;
 	;  input:
 	;   n/a
 	;
@@ -41,6 +42,7 @@ ret
 
 PICInit:
 	; Init & remap both PICs to use int numbers 0x20 - 0x2f
+	;
 	;  input:
 	;   n/a
 	;
@@ -96,6 +98,7 @@ ret
 
 PICIntComplete:
 	; Tells both PICs the interrupt has been handled
+	;
 	;  input:
 	;   n/a
 	;
@@ -116,6 +119,7 @@ ret
 
 PICMaskAll:
 	; Masks all interrupts
+	;
 	;  input:
 	;   n/a
 	;
@@ -140,6 +144,7 @@ ret
 
 PICMaskSet:
 	; Masks all interrupts
+	;
 	;  input:
 	;   n/a
 	;
@@ -164,6 +169,7 @@ ret
 
 PICUnmaskAll:
 	; Unmasks all interrupts
+	;
 	;  input:
 	;   n/a
 	;

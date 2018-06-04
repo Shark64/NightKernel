@@ -23,6 +23,7 @@ bits 32
 A20Enable:
 	; Enables the A20 line of the processor's address bus using the "Fast A20 enable" method
 	; Since A20 support is critical, this code will print an error then intentionally hang if unsuccessful
+	;
 	;  input:
 	;   n/a
 	;
@@ -46,7 +47,6 @@ A20Enable:
 	push fastA20Fail$
 	call Print32
 	call PrintRegs32
-	;jmp $
 
 	.success:
 ret
@@ -55,6 +55,7 @@ ret
 
 CPUSpeedDetect:
 	; Determines how many iterations of random activities the CPU is capable of in one second
+	;
 	;  input:
 	;   n/a
 	;
@@ -91,6 +92,7 @@ ret
 
 PITInit:
 	; Init the PIT for our timing purposes
+	;
 	;  input:
 	;   n/a
 	;
@@ -111,6 +113,7 @@ ret
 
 Random:
 	; Returns a random number using the XORShift method
+	;
 	;  input:
 	;   number limit
 	;
@@ -150,6 +153,7 @@ ret
 
 Reboot:
 	; Performs a warm reboot of the PC
+	;
 	;  input:
 	;   n/a
 	;
