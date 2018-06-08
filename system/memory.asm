@@ -16,14 +16,28 @@
 
 
 
+; 16-bit function listing:
+; PCICalculateNext				Calculates the proper value of the next spot on the PCI bus
+
+; 32-bit function listing:
+; MemoryInit					Probes the BIOS memory map using interrupt 0x15:0xE820, finds the largest block of free RAM, and fills in the appropriate system data structures for future use by the memory manager
+; MemAllocate					Returns the address of a block of memory of the specified size, or zero if a block of that size is unavailble
+; MemCopy						Copies the specified number of bytes from one address to another
+; MemDispose					Notifies the memory manager that the block specified by the address given is now free for reuse
+; MemFill						Fills the range of memory given with the byte value specified
+; MemResize						Resizes the specified block of RAM to the new size specified
+; MemSearchDWord				Searches the memory range specified for the given dword value
+; MemSearchWord					Searches the memory range specified for the given word value
+
+
+
 bits 16
 
 
 
 MemoryInit:
-	; Probes the BIOS memory map using interrupt 0x15 function 0xE820,
-	; finds the largest block of free RAM, and fills in the appropriate
-	; system data structures for future use by the memory manager
+	; Probes the BIOS memory map using interrupt 0x15:0xE820, finds the largest block of free RAM,
+	; and fills in the appropriate system data structures for future use by the memory manager
 	;
 	;  input:
 	;   n/a
@@ -404,7 +418,3 @@ MemSearchWord:
 	jmp .MemorySearchLoop
 	.MemorySearchLoopDone:
 ret
-
-
-
-memE820Unsupported$								db 'Could not detect memory, function unsupported', 0x00

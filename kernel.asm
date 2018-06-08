@@ -297,8 +297,20 @@ push progressText0E$
 call Print32
 
 .NoPrint0E:
-call PCIInitBus
+call PCIDetect
+pop eax
+cmp eax, [kTrue]
+jne .PCIFail
 
+call PCIInitBus
+jmp .PCISkip
+
+.PCIFail:
+push PCIFailed$
+call Print32
+jmp .PCISkip
+
+.PCISkip:
 
 
 ; load drivers for PCI devices
@@ -326,10 +338,6 @@ call Print32
 
 .NoPrint10:
 call ClearScreen32
-
-
-
-
 
 
 
@@ -362,9 +370,11 @@ progressText0A$									db 'Load system data to the info struct', 0x00
 progressText0B$									db 'MouseInit', 0x00
 progressText0C$									db 'KeyboardInit', 0x00
 progressText0D$									db 'Enabling interrupts', 0x00
-progressText0E$									db 'Shadowing PCI register space', 0x00
+progressText0E$									db 'Initializing PCI bus', 0x00
 progressText0F$									db 'Loading drivers', 0x00
 progressText10$									db 'Setup complete', 0x00
+memE820Unsupported$								db 'Could not detect memory, function unsupported', 0x00
+PCIFailed$										db 'PCI Controller not detected', 0x00
 
 
 

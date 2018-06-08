@@ -1,3 +1,20 @@
+6/10/2018, 0.11 Update - Fleshed out List Manager and PCI routines, other fixes
+- Added check for PCI controller before attempting to init the PCI bus
+- Added function listing for lists.asm, memory.asm, and pci.asm
+- Added PCICalculateNext() in pci.asm
+- Added PCIGetNextFunction() in pci.asm
+- Added time and date data to system info page on debug menu
+- Changed folder locations and modified buildrun.sh accordingly
+- Finished LMItemGetAddress() in lists.asm
+- Finished PCIGetFunctionCount (formerly PCIGetDeviceCount) in pci.asm
+- Optimized (drastically!) the debug menu's PCI listing code and saved around 1.5 KiB
+- Removed duplicate code from LMItemAddAtSlot() in lists.asm
+- Removed LMListSignatureCreate and LMListSignatureTest from lists.asm
+- Replaced CRC checksumming in List Manager routines with a simple signature check for speed :/
+- Rewrote PCI routines to use List Manager for data shadowing
+
+
+
 6/4/2018, 0.10 Update - Stupid little fixes
 - Changed major and minor version numbers to byte size in globals.asm
 - Fixed a bug in the newly optimized PCI device name table where the date being written to screen wasn't coming from the right place. And also saved around 300 bytes!

@@ -329,6 +329,71 @@ ret
 	push tSystem.CPUIDBrand$
 	call Print32
 
+	inc byte [cursorY]
+
+	; clear our print string
+	push dword 0
+	push dword 256
+	push kPrintText$
+	call MemFill
+
+	; do the ticks/seconds since boot string
+	push dword [tSystem.secondsSinceBoot]
+	push dword [tSystem.ticksSinceBoot]
+
+	push kPrintText$
+	push .ticksFormat$
+	call StringBuild
+
+	push kPrintText$
+	call Print32
+
+	; clear our print string
+	push dword 0
+	push dword 256
+	push kPrintText$
+	call MemFill
+
+	; do the date and time info string
+	mov eax, 0x00000000
+	mov al, byte [tSystem.year]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.century]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.day]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.month]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.ticks]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.seconds]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.minutes]
+	push eax
+
+	mov eax, 0x00000000
+	mov al, byte [tSystem.hours]
+	push eax
+
+	push kPrintText$
+	push .dateTimeFormat$
+	call StringBuild
+
+	push kPrintText$
+	call Print32
+
 	; wait for a keypress before leaving
 	call KeyWait
 	pop eax
@@ -337,7 +402,9 @@ ret
 	call ClearScreen32
 ret
 .systemInfoText$								db 'System Information', 0x00
-.versionFormat$									db 'Version ^p2^h.^h', 0x00
+.versionFormat$									db 'Kernel version ^p2^h.^h', 0x00
+.ticksFormat$									db 'Ticks since boot: ^p10^d     Seconds since boot:^d', 0x00
+.dateTimeFormat$								db '^p2^d:^d:^d.^p3^d     ^p2^d/^d/^h^d', 0x00
 
 
 
@@ -363,177 +430,69 @@ ret
 	
 		push kPrintText$
 		call Print32
-		
+
 		; print the device description header
+		inc byte [cursorY]
 		push .PCIDeviceDescriptionText1$
 		call Print32
-	
-		mov ecx, 1
+
+		; init the values
+		mov dword [.PCIBus], 0
+		mov dword [.PCIDevice], 0
+		mov dword [.PCIFunction], 0
+
 		.PCIListAllLoop:
-			pusha
-
-			; cycle through all busses and devices on those busses, copying all registers into RAM
-				mov ecx, 0
-				.ProbeBusLoop:
-					mov [.PCIBus], ecx
-					mov ecx, 0
-					.ProbeDeviceLoop:
-						mov [.PCIDevice], ecx
-						mov ecx, 0
-						.ProbeFunctionLoop:
-							mov [.PCIFunction], ecx
-
-							; load the first register (vendor and device IDs) for this device
-							pusha
-							push 0
-							push dword [.PCIFunction]
-							push dword [.PCIDevice]
-							push dword [.PCIBus]
-							call PCIReadDWord
-							pop dword [.temp]
-							popa
-
-							; if the vendor ID is 0xFFFF, it's invalid
-							cmp word [.temp], 0xFFFF
-							je .InfoSkip
-								; if we get here, the device is valid, so we print the data for it
-
-								pusha
-
-								; get info on the first device
-								push PCIDeviceInfo
-								push dword [.PCIFunction]
-								push dword [.PCIDevice]
-								push dword [.PCIBus]
-								call PCIReadAll
-
-								; first calculate the address of the string which describes this device
-								mov edx, 0x00000000
-								mov eax, 36
-								mul byte [PCIDeviceInfo.PCIClass]
-								mov ebx, [PCITable.PCIClassTable]
-								add ebx, 20
-								add eax, ebx
-								push eax
-
-								; build the rest of the PCI data into line 1 for this device
-								mov eax, 0x00000000
-								mov al, [PCIDeviceInfo.PCIRevision]
-								push eax
-
-								mov eax, 0x00000000
-								mov al, [PCIDeviceInfo.PCIProgIf]
-								push eax
-
-								mov eax, 0x00000000
-								mov al, [PCIDeviceInfo.PCISubclass]
-								push eax
-
-								mov eax, 0x00000000
-								mov al, [PCIDeviceInfo.PCIClass]
-								push eax
-
-								mov eax, 0x00000000
-								mov ax, [PCIDeviceInfo.PCIDeviceID]
-								push eax
-
-								mov eax, 0x00000000
-								mov ax, [PCIDeviceInfo.PCIVendorID]
-								push eax
-								push dword [.PCIFunction]
-								push dword [.PCIDevice]
-								push dword [.PCIBus]
-								push kPrintText$
-								push .format1$
-								call StringBuild
-
-								; print the string we just built
-								push kPrintText$
-								call Print32
-
-								popa
-
-							.InfoSkip:
-						inc ecx
-						cmp ecx, 8
-						jne .ProbeFunctionLoop
-			
-					mov ecx, [.PCIDevice]
-					inc ecx
-					cmp ecx, 32
-					jne .ProbeDeviceLoop
-			
-				mov ecx, [.PCIBus]
-				inc ecx
-				cmp ecx, 256
-				jne .ProbeBusLoop
-
-
-			popa
-			inc ecx
-		jmp .GetInputLoop
-
-		; here we print info for just one specific device
-		.PrintSpecificDevice:
-			call ClearScreen32
-
-			; build and print the device count string
-			push dword [tSystem.PCIDeviceCount]
-			push dword [.currentDevice]
-			push kPrintText$
-			push .PCIDeviceListingText$
-			call StringBuild
-
-			push kPrintText$
-			call Print32
-
-			inc byte [cursorY]
-
-			; print the device description header
-			push .PCIDeviceDescriptionText1$
-			call Print32
-
-			mov ecx, dword [.currentDevice]
-			pusha
-
-			; get info on the first device
-			push PCIDeviceInfo
-			push ecx
-			call PCIReadDeviceNumber
+			push dword [.PCIFunction]
+			push dword [.PCIDevice]
+			push dword [.PCIBus]
+			call PCIGetNextFunction
 			pop dword [.PCIFunction]
 			pop dword [.PCIDevice]
 			pop dword [.PCIBus]
 
-			; now we print line 1 of the data for this device
+			; see if we're done yet
+			mov eax, dword [.PCIBus]
+			add eax, dword [.PCIDevice]
+			add eax, dword [.PCIFunction]
+			cmp eax, 0x0002FFFD
+			je .GetInputLoop
+
+			; get info on the first device
+			push PCIDeviceInfo
+			push dword [.PCIFunction]
+			push dword [.PCIDevice]
+			push dword [.PCIBus]
+			call PCIReadAll
 
 			; first calculate the address of the string which describes this device
-			mov edx, 0x00000000
-			mov eax, 36
-			mul byte [PCIDeviceInfo.PCIClass]
-			mov ecx, PCITable.PCI00$
-			add eax, ecx
+			mov eax, 0x00000000
+			mov al, byte [PCIDeviceInfo.PCIClass]
 			push eax
+			push dword [PCITable.PCIClassTable]
+			call LMItemGetAddress
+			; no need to pop the return value off the stack here from the above call since it needs to be there anyway
+
 			; build the rest of the PCI data into line 1 for this device
 			mov eax, 0x00000000
 			mov al, [PCIDeviceInfo.PCIRevision]
 			push eax
-			
+
 			mov eax, 0x00000000
 			mov al, [PCIDeviceInfo.PCIProgIf]
 			push eax
-			
+
 			mov eax, 0x00000000
 			mov al, [PCIDeviceInfo.PCISubclass]
 			push eax
-			
+
 			mov eax, 0x00000000
 			mov al, [PCIDeviceInfo.PCIClass]
 			push eax
-			
+
 			mov eax, 0x00000000
 			mov ax, [PCIDeviceInfo.PCIDeviceID]
 			push eax
-			
+
 			mov eax, 0x00000000
 			mov ax, [PCIDeviceInfo.PCIVendorID]
 			push eax
@@ -541,134 +500,53 @@ ret
 			push dword [.PCIDevice]
 			push dword [.PCIBus]
 			push kPrintText$
-			push .format1$
+			push .format$
 			call StringBuild
-		
-			; print the string we just built
-			push kPrintText$
-			call Print32
-	
-			inc byte [cursorY]
-	
-			; print the first three BARs
-			push dword [PCIDeviceInfo.PCIBAR2]
-			push dword [PCIDeviceInfo.PCIBAR1]
-			push dword [PCIDeviceInfo.PCIBAR0]
-			push kPrintText$
-			push .format2$
-			call StringBuild
-		
-			; print the string we just built
-			push kPrintText$
-			call Print32
-	
-			; print the other three BARs
-			push dword [PCIDeviceInfo.PCIBAR5]
-			push dword [PCIDeviceInfo.PCIBAR4]
-			push dword [PCIDeviceInfo.PCIBAR3]
-			push kPrintText$
-			push .format3$
-			call StringBuild
-		
+
 			; print the string we just built
 			push kPrintText$
 			call Print32
 
-			inc byte [cursorY]
+			; advance to the next slot
+			push dword [.PCIFunction]
+			push dword [.PCIDevice]
+			push dword [.PCIBus]
+			call PCICalculateNext
+			pop dword [.PCIFunction]
+			pop dword [.PCIDevice]
+			pop dword [.PCIBus]
 
-			; process the miscellaneous PCI infos, starting with the device description header
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCIBIST]
-			push eax
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCIHeaderType]
-			push eax
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCILatencyTimer]
-			push eax
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCICacheLineSize]
-			push eax
-			
-			push kPrintText$
-			push .format4$
-			call StringBuild
-		
-			; print the string we just built
-			push kPrintText$
-			call Print32
+		jmp .PCIListAllLoop
 
-			inc byte [cursorY]
+	.PrintSpecificDevice:
+	; here we print info for just one specific device
+	; we start by building and printing the device count string
+	push dword [tSystem.PCIDeviceCount]
+	push dword [.currentDevice]
+	push kPrintText$
+	push .PCIDeviceListingText$
+	call StringBuild
 
-			; more data and stuffs
-			mov eax, 0x00000000
-			mov ax, [PCIDeviceInfo.PCISubsystemID]
-			push eax
-			
-			mov eax, 0x00000000
-			mov ax, [PCIDeviceInfo.PCISubsystemVendorID]
-			push eax
-			
-			push dword [PCIDeviceInfo.PCICardbusCISPointer]
-			
-			push kPrintText$
-			push .format5$
-			call StringBuild
-		
-			; print the string we just built
-			push kPrintText$
-			call Print32
-	
-			inc byte [cursorY]
+	push kPrintText$
+	call Print32
 
-			; even moar data and thingz
-			push dword [PCIDeviceInfo.PCIExpansionROMBaseAddress]
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCICapabilitiesPointer]
-			push eax
-			
-			push kPrintText$
-			push .format6$
-			call StringBuild
-		
-			; print the string we just built
-			push kPrintText$
-			call Print32
-	
-			inc byte [cursorY]
+	mov eax, dword [.currentDevice]
+	dec eax
+	push eax
+	push dword [tSystem.PCITableAddress]
+	call LMItemGetAddress
+	pop eax
 
-			; SO. MUCH. DATA.
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCIMaxLatency]
-			push eax
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCIMaxGrant]
-			push eax
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCIInterruptPin]
-			push eax
-			
-			mov eax, 0x00000000
-			mov al, [PCIDeviceInfo.PCIInterruptLine]
-			push eax
-			
-			push kPrintText$
-			push .format7$
-			call StringBuild
-		
-			; print the string we just built
-			push kPrintText$
-			call Print32
+	; adjust the address to skip the pci bus/device/function data
+	add eax, 12
 
-			popa
+	; dump the memory space
+	inc byte [cursorY]		
+	push dword 16
+	push eax
+	call PrintRAM32
 			
-		.GetInputLoop:
+	.GetInputLoop:
 		call KeyWait
 		pop eax
 	
@@ -682,260 +560,39 @@ ret
 		cmp eax, 0x31
 		je .End
 
-jmp .GetInputLoop
+	jmp .GetInputLoop
 
-.PageUp:
-	dec dword [.currentDevice]
-	cmp dword [.currentDevice], 0xFFFFFFFF
-	jne .PCIDevices
-	inc dword [.currentDevice]
-jmp .GetInputLoop
+	.PageUp:
+		dec dword [.currentDevice]
+		cmp dword [.currentDevice], 0xFFFFFFFF
+		jne .PCIDevices
+		inc dword [.currentDevice]
+	jmp .GetInputLoop
 
-.PageDown:
-	inc dword [.currentDevice]
-	mov eax, dword [tSystem.PCIDeviceCount]
-	cmp dword [.currentDevice], eax
-	jbe .PCIDevices
-	dec dword [.currentDevice]
-jmp .GetInputLoop
+	.PageDown:
+		inc dword [.currentDevice]
+		mov eax, dword [tSystem.PCIDeviceCount]
+		cmp dword [.currentDevice], eax
+		jbe .PCIDevices
+		dec dword [.currentDevice]
+	jmp .GetInputLoop
 
-.End:
+	.End:
 	; set this for next time
 	mov dword [.currentDevice], 0
 
 	; clear the screen and exit
 	call ClearScreen32
 ret
-
-
-
 .PCIInfoText$									db 'PCI Devices', 0x00
 .PCIDeviceCountText$							db '^d PCI devices found', 0x00
-.PCIDeviceListingText$							db 'Device ^d of ^d', 0x00
+.PCIDeviceListingText$							db 'Shadowed register space for device ^d of ^d', 0x00
 .PCIDeviceDescriptionText1$						db 'Bus Dev  Fn  Vend  Dev   Cl  Sc  PI  Rv  Description', 0x00
-.format1$										db '^p2^h  ^p2^h   ^p1^h   ^p4^h  ^h  ^p2^h  ^h  ^h  ^h  ^s', 0x00
-.format2$										db '^p8BAR0 ^h        BAR1 ^h        BAR2 ^h', 0x00
-.format3$										db '^p8BAR3 ^h        BAR4 ^h        BAR5 ^h', 0x00
-.format4$										db '^p2Cache Line Size ^h    Latency Timer ^h    Header Type ^h    BIST ^h', 0x00
-.format5$										db '^p8Cardbus CIS Pointer ^h    ^p4Subsystem Vendor ^h    Subsystem ^h', 0x00
-.format6$										db '^p8Expansion ROM Base Address ^h    Capabilities Pointer ^p2^h', 0x00
-.format7$										db '^p2Interrupt Line ^h    Interrupt Pin ^h    Max Grant ^h    Max Latency ^h', 0x00
+.format$										db '^p2^h  ^p2^h   ^p1^h   ^p4^h  ^h  ^p2^h  ^h  ^h  ^h  ^s', 0x00
 .PCIBus											dd 0x00000000
 .PCIDevice										dd 0x00000000
 .PCIFunction									dd 0x00000000
 .currentDevice									dd 0x00000000
-.temp											dd 0x00000000
-
-
-
-.TimeInfo:
-;	mov eax, 0x00000000
-;	mov al, [tSystem.hours]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 180
-;	push 20
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.minutes]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 180
-;	push 120
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.seconds]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 180
-;	push 220
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.ticks]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 180
-;	push 320
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.month]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 200
-;	push 20
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.day]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 200
-;	push 120
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.century]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 200
-;	push 220
-;	call [VESAPrint]
-;
-;	mov eax, 0x00000000
-;	mov al, [tSystem.year]
-;	push kPrintText$
-;	push eax
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 200
-;	push 320
-;	call [VESAPrint]
-;
-;	; print seconds since boot just for the heck of it
-;	push kPrintText$
-;	push dword [tSystem.secondsSinceBoot]
-;	call ConvertToHexString
-;	push kPrintText$
-;	push 0xFF000000
-;	push 0xFF777777
-;	push 34
-;	push 2
-;	call [VESAPrint]
-ret
-
-
-
-PCIReadDeviceNumber:
-	; Returns data for the PCI devices specified
-	;
-	;  input:
-	;   Device number (obtain count of devices first from PCIGetDeviceCount())
-	;	PCI info struct address
-	;
-	;  output:
-	;   n/a
-	;
-	;  changes: eax, ebx, ecx, edx
-
-	; get the device number from the stack
-	pop dword [.returnAddress]
-	pop dword [.deviceNumber]
-	pop dword [.destAddress]
-
-	; see if the device requested is outside the valid number of devices
-	mov eax, dword [tSystem.PCIDeviceCount]
-	cmp dword [.deviceNumber], eax
-	jbe .ValidRequest
-	jmp .Exit
-
-	.ValidRequest:
-	; first, clear the counter and BDF values
-	mov dword [.PCIDevices], 0
-	mov dword [.PCIBus], 0
-	mov dword [.PCIDevice], 0
-	mov dword [.PCIFunction], 0
-
-	mov ecx, 0
-	.ProbeBusLoop:
-		mov [.PCIBus], ecx
-		mov ecx, 0
-		.ProbeDeviceLoop:
-			mov [.PCIDevice], ecx
-			mov ecx, 0
-			.ProbeFunctionLoop:
-				mov [.PCIFunction], ecx
-				pusha
-				mov eax, PCIDeviceInfo
-				push eax
-				push ecx
-				push dword [.PCIDevice]
-				push dword [.PCIBus]
-				call PCIReadAll
-				popa
-
-				; if the vendor ID is 0xFFFF, it's invalid
-				cmp word [PCIDeviceInfo.PCIVendorID], 0xFFFF
-				je .InfoSkip
-
-				; if we get here, the device is valid, so let's increment the counter
-				inc dword [.PCIDevices]
-
-				; see if we're on the right device
-				mov eax, dword [.deviceNumber]
-				cmp dword [.PCIDevices], eax
-				jne .InfoSkip
-
-				; if we get here, the device matched, so we copy the data to the address specified
-				push 256
-				push dword [.destAddress]
-				push PCIDeviceInfo
-				call MemCopy
-
-				; And we're all done! No need to hang around this dusty old town.
-				jmp .Exit
-
-				.InfoSkip:
-				inc ecx
-				cmp ecx, 8
-			jne .ProbeFunctionLoop
-
-		mov ecx, [.PCIDevice]
-		inc ecx
-		cmp ecx, 32
-		jne .ProbeDeviceLoop
-
-	mov ecx, [.PCIBus]
-	inc ecx
-	cmp ecx, 256
-	jne .ProbeBusLoop
-
-	.Exit:
-	push dword [.PCIBus]
-	push dword [.PCIDevice]
-	push dword [.PCIFunction]
-	push dword [.returnAddress]
-ret
-.PCIDevices										dd 0x00000000
-.PCIBus											dd 0x00000000
-.PCIDevice										dd 0x00000000
-.PCIFunction									dd 0x00000000
-.deviceNumber									dd 0x00000000
-.destAddress									dd 0x00000000
-.returnAddress									dd 0x00000000
 
 
 

@@ -16,12 +16,27 @@
 
 
 
+; function listing:
+; LMItemAddAtSlot				Adds an item to the list specified at the list slot specified
+; LMItemDelete					Deletes the item specified from the list specified
+; LMItemGetAddress				Returns the address of the specified element in the list specified
+; LMListCompact					Compacts the list specified
+; LMListDelete					Deletes the list specified
+; LMListFindFirstFreeSlot		Finds the first free slot available in the list specified
+; LMListGetElementCount			Returns the number of elements in the list specified
+; LMListGetElementSize			Returns the size of elements in the list specified
+; LMListNew						Creates a new list in memory from the parameters specified
+; LMListSearch					Searches the list specified for the element specified
+; LMListSlotFreeTest			Tests the element specified in trhe list specified to see if it is free
+
+
+
 bits 32
 
 
 
 LMItemAddAtSlot:
-	; Adds an item to the list specified
+	; Adds an item to the list specified at the list slot specified
 	;
 	;  input:
 	;   table address
@@ -48,12 +63,8 @@ LMItemAddAtSlot:
 	mov dword [.newItemSize], ebx
 
 	; check list validity
-	push edi
-	call LMListChecksumTest
-	pop eax
-
-	; error out if the list was invalid
-	cmp eax, [kTrue]
+	mov eax, dword [edi]
+	cmp eax, 0x7473696C
 	je .ListValid
 
 	; add error handling code here later
@@ -62,6 +73,7 @@ LMItemAddAtSlot:
 
 	.ListValid:
 	; the list passed the data integrity check, so we proceed
+
 	; get the size of each element in this list
 	mov edi, dword [.listAddress]
 	push edi
@@ -81,12 +93,7 @@ LMItemAddAtSlot:
 
 	.SizeValid:
 	; if we get here, the size is ok, so we add it to the list!
-	; get the size of each element in this list
-	mov edi, dword [.listAddress]
-	push edi
-	call LMListGetElementSize
-	pop eax
-
+	
 	; calculate the new destination address
 	mov eax, dword [.listElementSize]
 	mov edx, dword [.destElement]
@@ -104,14 +111,6 @@ LMItemAddAtSlot:
 	push eax
 	push esi
 	call MemCopy
-
-	; new the checksum. yes, new is a verb.
-	mov edi, dword [.listAddress]
-	push edi
-	call LMListChecksumCreate
-	pop eax
-	mov edi, dword [.listAddress]
-	mov [edi], eax
 ret
 .listAddress									dd 0x00000000
 .destElement									dd 0x00000000
@@ -137,98 +136,86 @@ ret
 
 
 
-LMListChecksumCreate:
-	; Creates and returns a checksum for the list specified
+LMItemGetAddress:
+	; Returns the address of the specified element in the list specified
 	;
 	;  input:
 	;   list address
+	;	element number
 	;
 	;  output:
-	;   checksum
+	;   element address
 	;
-	;  changes: eax, ebx, ecx, edx, esi, edi
+	;  changes: eax, ebx, ecx, edx, esi, edi, ebp
 
-
-	pop edi
-	pop esi
-
-	; add 4 to the list pointer so we don't include the checksum area in the operation
-	add esi, 4
-	
-	; get the total size of this list
-	mov edx, [esi]
-
-	; take 4 from the fix the size value to again compensate for the checksum area
-	sub edx, 4
-
-	; save our return value
-	push edi
-
-	; time to checksum!
-	push dword 0xFFFFFFFF
-	push edx
-	push esi
-	call CRC32
 	pop eax
-	
-	; restore the return address
-	pop edi
-
-	; set up our exit
-	push eax
-	push edi
-ret
-
-
-
-LMListChecksumTest:
-	; Tests the checksum of the list at the address specified to see if it's valid
-	;
-	;  input:
-	;   list address
-	;
-	;  output:
-	;   result
-	;		kTrue - list valid
-	;		kFalse - list invalid
-	;
-	;  changes: eax, ebx, ecx, edx, esi, edi
-
-	pop edi
-	pop esi
-
-	; get the stored checksum of this list
-	mov edx, [esi]
-
-	; save some important stuff
-	push edx
-	push edi
-
-	; now calculate a checksum ourselves to see how accurate the stored value is
-	push esi
-	call LMListChecksumCreate
-	pop eax
-
-	; restore important stuff
 	pop edi
 	pop edx
+	push eax
 
-	; test the results
-	cmp eax, edx
+	; save the important stuff
+	mov dword [.listAddress], edi
+	mov dword [.destElement], edx
+
+	; check list validity
+	mov eax, dword [edi]
+	cmp eax, 0x7473696C
 	je .ListValid
 
-	; if we get here, the checksums don't match
-	push dword [kFalse]
-	jmp .Exit
+	; add error handling code here later
+	mov eax, 0xDEAD0007
+	jmp $
 
 	.ListValid:
-	; if we get here, they do
-	push dword [kTrue]
+	; the list passed the data integrity check, so we proceed
 
-	.Exit:
-	; restore the exit value
+	; now we check that the element requested is within range
+	; so first we get the number of elements from the list itself
+	mov edi, dword [.listAddress]
 	push edi
+	call LMListGetElementCount
+	pop eax
+
+	; adjust eax by one since if a list has, say, 10 elements, they would actually be numbered 0 - 9
+	dec eax
+
+	; now compare the number of elements to what was requested
+	cmp [.destElement], eax
+	jbe .ElementInRange
+
+	; add error handling code here later
+	mov eax, 0xDEAD0008
+	jmp $
+
+	.ElementInRange:
+	; if we get here, the element was in range; let's proceed
+
+	; get the size of each element in this list
+	mov edi, dword [.listAddress]
+	push edi
+	call LMListGetElementSize
+	pop eax
+
+	; save this for later
+	mov dword [.listElementSize], eax
+
+	; calculate the new destination address
+	mov eax, dword [.listElementSize]
+	mov edx, dword [.destElement]
+	mul edx
+	mov edi, dword [.listAddress]
+	add eax, edi
+	add eax, 20
+
+	; push the value on the stack and we're done!
+	pop ebx
+	push eax
+	push ebx
+
 ret
+.listAddress									dd 0x00000000
+.destElement									dd 0x00000000
+.listElementSize								dd 0x00000000
 
 
 
@@ -340,7 +327,7 @@ LMListGetElementCount:
 	;   list address
 	;
 	;  output:
-	;   element number of first free slot
+	;   number of total element slots in this list
 	;
 	;  changes: eax, bl, ecx, edx, esi, edi
 
@@ -348,19 +335,9 @@ LMListGetElementCount:
 	pop edi
 	push ecx
 
-	; save the important stuff
-	push edi
-
 	; check list validity
-	push edi
-	call LMListChecksumTest
-	pop eax
-
-	; restore the important stuff
-	pop edi
-
-	; error out if the list was invalid
-	cmp eax, [kTrue]
+	mov eax, dword [edi]
+	cmp eax, 0x7473696C
 	je .ListValid
 
 	; add error handling code here later
@@ -396,19 +373,9 @@ LMListGetElementSize:
 	pop edi
 	push ecx
 
-	; save the important stuff
-	push edi
-
 	; check list validity
-	push edi
-	call LMListChecksumTest
-	pop eax
-
-	; restore the important stuff
-	pop edi
-
-	; error out if the list was invalid
-	cmp eax, [kTrue]
+	mov eax, dword [edi]
+	cmp eax, 0x7473696C
 	je .ListValid
 
 	; add error handling code here later
@@ -471,14 +438,14 @@ LMListNew:
 	cmp edi, 0
 	jne .MemoryBlockValid
 
-	; if we get here, the block address we got is invalid, so error time
+	; if we get here, the block address we got is invalid, so now it's error time
 	; add code here for an error eventually
 	mov eax, 0x00DEAD00
 	jmp $
 
 	.MemoryBlockValid:
-	; write the data to the start of the list area
-	; add 4 to edi to allow for the checksum which will be filled in last
+	; write the data to the start of the list area, starting with the signature
+	mov dword [edi], 0x7473696C
 	add edi, 4
 
 	; total size of list gets written first after being retrieved from the stack
@@ -500,25 +467,9 @@ LMListNew:
 	pop ebx
 	mov [edi], ebx
 
-	; now that everything else has been written, it's time to checksum the list
+	; now that everything else has been written, it's time to signature the list
 	; make edi point to the proper place
 	sub edi, 16
-
-	; save important stuff befrore the checksum call
-	push esi
-	push edi
-	
-	; let's get us a checksum!
-	push edi
-	call LMListChecksumCreate
-	pop eax
-
-	; restore the important stuff
-	pop edi
-	pop esi
-
-	; write the checksum
-	mov [edi], eax
 
 	; the memory address needs to be returned so the caller knows where the list is. duh.
 	push edi
@@ -564,21 +515,9 @@ LMListSlotFreeTest:
 	pop edx
 	push ecx
 
-	; save the important stuff
-	push edx
-	push edi
-
 	; check list validity
-	push edi
-	call LMListChecksumTest
-	pop eax
-
-	; restore the important stuff
-	pop edi
-	pop edx
-
-	; error out if the list was invalid
-	cmp eax, [kTrue]
+	mov eax, dword [edi]
+	cmp eax, 0x7473696C
 	je .ListValid
 
 	; add error handling code here later
@@ -647,7 +586,7 @@ ret
 
 
 ; list format:
-; dword		checksum
+; dword		signature
 ; dword		total size of list in bytes
 ; dword		number of elements total
 ; dword		number of elements used
