@@ -1,3 +1,43 @@
+7/6/2018, 0.12 Update - Functional ATA driver
+
+New
+- Added function listings to the beginnings of all files
+- Added GDT setting and getting routines to facilitate generation of GDT elements on-the-fly; a first step to multitasking
+- Added MemSearchString() - It works for now, but it's not elegant and will definitely need optimized later.
+- Added MemCompare(), MemSwapWordBytes(), and MemSwapDWordWords()
+- Added PrintIfConfigBits16 and PrintIfConfigBits32 to only print messages if the flag is set in the configbits
+- Added a whole buncha string routines! (StringCharAppend(), StringCharPrepend(), StringPadLeft(), StringPadRight(), StringSearchCharList(), StringTruncateLeft(), StringTruncateRight(), StringWordCount(), and StringWordGet(), to be precise)
+- ATA Controller.asm (formerly IDE Controller.asm) is now operational for basic PIO mode
+- Finished PCIDriverSearch() and PCILoadDrivers()
+- The ebp register is now used as it was intended in all functions, allowing more flexibility in stack tracing later
+
+Changed
+- All interrupt service routines now preserve the flags register when appropriate
+- Both ScreenClear16() and ScreenClear32() now honor the kBytesPerScreen value
+- Cleaned up pci.asm and pic.asm with some %defines
+- Debug menu now shows the time/date/ticks info (previously on System Info screen) and updates the info in real time while waiting for you to make a choice
+- Local variables in all kernel routines are now allocated on the stack, making the kernel fully reentrant. Except for the StringBuild routine. Oh, well. Maybe next version.
+- Optimized List Manager code slightly
+- Optimized StringLength() for speed
+- Relocated GDT header to fit in null descriptor
+- Removed all those "changes" lines from the function descriptions for sanity... besides, we shouldn't be counting on any certain registers being preserved anyway!
+- Removed CRC32()
+- Renamed ClearScreen16() and ClearScreen32() to ScreenClear16() and ScreenClear32()
+- Renamed HomeCursor() to CursorHome()
+- Renamed IDTWrite() to InterruptHandlerSet()
+- Renamed InitGDT to GDTInit and changed its function to now load an allocated GDT once protected mode is active
+- Renamed InterruptSetHandlers() to ISRInitAll()
+- Renamed various string routines for consistency
+- Revamped existing LBA code into C01ATASectorReadLBA28PIO() and C01ATASectorWriteLBA28PIO()
+
+Fixed
+- MemSearchDWord() and MemSearchWord() now actually return values O.O
+- PrintRegs16 and PrintRegs32 now preserve the flags register
+- Squashed a bug in ScreenClear32() which could potentially cause a triple fault depending on the value of ecx
+
+
+
+
 6/10/2018, 0.11 Update - Fleshed out List Manager and PCI routines, other fixes
 - Added check for PCI controller before attempting to init the PCI bus
 - Added function listing for lists.asm, memory.asm, and pci.asm
@@ -15,9 +55,13 @@
 
 
 
+
+
 6/4/2018, 0.10 Update - Stupid little fixes
 - Changed major and minor version numbers to byte size in globals.asm
-- Fixed a bug in the newly optimized PCI device name table where the date being written to screen wasn't coming from the right place. And also saved around 300 bytes!
+- Fixed a bug in the newly optimized PCI device name table where the data being written to screen wasn't coming from the right place. And also saved around 300 bytes!
+
+
 
 
 
@@ -51,11 +95,15 @@
 
 
 
+
+
 4/25/2018, 0.0F Update - Final PCI system
 - Added version information to kernel info screen
 - Changed PCI system to load device data into RAM and source all subsequent register reads from there
 - Made minor changes to folder structure
 - Other minor changes
+
+
 
 
 
@@ -65,7 +113,7 @@
 - Added PCI device info dump to debug menu
 - Added PCIGetDeviceCount to return the total number of PCI devices (functions) in the system
 - Added text color and location features Print16 and Print32 complete with autoscrolling text as the bottom of the screen is reached
-- Added HomeCursor()
+- Added CursorHome()
 - Added handlers for breakpoint, invalid opcode and GPF exceptions
 - Removed VESA support in favor of later having a dedicated graphics driver handle video
 - Changed PrintRegs() (formerly RegDump) to not use StringBuild() to do its job, since I needed PrintRegs() to debug StringBuild() O.O
@@ -79,6 +127,8 @@
 
 
 
+
+
 12/6/2017, 0.0D Update - Milestone 1
 - Added beginning of framework for PCI support (Exelyx C code which will be rewritten in assembly)
 - Moved some code around
@@ -86,6 +136,8 @@
 - Slight modifications to the Debug code
 - Structured the project into directories
 - Tested and polished the dummy memory allocation routine
+
+
 
 
 
@@ -100,6 +152,8 @@
 
 
 
+
+
 11/8/2017, 0.0B Update
 - Modified Random() to return numbers within a requested limit
 - Added a starfield to the boot screen (Makes a nice test for Random()'s new feature! :) )
@@ -110,6 +164,8 @@
 - Modified VESAPlot() to clip pixels outside the LFB (Writing to memory outside your target is a Very Bad Thing)
 - Added the beginning of a RAM browser to the debug menu for inspecting memory without relying on the VirtualBox debugger
 - Added ConvertDecimalToString()
+
+
 
 
 
@@ -129,11 +185,15 @@
 
 
 
+
+
 10/23/2017, 0.09 Update
 -added 32-bit random number generator "Random()"
 -added internal time maintenence based on rtc values at boot
 -added PrintSimple16() and PrintSimple32()
 -added files for upcoming work on deeper hardware management
+
+
 
 
 
@@ -147,6 +207,8 @@
 
 
 
+
+
 8/31/2016, 0.08 Update
 -Fixed a horribly insidious bug in which the correct VESAPrint function pointer is not used if the address of the low byte of the VESAPrint32 function address happens to be 0x18
 -Added limiters on mouse position counters
@@ -155,8 +217,12 @@
 
 
 
+
+
 8/17/2016, 0.07 Update
 -Finished mouse support
+
+
 
 
 
@@ -170,6 +236,8 @@
 
 
 
+
+
 8/7/2016, v0.05 Update
 -Added 24 bit color support
 -Made VESAPrint and VESAPlot function pointers to handle different underlying color depth routines
@@ -179,10 +247,14 @@
 
 
 
+
+
 8/6/2016, v0.04 update bugfixes
 -Fixed Maarten's memory code
 -Added PrintFail for printing pre-VESA init fatal errors
 -other little fixups
+
+
 
 
 

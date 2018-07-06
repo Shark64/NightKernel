@@ -17,17 +17,20 @@
 
 
 ; 16-bit function listing:
-; PCICalculateNext				Calculates the proper value of the next spot on the PCI bus
+; MemoryInit					Probes the BIOS memory map using interrupt 0x15:0xE820, finds the largest block of free RAM, and fills in the appropriate system data structures for future use by the memory manager
 
 ; 32-bit function listing:
-; MemoryInit					Probes the BIOS memory map using interrupt 0x15:0xE820, finds the largest block of free RAM, and fills in the appropriate system data structures for future use by the memory manager
 ; MemAllocate					Returns the address of a block of memory of the specified size, or zero if a block of that size is unavailble
+; MemCompare					Compares two regions in memory of a specified length for equality
 ; MemCopy						Copies the specified number of bytes from one address to another
 ; MemDispose					Notifies the memory manager that the block specified by the address given is now free for reuse
 ; MemFill						Fills the range of memory given with the byte value specified
 ; MemResize						Resizes the specified block of RAM to the new size specified
-; MemSearchDWord				Searches the memory range specified for the given dword value
 ; MemSearchWord					Searches the memory range specified for the given word value
+; MemSearchDWord				Searches the memory range specified for the given dword value
+; MemSearchString				Searches the memory range specified for the given string
+; MemSwapWordBytes				Swaps the bytes in a series of words starting at the address specified
+; MemSwapWordBytes				Swaps the words in a series of dwords starting at the address specified
 
 
 
@@ -45,24 +48,41 @@ MemoryInit:
 	;  output:
 	;   n/a
 
+	push bp
+	mov bp, sp
+	sub sp, 44
+	sub sp, 4									; attributes
+	sub sp, 4									; lengthHigh
+	sub sp, 4									; lengthLow
+	sub sp, 4									; addressHigh
+	sub sp, 4									; addressLow
+
+	; clear the string to all spaces
+	mov cx, 44
+	mov si, bp
+	sub si, 44
+	.OutputStringClearLoop:
+		mov byte [si], 32
+		inc si
+	loop .OutputStringClearLoop
+
+	; throw a null at the end of the string
+	mov byte [bp - 1], 0
 	; print the labels string if appropriate
-	mov eax, [tSystem.configBits]
-	and eax, 000000000000000000000000000000010b
-	cmp eax, 000000000000000000000000000000010b
-	jne .SkipLabelPrinting
 	mov byte [textColor], 7
 	mov byte [backColor], 0
 	push .memoryMapLabels$
-	call Print16
+	call PrintIfConfigBits16
 
 	.SkipLabelPrinting:
 
 	mov ebx, 0x00000000							; set ebx index to zero to start the probing loop
 	.ProbeLoop:
 		mov eax, 0x0000E820						; eax needs to be 0xE820
-		mov ecx, 24
+		mov ecx, 20
 		mov edx, 0x534D4150						; the magic value "SMAP"
-		mov di, .buffer
+		mov di, bp
+		sub di, 64								; addressLow (start of buffer)
 		int 0x15
 
 		; display the memory mapping table if appropriate
@@ -77,13 +97,15 @@ MemoryInit:
 		mov cx, 8
 		mov dx, 0
 		.MemoryMapAddressPrintLoop:
-			mov si, .addressLow
+			mov si, bp
+			sub si, 64							; addressLow
 			add si, cx
 			dec si
 			mov ax, [si]
 
 			push cx
-			mov si, .memoryMap$
+			mov si, bp
+			sub si, 44							; point to the beginning of the output string
 			add si, 3							; position in output string
 			add si, dx
 			push si
@@ -97,13 +119,15 @@ MemoryInit:
 		mov cx, 8
 		mov dx, 0
 		.MemoryMapLengthPrintLoop:
-			mov si, .lengthLow
+			mov si, bp
+			sub si, 56							; lengthLow
 			add si, cx
 			dec si
 			mov ax, [si]
 
 			push cx
-			mov si, .memoryMap$
+			mov si, bp
+			sub si, 44							; point to the beginning of the output string
 			add si, 22							; position in output string
 			add si, dx
 			push si
@@ -114,11 +138,13 @@ MemoryInit:
 		loop .MemoryMapLengthPrintLoop
 
 		; fill in the type section
-		mov si, .attributes
+		mov si, bp
+		sub si, 48								; attributes
 		mov ax, [si]
 
 		push cx
-		mov si, .memoryMap$
+		mov si, bp
+		sub si, 44								; point to the beginning of the output string
 		add si, 41								; position in output string
 		push si
 		push ax
@@ -126,30 +152,32 @@ MemoryInit:
 		pop cx
 
 		; print the string
-		push .memoryMap$
+		mov si, bp
+		sub si, 44								; point to the beginning of the output string
+		push si
 		call Print16
 
 		.SkipMemoryMapPrinting:
 		pop bx
 
 		; add the size of this block to the total counter in the system struct
-		mov ecx, dword [.lengthLow]
+		mov ecx, dword [bp - 56]				; lengthLow
 		add dword [tSystem.memoryInstalledBytes], ecx
 
 		; test the output to see what we've just found
-		mov ecx, dword [.attributes]
+		mov ecx, dword [bp - 48]				; attributes
 		cmp ecx, 0x01
 		jne .SkipCheckBlock
 
 			; if we get here, there's a good block of available RAM
 			; let's see if we've found a bigger block than the current record holder!
-			mov eax, dword [.lengthLow]
+			mov eax, dword [bp - 56]			; lengthLow
 			cmp eax, dword [tSystem.memoryInitialAvailableBytes]
 			jna .SkipCheckBlock
 
 			; if we get here, we've found a new biggest block! YAY!
 			mov dword [tSystem.memoryInitialAvailableBytes], eax
-			mov eax, dword [.addressLow]
+			mov eax, dword [bp - 64]			; addressLow
 			mov dword [tSystem.memoryBlockAddress], eax
 
 		.SkipCheckBlock:
@@ -159,16 +187,11 @@ MemoryInit:
 	jmp .ProbeLoop
 
 	.Done:
+
+	mov sp, bp
+	pop bp
 ret
 .memoryMapLabels$								db '   Address            Size               Type', 0x00
-.memoryMap$										db '   xxxxxxxxxxxxxxxx   xxxxxxxxxxxxxxxx   xx', 0x00
-.buffer:
-	.addressLow									dd 0x00000000
-	.addressHigh								dd 0x00000000
-	.lengthLow									dd 0x00000000
-	.lengthHigh									dd 0x00000000
-	.attributes									dd 0x00000000
-	.extra										dd 0x00000000
 
 
 
@@ -189,8 +212,10 @@ MemAllocate:
 	; at the 2 MB mark and increasing upward with no error checking whatsoever. This will allow basic allocate calls to
 	; function for development purposes until the full paged memory manager is completed.
 
-	pop edx
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; see if nextAllocation is zero
 	cmp dword [.nextAllocation], 0
@@ -202,12 +227,54 @@ MemAllocate:
 
 	.DoAllocation:
 	mov eax, [.nextAllocation]
-	push eax
+	mov dword [ebp + 8], eax
 	add eax, ecx
 	mov [.nextAllocation], eax
-	push edx
+
+	mov esp, ebp
+	pop ebp
 ret
 .nextAllocation									dd 0x00000000
+
+
+
+MemCompare:
+	; Compares two regions in memory of a specified length for equality
+	;
+	;  input:
+	;   region 1 address
+	;   region 2 address
+	;   comparison length
+	;
+	;  output:
+	;   result
+	;		kTrue - the regions are identical
+	;		kFalse - the regions are different
+
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov edi, [ebp + 12]
+	mov ecx, [ebp + 16]
+
+	; set the result to possibly be changed if necessary later
+	mov edx, dword [kFalse]
+
+	cmp ecx, 0
+	je .Exit
+
+	repe cmpsb
+	jnz .Exit
+
+	mov edx, dword [kTrue]
+
+	.Exit:
+	mov dword [ebp + 16], edx
+
+	mov esp, ebp
+	pop ebp
+ret 8
 
 
 
@@ -221,23 +288,19 @@ MemCopy:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ecx, esi, edi
 
-	pop eax
-	pop esi
-	pop edi
-	pop ecx
-	push eax
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov edi, [ebp + 12]
+	mov ecx, [ebp + 16]
 
 	; to copy at top speed, we will break the copy operation into two parts
 	; first, we'll see how many multiples of 16 need transferred, and do those in 16-byte chunks
 
-	; save the amount first
-	push ecx
-
-	; divide by 16
-	shr ecx, 4
+	; divide by 8
+	shr ecx, 3
 
 	; make sure the loop doesn't get executed if the counter is zero
 	cmp ecx, 0
@@ -245,14 +308,10 @@ MemCopy:
 
 	; do the copy
 	.ChunkLoop:
-		; read 16 bytes in
+		; read 8 bytes in
 		mov eax, [esi]
 		add esi, 4
 		mov ebx, [esi]
-		add esi, 4
-		mov ebp, [esi]
-		add esi, 4
-		mov edx, [esi]
 		add esi, 4
 
 		; write them out
@@ -260,18 +319,14 @@ MemCopy:
 		add edi, 4
 		mov [edi], ebx
 		add edi, 4
-		mov [edi], ebp
-		add edi, 4
-		mov [edi], edx
-		add edi, 4
 	loop .ChunkLoop
 	.ChunkLoopDone:
 
 	; now restore the transfer amount
-	pop ecx
+	mov ecx, [ebp + 16]
 
 	; see how many bytes we have remaining
-	and ecx, 0x0000000F
+	and ecx, 0x00000007
 
 	; make sure the loop doesn't get executed if the counter is zero
 	cmp ecx, 0
@@ -284,7 +339,10 @@ MemCopy:
 		inc edi	
 	loop .ByteLoop
 	.ByteLoopDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 12
 
 
 
@@ -296,9 +354,8 @@ MemDispose:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ebx, ecx, edx, esi, edi
 
+	
 ret
 
 
@@ -307,20 +364,19 @@ MemFill:
 	; Fills the range of memory given with the byte value specified
 	;
 	;  input:
-	;   starting fill address
-	;   fill length
-	;   fill character
+	;   address
+	;   length
+	;   byte value
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: ebx, ecx, esi, edi
 
-	pop edi
-	pop esi
-	pop ecx
-	pop ebx
-	push edi
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+	mov ebx, [ebp + 16]
 
 	mov edi, esi
 	add edi, ecx
@@ -332,7 +388,10 @@ MemFill:
 		inc esi
 	jmp .Loop
 	.LoopDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 12
 
 
 
@@ -344,45 +403,8 @@ MemResize:
 	;
 	;  output:
 	;   
-	;
-	; changes: 
 
 	
-ret
-
-
-
-MemSearchDWord:
-	; Searches the memory range specified for the given dword value
-	;
-	;  input:
-	;   search range start
-	;   search range end
-	;   dword for which to search
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, ecx, edx
-
-
-	pop eax
-	pop ecx
-	pop edx
-	pop ebx
-	push eax
-
-	.MemorySearchLoop:
-		; check if the dword we just loaded is a match
-		mov eax, [ecx]
-		cmp eax, ebx
-		je .MemorySearchLoopDone
-		; check if we're at the end of the search range
-		cmp ecx, edx
-		je .MemorySearchLoopDone
-		inc ecx
-	jmp .MemorySearchLoop
-	.MemorySearchLoopDone:
 ret
 
 
@@ -392,29 +414,224 @@ MemSearchWord:
 	;
 	;  input:
 	;   search range start
-	;   search range end
+	;   search region length
 	;   word for which to search
 	;
 	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, ecx, edx
+	;   address of match (zero if not found)
 
-	pop eax
-	pop ecx
-	pop edx
-	pop ebx
-	push eax
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+	mov ebx, [ebp + 16]
+
+	; preload the result
+	mov edx, 0x00000000
 
 	.MemorySearchLoop:
-		; check if the word we just loaded is a match
-		mov word ax, [ecx]
+		; check if the dword we just loaded is a match
+		mov ax, [esi]
 		cmp ax, bx
 		je .MemorySearchLoopDone
-		; check if we're at the end of the search range
-		cmp ecx, edx
-		je .MemorySearchLoopDone
-		inc ecx
-	jmp .MemorySearchLoop
+
+		inc esi
+	loop .MemorySearchLoop
+	jmp .Exit
+
 	.MemorySearchLoopDone:
-ret
+	mov edx, esi
+
+	.Exit:
+	mov dword [ebp + 16], edx
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+MemSearchDWord:
+	; Searches the memory range specified for the given dword value
+	;
+	;  input:
+	;   search range start
+	;   search region length
+	;   dword for which to search
+	;
+	;  output:
+	;   address of match (zero if not found)
+
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+	mov ebx, [ebp + 16]
+
+	; preload the result
+	mov edx, 0x00000000
+
+	.MemorySearchLoop:
+		; check if the dword we just loaded is a match
+		mov eax, [esi]
+		cmp eax, ebx
+		je .MemorySearchLoopDone
+
+		inc esi
+	loop .MemorySearchLoop
+	jmp .Exit
+
+	.MemorySearchLoopDone:
+	mov edx, esi
+
+	.Exit:
+	mov dword [ebp + 16], edx
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+MemSearchString:
+	; Searches the memory range specified for the given string
+	;
+	;  input:
+	;   search range start
+	;   search region length
+	;   address of string for which to search
+	;
+	;  output:
+	;   address of match (zero if not found)
+
+	; this code is SUCH a kludge
+	; do everyone a favor and REWRITE THIS
+
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+	mov edi, [ebp + 16]
+
+	; get string length
+	push edi
+	call StringLength
+	pop ebx
+
+	; exit if the string lenght is zero
+	cmp ebx, 0
+	je .Exit
+
+	; restore crucial stuff
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+	mov edi, [ebp + 16]
+
+	; preload the result
+	mov eax, 0x00000000
+
+	.MemorySearchLoop:
+		; save stuff again
+		push ebx
+		push ecx
+
+		; see if this address is a match
+		mov ecx, ebx
+
+		; set the result to possibly be changed if necessary later
+		mov eax, dword [kFalse]
+
+		repe cmpsb
+		jnz .Exit2
+
+		mov eax, dword [kTrue]
+
+		.Exit2:
+
+		; restore stuff again
+		mov edi, [ebp + 16]
+		mov esi, [ebp + 8]
+		pop ecx
+		pop ebx
+
+		; decide if we have a match or not
+		cmp eax, [kTrue]
+		mov eax, 0x00000000
+		jne .NoMatch
+
+		; if we get here, we found a match!
+		mov eax, esi
+		jmp .Exit
+
+		.NoMatch:
+		inc esi
+
+	loop .MemorySearchLoop
+
+	.Exit:
+	mov dword [ebp + 16], eax
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+MemSwapWordBytes:
+	; Swaps the bytes in a series of words starting at the address specified
+	;
+	;  input:
+	;   source address
+	;   number of words to process
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+
+	.SwapLoop:
+		mov ax, [esi]
+		ror ax, 8
+		mov [esi], ax
+		add esi, 2
+	loop .SwapLoop
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+MemSwapDwordWords:
+	; Swaps the words in a series of dwords starting at the address specified
+	;
+	;  input:
+	;   source address
+	;   number of dwords to process
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov ecx, [ebp + 12]
+
+	.SwapLoop:
+		mov eax, [esi]
+		ror eax, 16
+		mov [esi], eax
+		add esi, 4
+	loop .SwapLoop
+
+	mov esp, ebp
+	pop ebp
+ret 8

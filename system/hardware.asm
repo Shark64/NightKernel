@@ -16,6 +16,15 @@
 
 
 
+; 32-bit function listing:
+; A20Enable						Enables the A20 line of the processor's address bus using the "Fast A20 enable" method
+; CPUSpeedDetect				Determines how many iterations of random activities the CPU is capable of in one second
+; PITInit						Init the PIT for our timing purposes
+; Random						Returns a random number using the XORShift method
+; Reboot						Performs a warm reboot of the PC
+
+
+
 bits 32
 
 
@@ -29,6 +38,9 @@ A20Enable:
 	;
 	;  output:
 	;   n/a
+
+	push ebp
+	mov ebp, esp
 
 	in al, 0x92
 	or al, 00000010b
@@ -49,6 +61,9 @@ A20Enable:
 	call PrintRegs32
 
 	.success:
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -57,12 +72,13 @@ CPUSpeedDetect:
 	; Determines how many iterations of random activities the CPU is capable of in one second
 	;
 	;  input:
-	;   n/a
+	;   dummy value
 	;
 	;  output:
 	;   number of iterations
-	;
-	;  changes: ebx, ecx, edx
+
+	push ebp
+	mov ebp, esp
 
 	mov ebx, 0x00000000
 	mov ecx, 0x00000000
@@ -83,21 +99,26 @@ CPUSpeedDetect:
 		mov al, [tSystem.ticks]
 		cmp al, ah
 	jne .loop1
-	pop ebx
-	push ecx
-	push ebx
+
+	mov dword [ebp + 8], ecx
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
 
 PITInit:
-	; Init the PIT for our timing purposes
+	; Init the PIT for our timing purposes (256 ticks per second)
 	;
 	;  input:
 	;   n/a
 	;
 	;  output:
 	;   n/a
+
+	push ebp
+	mov ebp, esp
 
 	mov ax, 1193180 / 256
 
@@ -107,6 +128,9 @@ PITInit:
 	out 0x40, al
 	xchg ah, al
 	out 0x40, al
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -119,11 +143,11 @@ Random:
 	;
 	;  output:
 	;   32-bit random number between 0 and the number limit
-	;
-	;  changes: eax, ebx, ecx, edx
 
-	pop ecx
-	pop ebx
+	push ebp
+	mov ebp, esp
+
+	mov ebx, [ebp + 8]
 
 	; use good ol' XORShift to get a random
 	mov eax, [.randomSeed]
@@ -144,8 +168,10 @@ Random:
 	mov eax, edx
 
 	; throw the numbers on the stack and get going!
-	push eax
-	push ecx
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 .randomSeed										dd 0x92D68CA2
 
@@ -159,8 +185,9 @@ Reboot:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, dx
+
+	push ebp
+	mov ebp, esp
 
 	mov dx, 0x92
 	in al, dx
@@ -168,6 +195,9 @@ Reboot:
 	out dx, al
 
 	; and now, for the return we'll never reach...
+
+	mov esp, ebp
+	pop ebp
 ret
 
 

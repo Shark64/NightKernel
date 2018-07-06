@@ -16,6 +16,14 @@
 
 
 
+; 32-bit function listing:
+; IDTInit						Initializes the kernel IDT
+; InterruptHandlerSet			Formats the passed data and writes it to the IDT in the slot specified
+; InterruptUnimplemented		A generic handler to run when an unimplemented interrupt is called
+; ISRInitAll					Sets the interrupt handler addresses into the IDT
+
+
+
 bits 32
 
 
@@ -28,8 +36,10 @@ IDTInit:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: eax
+
+
+	push ebp
+	mov ebp, esp
 
 	; allocate 64 KiB for the IDT
 	push dword 65536
@@ -48,10 +58,10 @@ IDTInit:
 
 		; map the interrupt
 		push 0x8e
-		push InterruptUnsupported
+		push InterruptUnimplemented
 		push 0x08
 		push ecx
-		call IDTWrite
+		call InterruptHandlerSet
 
 		; restore our counter
 		pop ecx
@@ -59,6 +69,9 @@ IDTInit:
 
 	; activate that IDT!
 	lidt [tIDT]
+
+	mov esp, ebp
+	pop ebp
 ret
 
 tIDT:
@@ -67,7 +80,7 @@ tIDT:
 
 
 
-IDTWrite:
+InterruptHandlerSet:
 	; Formats the passed data and writes it to the IDT in the slot specified
 	;
 	;  input:
@@ -78,8 +91,6 @@ IDTWrite:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: eax, ebx, ecx, edx, edi, esi
 
 	; save return address
 	pop esi
@@ -121,349 +132,391 @@ ret
 
 
 
-InterruptHandlerSetAddresses:
-	; Sets the interrupt handler addresses into the IDT
+InterruptUnimplemented:
+	; A generic handler to run when an unimplemented interrupt is called
 	;
 	;  input:
 	;   n/a
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: eax
 
-	push 0x8e
-	push ISR00
-	push 0x08
-	push 0x00
-	call IDTWrite
+	push ebp
+	mov ebp, esp
 
-	push 0x8e
-	push ISR01
-	push 0x08
-	push 0x01
-	call IDTWrite
-
-	push 0x8e
-	push ISR02
-	push 0x08
-	push 0x02
-	call IDTWrite
-
-	push 0x8e
-	push ISR03
-	push 0x08
-	push 0x03
-	call IDTWrite
-
-	push 0x8e
-	push ISR04
-	push 0x08
-	push 0x04
-	call IDTWrite
-
-	push 0x8e
-	push ISR05
-	push 0x08
-	push 0x05
-	call IDTWrite
-
-	push 0x8e
-	push ISR06
-	push 0x08
-	push 0x06
-	call IDTWrite
-
-	push 0x8e
-	push ISR07
-	push 0x08
-	push 0x07
-	call IDTWrite
-
-	push 0x8e
-	push ISR08
-	push 0x08
-	push 0x08
-	call IDTWrite
-
-	push 0x8e
-	push ISR09
-	push 0x08
-	push 0x09
-	call IDTWrite
-
-	push 0x8e
-	push ISR0A
-	push 0x08
-	push 0x0A
-	call IDTWrite
-
-	push 0x8e
-	push ISR0B
-	push 0x08
-	push 0x0B
-	call IDTWrite
-
-	push 0x8e
-	push ISR0C
-	push 0x08
-	push 0x0C
-	call IDTWrite
-
-	push 0x8e
-	push ISR0D
-	push 0x08
-	push 0x0D
-	call IDTWrite
-
-	push 0x8e
-	push ISR0E
-	push 0x08
-	push 0x0E
-	call IDTWrite
-
-	push 0x8e
-	push ISR0F
-	push 0x08
-	push 0x0F
-	call IDTWrite
-
-	push 0x8e
-	push ISR10
-	push 0x08
-	push 0x10
-	call IDTWrite
-
-	push 0x8e
-	push ISR11
-	push 0x08
-	push 0x11
-	call IDTWrite
-
-	push 0x8e
-	push ISR12
-	push 0x08
-	push 0x12
-	call IDTWrite
-
-	push 0x8e
-	push ISR13
-	push 0x08
-	push 0x13
-	call IDTWrite
-
-	push 0x8e
-	push ISR14
-	push 0x08
-	push 0x14
-	call IDTWrite
-
-	push 0x8e
-	push ISR15
-	push 0x08
-	push 0x15
-	call IDTWrite
-
-	push 0x8e
-	push ISR16
-	push 0x08
-	push 0x16
-	call IDTWrite
-
-	push 0x8e
-	push ISR17
-	push 0x08
-	push 0x17
-	call IDTWrite
-
-	push 0x8e
-	push ISR18
-	push 0x08
-	push 0x18
-	call IDTWrite
-
-	push 0x8e
-	push ISR19
-	push 0x08
-	push 0x19
-	call IDTWrite
-
-	push 0x8e
-	push ISR1A
-	push 0x08
-	push 0x1A
-	call IDTWrite
-
-	push 0x8e
-	push ISR1B
-	push 0x08
-	push 0x1B
-	call IDTWrite
-
-	push 0x8e
-	push ISR1C
-	push 0x08
-	push 0x1C
-	call IDTWrite
-
-	push 0x8e
-	push ISR1D
-	push 0x08
-	push 0x1D
-	call IDTWrite
-
-	push 0x8e
-	push ISR1E
-	push 0x08
-	push 0x1E
-	call IDTWrite
-
-	push 0x8e
-	push ISR1F
-	push 0x08
-	push 0x1F
-	call IDTWrite
-
-	push 0x8e
-	push ISR20
-	push 0x08
-	push 0x20
-	call IDTWrite
-
-	push 0x8e
-	push ISR21
-	push 0x08
-	push 0x21
-	call IDTWrite
-
-	push 0x8e
-	push ISR22
-	push 0x08
-	push 0x22
-	call IDTWrite
-
-	push 0x8e
-	push ISR23
-	push 0x08
-	push 0x23
-	call IDTWrite
-
-	push 0x8e
-	push ISR24
-	push 0x08
-	push 0x24
-	call IDTWrite
-
-	push 0x8e
-	push ISR25
-	push 0x08
-	push 0x25
-	call IDTWrite
-
-	push 0x8e
-	push ISR26
-	push 0x08
-	push 0x26
-	call IDTWrite
-
-	push 0x8e
-	push ISR27
-	push 0x08
-	push 0x27
-	call IDTWrite
-
-	push 0x8e
-	push ISR28
-	push 0x08
-	push 0x28
-	call IDTWrite
-
-	push 0x8e
-	push ISR29
-	push 0x08
-	push 0x29
-	call IDTWrite
-
-	push 0x8e
-	push ISR2A
-	push 0x08
-	push 0x2A
-	call IDTWrite
-
-	push 0x8e
-	push ISR2B
-	push 0x08
-	push 0x2B
-	call IDTWrite
-
-	push 0x8e
-	push ISR2C
-	push 0x08
-	push 0x2C
-	call IDTWrite
-
-	push 0x8e
-	push ISR2D
-	push 0x08
-	push 0x2D
-	call IDTWrite
-
-	push 0x8e
-	push ISR2E
-	push 0x08
-	push 0x2E
-	call IDTWrite
-
-	push 0x8e
-	push ISR2F
-	push 0x08
-	push 0x2F
-	call IDTWrite
-ret
-
-
-
-InterruptUnsupported:
 	pusha
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	push kUnsupportedInt$
 	call PrintRegs32
 	call PICIntComplete
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
+
+
+
+ISRInitAll:
+	; Sets all the kernel interrupt handler addresses into the IDT
+	;
+	;  input:
+	;   n/a
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	push 0x8e
+	push ISR00
+	push 0x08
+	push 0x00
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR01
+	push 0x08
+	push 0x01
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR02
+	push 0x08
+	push 0x02
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR03
+	push 0x08
+	push 0x03
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR04
+	push 0x08
+	push 0x04
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR05
+	push 0x08
+	push 0x05
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR06
+	push 0x08
+	push 0x06
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR07
+	push 0x08
+	push 0x07
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR08
+	push 0x08
+	push 0x08
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR09
+	push 0x08
+	push 0x09
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR0A
+	push 0x08
+	push 0x0A
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR0B
+	push 0x08
+	push 0x0B
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR0C
+	push 0x08
+	push 0x0C
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR0D
+	push 0x08
+	push 0x0D
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR0E
+	push 0x08
+	push 0x0E
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR0F
+	push 0x08
+	push 0x0F
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR10
+	push 0x08
+	push 0x10
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR11
+	push 0x08
+	push 0x11
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR12
+	push 0x08
+	push 0x12
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR13
+	push 0x08
+	push 0x13
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR14
+	push 0x08
+	push 0x14
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR15
+	push 0x08
+	push 0x15
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR16
+	push 0x08
+	push 0x16
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR17
+	push 0x08
+	push 0x17
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR18
+	push 0x08
+	push 0x18
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR19
+	push 0x08
+	push 0x19
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR1A
+	push 0x08
+	push 0x1A
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR1B
+	push 0x08
+	push 0x1B
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR1C
+	push 0x08
+	push 0x1C
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR1D
+	push 0x08
+	push 0x1D
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR1E
+	push 0x08
+	push 0x1E
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR1F
+	push 0x08
+	push 0x1F
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR20
+	push 0x08
+	push 0x20
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR21
+	push 0x08
+	push 0x21
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR22
+	push 0x08
+	push 0x22
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR23
+	push 0x08
+	push 0x23
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR24
+	push 0x08
+	push 0x24
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR25
+	push 0x08
+	push 0x25
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR26
+	push 0x08
+	push 0x26
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR27
+	push 0x08
+	push 0x27
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR28
+	push 0x08
+	push 0x28
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR29
+	push 0x08
+	push 0x29
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR2A
+	push 0x08
+	push 0x2A
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR2B
+	push 0x08
+	push 0x2B
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR2C
+	push 0x08
+	push 0x2C
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR2D
+	push 0x08
+	push 0x2D
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR2E
+	push 0x08
+	push 0x2E
+	call InterruptHandlerSet
+
+	push 0x8e
+	push ISR2F
+	push 0x08
+	push 0x2F
+	call InterruptHandlerSet
+
+	mov esp, ebp
+	pop ebp
+ret
 
 
 
 ISR00:
 	; Divide by Zero Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000000
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR01:
 	; Debug Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000001
 	pop esi
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR02:
+	push ebp
+	mov ebp, esp
+
 	; Nonmaskable Interrupt Exception
 	pusha
+	pushf
 	mov edx, 0x00000002
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
@@ -471,6 +524,9 @@ iretd
 ISR03:
 	; Breakpoint Exception
 	; get the location of the bad instruction off the stack
+	push ebp
+	mov ebp, esp
+
 	pop dword [exceptionAddress]
 	pop dword [exceptionSelector]
 	dec dword [exceptionAddress]
@@ -502,6 +558,9 @@ ISR03:
 	inc dword [exceptionAddress]
 	push dword [exceptionSelector]
 	push dword [exceptionAddress]	
+
+	mov esp, ebp
+	pop ebp
 iretd
 .format$										db ' Breakpoint at ^p4^h:^p8^h ', 0x00
 
@@ -509,27 +568,47 @@ iretd
 
 ISR04:
 	; Overflow Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000004
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR05:
 	; Bound Range Exceeded Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000005
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
-ISR06:											; Invalid Opcode Exception
+ISR06:
+	; Invalid Opcode Exception
+	push ebp
+	mov ebp, esp
+
 	; get the location of the bad instruction off the stack
 	pop dword [exceptionAddress]
 	pop dword [exceptionSelector]
@@ -558,73 +637,124 @@ ISR06:											; Invalid Opcode Exception
 	call PrintRegs32
 
 	jmp $ ; for debugging, makes sure the system hangs upon exception
+
+	mov esp, ebp
+	pop ebp
 iretd
 .format$										db ' Invalid Opcode at ^p4^h:^p8^h ', 0x00
 
 
 
 ISR07:
+	push ebp
+	mov ebp, esp
+
 	; Device Not Available Exception
 	pusha
+	pushf
 	mov edx, 0x00000007
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR08:
+	push ebp
+	mov ebp, esp
+
 	; Double Fault Exception
 	pusha
+	pushf
 	mov edx, 0x00000008
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR09:
+	push ebp
+	mov ebp, esp
+
 	; Former Coprocessor Segment Overrun Exception
 	pusha
+	pushf
 	mov edx, 0x00000009
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR0A:
 	; Invalid TSS Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000000A
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR0B:
 	; Segment Not Present Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000000B
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR0C:
 	; Stack Segment Fault Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000000C
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
@@ -632,6 +762,9 @@ iretd
 ISR0D:
 	; General Protection Fault
 	; get the location of the bad instruction off the stack
+	push ebp
+	mov ebp, esp
+
 	pop dword [exceptionAddress]
 	pusha
 	push dword [exceptionAddress]
@@ -657,6 +790,9 @@ ISR0D:
 	call PrintRegs32
 
 	jmp $ ; for debugging, makes sure the system hangs upon exception
+
+	mov esp, ebp
+	pop ebp
 iretd
 .format$										db ' General protection fault at ^p8^h ', 0x00
 
@@ -664,205 +800,353 @@ iretd
 
 ISR0E:
 	; Page Fault Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000000E
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR0F:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000000F
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR10:
 	; x86 Floating Point Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000010
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR11:
 	; Alignment Check Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000011
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR12:
 	; Machine Check Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000012
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR13:
 	; SIMD Floating Point Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000013
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR14:
 	; Virtualization Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000014
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR15:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000015
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR16:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000016
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR17:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000017
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR18:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000018
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR19:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000019
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR1A:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000001A
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR1B:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000001B
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR1C:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000001C
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR1D:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000001D
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR1E:
 	; Security Exception
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000001E
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR1F:
 	; Reserved
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000001F
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR20:
 	; Programmable Interrupt Timer (PIT)
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	inc dword [tSystem.ticksSinceBoot]
 	inc byte [tSystem.ticks]
 	cmp byte [tSystem.ticks], 0
@@ -895,14 +1179,22 @@ ISR20:
 	inc byte [tSystem.century]
 	.done:
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR21:
 	; Keyboard
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov eax, 0x00000000
 	in al, 0x60
 
@@ -932,7 +1224,11 @@ ISR21:
 
 	.done:
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 .incrementCounter:
  mov [kKeyBufferWrite], dl
@@ -942,119 +1238,203 @@ jmp .done
 
 ISR22:
 	; Cascade - used internally by the PICs, should never fire
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000022
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR23:
 	; Serial port 2
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000023
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR24:
 	; Serial port 1
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	;push 1
 	;call SerialGetIIR
 	;pop edx
 	;pop ecx
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR25:
 	; Parallel port 2
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000025
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR26:
 	; Floppy disk
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000026
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR27:
 	; Parallel port 1 - prone to misfire
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000027
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR28:
 	; CMOS real time clock
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000028
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR29:
 	; Free for peripherals / legacy SCSI / NIC
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x00000029
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR2A:
 	; Free for peripherals / SCSI / NIC
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000002A
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR2B:
 	; Free for peripherals / SCSI / NIC
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000002B
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR2C:
 	; PS/2 Mouse
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 
 	mov eax, 0x00000000
 	in al, 0x60
@@ -1162,7 +1542,11 @@ ISR2C:
 	.done:
 	inc byte [tSystem.mousePacketByteCount]
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 .mouseXNegativeAdjust:
@@ -1187,33 +1571,57 @@ jmp .mouseYDone
 
 ISR2D:
 	; FPU / Coprocessor / Inter-processor
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000002D
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR2E:
 	; Primary ATA Hard Disk
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000002E
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 
 
 ISR2F:
 	; Secondary ATA Hard Disk
+	push ebp
+	mov ebp, esp
+
 	pusha
+	pushf
 	mov edx, 0x0000002F
 	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
+	popf
 	popa
+
+	mov esp, ebp
+	pop ebp
 iretd
 
 

@@ -16,6 +16,28 @@
 
 
 
+; 32-bit function listing:
+; SerialGetBaud					Returns the current baud rate of the specified serial port
+; SerialGetIER					Returns the Interrupt Enable Register for the specified serial port
+; SerialGetIIR					Returns the Interrupt Identification Register for the specified serial port
+; SerialGetLSR					Returns the Line Status Register for the specified serial port
+; SerialGetMSR					Returns the Modem Status Register for the specified serial port
+; SerialGetParity				Returns the current parity setting of the specified serial port
+; SerialGetStopBits				Returns the current number of stop bits for the specified serial port
+; SerialGetWordSize				Returns the current number of data word bits for the specified serial port
+; SerialPrintString				Prints an ASCIIZ string as a series of characters to serial port 1
+; SerialSetBaud					Returns the current baud rate of the specified serial port
+; SerialSetIER					Sets the Interrupt Enable Register for the specified serial port
+; SerialSetParity				Sets the parity of the specified serial port
+; SerialSetStopBits				Returns the current number of stop bits for the specified serial port
+; SerialSetWordSize				Returns the current number of data word bits for the specified serial port
+
+
+
+bits 32
+
+
+
 SerialGetBaud:
 	; Returns the current baud rate of the specified serial port
 	;
@@ -24,11 +46,11 @@ SerialGetBaud:
 	;
 	;  output:
 	;   baud rate
-	;   result code
-	;
-	;  changes: eax, ebx, ecx, edx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 	mov ebx, 0
 
 	; get the port number off the stack and test it out
@@ -122,11 +144,11 @@ SerialGetBaud:
 	mov edx, 0
 	div ebx
 
-	; push the baud rate, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	; push the baud rate and return
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -139,11 +161,11 @@ SerialGetIER:
 	;
 	;  output:
 	;   IER
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -200,11 +222,11 @@ SerialGetIER:
 	mov eax, 0x00000000
 	in al, dx
 
-	; push the IER, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	; push the IER and return
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -217,11 +239,11 @@ SerialGetIIR:
 	;
 	;  output:
 	;   IIR
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -278,11 +300,11 @@ SerialGetIIR:
 	mov eax, 0x00000000
 	in al, dx
 
-	; push the IIR, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	; push the IIR and return
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -295,11 +317,11 @@ SerialGetLSR:
 	;
 	;  output:
 	;   LSR
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -356,11 +378,11 @@ SerialGetLSR:
 	mov eax, 0x00000000
 	in al, dx
 
-	; push the parity code, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	; push the parity code and return
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -373,11 +395,11 @@ SerialGetMSR:
 	;
 	;  output:
 	;   MSR
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -434,11 +456,11 @@ SerialGetMSR:
 	mov eax, 0x00000000
 	in al, dx
 
-	; push the parity code, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	; push the parity code and return
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -456,11 +478,11 @@ SerialGetParity:
 	;    3 - Even parity
 	;    5 - Mark parity
 	;    7 - Space parity
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -519,11 +541,11 @@ SerialGetParity:
 	and al, 00111000b
 	shr al, 3
 
-	; push the parity code, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	; push the parity code and return
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -536,11 +558,11 @@ SerialGetStopBits:
 	;
 	;  output:
 	;   number of stop bits (1 or 2)
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -601,9 +623,10 @@ SerialGetStopBits:
 	inc al
 
 	; push the parity code, result code and return address
-	push eax
-	push 0x00000000
-	push ecx
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -616,11 +639,11 @@ SerialGetWordSize:
 	;
 	;  output:
 	;   number of data word bits (5 - 8)
-	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	; get the port number off the stack and test it out
 	pop eax
@@ -680,11 +703,59 @@ SerialGetWordSize:
 	add al, 5
 
 	; push the word size, result code and return address
-	push eax
-	mov eax, 0x00000000
-	push eax
-	push ecx
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
+
+
+
+SerialPrintString:
+	; Prints an ASCIIZ string as a series of characters to serial port 1
+	;
+	;  input:
+	;   address of string to print
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov ebx, [ebp + 8]
+
+	mov dx, 0x03F8
+	.serialLoop:
+		mov al, [ebx]
+
+		; have we reached the string end? if yes, exit the loop
+		cmp al, 0x00
+		je .end
+
+		; we're still here, so let's send a character
+		out dx, al
+
+		mov cl, [tSystem.ticks]
+		.timerloop:
+			mov ch, [tSystem.ticks]
+			cmp cl, ch
+			jne .timerdone
+		jmp .timerloop
+		.timerdone:
+		inc ebx
+	jmp .serialLoop
+	.end:
+
+	; throw on a cr & lf
+	mov al, 0x013
+	out dx, al
+	mov al, 0x010
+	out dx, al
+
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 
@@ -697,13 +768,15 @@ SerialSetBaud:
 	;
 	;  output:
 	;   result code
-	;
-	;  changes: eax, ebx, ecx, edx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
+	sub esp, 2									; divisorLatchLow
+	sub esp, 2									; divisorLatchHigh
+	sub esp, 2									; lineControl
 
 	; get the port number off the stack and test it out
-	pop eax
+	mov eax, [ebp + 8]
 	cmp eax, 1
 	jb .portValueTooLow
 	cmp eax, 4
@@ -712,14 +785,11 @@ SerialSetBaud:
 
 	.portValueTooLow:
 	mov eax, 0x0000F001
-	push eax
-	push ecx
-	ret
+	jmp .Exit
+
 	.portValueTooHigh:
 	mov eax, 0x0000F002
-	push eax
-	push ecx
-	ret
+	jmp .Exit
 
 	.doneTesting:
 	; select the address of this serial port
@@ -733,66 +803,67 @@ SerialSetBaud:
 	je .setPort1
 	jmp .selectDone
 
-	.divisorLatchLow							dw 0x0000
-	.divisorLatchHigh							dw 0x0000
-	.lineControl								dw 0x0000
-
 	.setPort1:
-	mov word [.divisorLatchLow], 0x03F8
-	mov word [.divisorLatchHigh], 0x03F9
-	mov word [.lineControl], 0x03FB
+	mov word [ebp - 2], 0x03F8
+	mov word [ebp - 4], 0x03F9
+	mov word [ebp - 6], 0x03FB
 	jmp .selectDone
 
 	.setPort2:
-	mov word [.divisorLatchLow], 0x02F8
-	mov word [.divisorLatchHigh], 0x02F9
-	mov word [.lineControl], 0x02FB
+	mov word [ebp - 2], 0x02F8
+	mov word [ebp - 4], 0x02F9
+	mov word [ebp - 6], 0x02FB
 	jmp .selectDone
 
 	.setPort3:
-	mov word [.divisorLatchLow], 0x03E8
-	mov word [.divisorLatchHigh], 0x03E9
-	mov word [.lineControl], 0x03EB
+	mov word [ebp - 2], 0x03E8
+	mov word [ebp - 4], 0x03E9
+	mov word [ebp - 6], 0x03EB
 	jmp .selectDone
 
 	.setPort4:
-	mov word [.divisorLatchLow], 0x02E8
-	mov word [.divisorLatchHigh], 0x02E9
-	mov word [.lineControl], 0x02EB
+	mov word [ebp - 2], 0x02E8
+	mov word [ebp - 4], 0x02E9
+	mov word [ebp - 6], 0x02EB
 
 	.selectDone:
 	; set the DLAB bit of the LCR
-	mov dx, [.lineControl]
+	mov dx, [ebp - 6]
 	in al, dx
 	or al, 10000000b
 	out dx, al
 
 	; calculate the divisor value from the baud rate
-	pop ebx
+	mov ebx, [ebp + 12]
 	mov eax, 115200
 	mov edx, 0
 	div ebx
 
 	; set the Divisor Latch low byte
-	mov dx, [.divisorLatchLow]
+	mov dx, [ebp - 2]
 	out dx, al
 
 	; set the Divisor Latch high byte
-	mov dx, [.divisorLatchHigh]
+	mov dx, [ebp - 4]
 	shr ax, 8
 	out dx, al
 
 	; clear the DLAB bit of the LCR
-	mov dx, [.lineControl]
+	mov dx, [ebp - 6]
 	in al, dx
 	and al, 01111111b
 	out dx, al
 
 	; push the result code and return address
 	mov eax, 0x00000000
-	push eax
-	push ecx
+
+	.Exit:
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
 ret
+
 
 
 
@@ -805,13 +876,12 @@ SerialSetIER:
 	;
 	;  output:
 	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
 
 	; get the port number off the stack and test it out
-	pop eax
+	mov eax, [ebp + 8]
 	cmp eax, 1
 	jb .portValueTooLow
 	cmp eax, 4
@@ -819,19 +889,12 @@ SerialSetIER:
 	jmp .doneTesting
 
 	.portValueTooLow:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F001
-	push eax
-	push ecx
-	ret
+	jmp .Exit
+
 	.portValueTooHigh:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F002
-	push eax
-	push ecx
-	ret
+	jmp .Exit
 
 	.doneTesting:
 	; select the address of this serial port
@@ -862,12 +925,17 @@ SerialSetIER:
 
 	.selectDone:
 	; set the IER
-	pop eax
+	mov eax, [ebp + 12]
 	out dx, al
 
 	; push the IER, result code and return address
-	push 0x00000000
-	push ecx
+	mov eax, 0x00000000
+
+	.Exit:
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -886,13 +954,12 @@ SerialSetParity:
 	;
 	;  output:
 	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
 
 	; get the port number off the stack and test it out
-	pop eax
+	mov eax, [ebp + 8]
 	cmp eax, 1
 	jb .portValueTooLow
 	cmp eax, 4
@@ -900,19 +967,12 @@ SerialSetParity:
 	jmp .doneTesting
 
 	.portValueTooLow:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F001
-	push eax
-	push ecx
-	ret
+	jmp .Exit
+
 	.portValueTooHigh:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F002
-	push eax
-	push ecx
-	ret
+	jmp .Exit
 
 	.doneTesting:
 	; select the address of this serial port
@@ -942,7 +1002,7 @@ SerialSetParity:
 	mov dx, 0x02EB
 
 	.selectDone:
-	pop ebx
+	mov ebx, [ebp + 12]
 	shl bl, 3
 
 	; get the LCR...
@@ -955,15 +1015,21 @@ SerialSetParity:
 	; ...and write it back
 	out dx, al
 
-	; push the result code and return address
-	push 0x00000000
-	push ecx
+	; if we get here, the result code is zero
+	mov eax, 0x00000000
+	
+	.Exit:
+	; push the result code and return
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
 
 SerialSetStopBits:
-	; Returns the current number of stop bits for the specified serial port
+	; Sets the number of stop bits for the specified serial port
 	;
 	;  input:
 	;   port number
@@ -971,13 +1037,12 @@ SerialSetStopBits:
 	;
 	;  output:
 	;   result code
-	;
-	;  changes: eax, ecx, dx
 
-	pop ecx
+	push ebp
+	mov ebp, esp
 
 	; get the port number off the stack and test it out
-	pop eax
+	mov eax, [ebp + 8]
 	cmp eax, 1
 	jb .portValueTooLow
 	cmp eax, 4
@@ -985,19 +1050,12 @@ SerialSetStopBits:
 	jmp .doneTesting
 
 	.portValueTooLow:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F001
-	push eax
-	push ecx
-	ret
+	jmp .Exit
+
 	.portValueTooHigh:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F002
-	push eax
-	push ecx
-	ret
+	jmp .Exit
 
 	.doneTesting:
 	; select the address of this serial port
@@ -1027,7 +1085,7 @@ SerialSetStopBits:
 	mov dx, 0x02EB
 
 	.selectDone:
-	pop ebx
+	mov ebx, [ebp + 12]
 	dec ebx
 	shl ebx, 2
 
@@ -1041,29 +1099,33 @@ SerialSetStopBits:
 	; ...and write it back
 	out dx, al
 
-	; push the result code and return address
-	push 0x00000000
-	push ecx
+	; if we get here, the return code is zero
+	mov eax, 0x00000000
+
+	.Exit:
+	; push the result code and return
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
 
 SerialSetWordSize:
-	; Returns the current number of data word bits for the specified serial port
+	; Sets the number of data word bits for the specified serial port
 	;
 	;  input:
 	;   port number
 	;
 	;  output:
-	;   number of data word bits (5 - 8)
-	;   result code
-	;
-	;  changes: eax, ecx, dx
+	;   number of data word bits (5 - 8) or result code if error
 
-	pop ecx
+	push ebp
+	mov ebp, esp
 
 	; get the port number off the stack and test it out
-	pop eax
+	mov eax, [ebp + 8]
 	cmp eax, 1
 	jb .portValueTooLow
 	cmp eax, 4
@@ -1071,19 +1133,12 @@ SerialSetWordSize:
 	jmp .doneTesting
 
 	.portValueTooLow:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F001
-	push eax
-	push ecx
-	ret
+	jmp .Exit
+
 	.portValueTooHigh:
-	mov eax, 0x00000000
-	push eax
 	mov eax, 0x0000F002
-	push eax
-	push ecx
-	ret
+	jmp .Exit
 
 	.doneTesting:
 	; select the address of this serial port
@@ -1114,7 +1169,7 @@ SerialSetWordSize:
 
 	.selectDone:
 	; get the word size from off the stack then adjust it
-	pop ebx
+	mov ebx, [ebp + 12]
 	sub ebx, 5
 
 	; get the LCR...
@@ -1127,7 +1182,8 @@ SerialSetWordSize:
 	; ...and write it back
 	out dx, al
 
-	; push the result code and return address
-	push 0x00000000
-	push ecx
+	.Exit:
+	mov dword [ebp + 12], eax
+	mov esp, ebp
+	pop ebp
 ret

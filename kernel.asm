@@ -24,18 +24,23 @@
 
 
 [map all kernel.map]
-
 bits 16
-org 0x0600										; set origin point to where the FreeDOS bootloader loads this code
-cli												; turn off interrupts and skip the GDT in a jump to our main routine
-jmp main
 
+
+
+; set origin point to where the FreeDOS bootloader loads this code
+org 0x0600
+
+; clear the direction flag and turn off interrupts
+cld
+cli
 
 main:
 ; init the stack segment
 mov ax, 0x0000
 mov ss, ax
 mov sp, 0x0600
+mov bp, 0x0000
 
 mov ax, 0x0000
 mov ds, ax
@@ -78,71 +83,36 @@ mov byte [backColor], 0
 
 
 ; init and probe RAM
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint01
-
 push progressText01$
-call Print16
-
-.NoPrint01:
+call PrintIfConfigBits16
 call MemoryInit
 
 
 
 ; get that good ol' APM info
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint02
-
 push progressText02$
-call Print16
-
-.NoPrint02:
+call PrintIfConfigBits16
 call SetSystemAPM
 
 
 
 ; enable the APM interface
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint03
-
 push progressText03$
-call Print16
-
-.NoPrint03:
+call PrintIfConfigBits16
 call APMEnable
 
 
 
 ; load that GDT
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint04
-
 push progressText04$
-call Print16
-
-.NoPrint04:
-call LoadGDT
+call PrintIfConfigBits16
+lgdt [GDTStart]
 
 
 
 ; enter protected mode. YAY!
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint05
-
 push progressText05$
-call Print16
-
-.NoPrint05:
+call PrintIfConfigBits16
 mov eax, cr0
 or eax, 00000001b
 mov cr0, eax
@@ -162,66 +132,39 @@ mov esp, 0x0009FB00
 
 
 
-
 ; enable the A20 line - one of the things we require for operation
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint06
-
 push progressText06$
-call Print32
-
-.NoPrint06:
+call PrintIfConfigBits32
 call A20Enable
 
 
 
 ; now that we have a temporary stack and access to all the memory addresses,
 ; let's allocate some RAM for the real stack
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint07
-
 push progressText07$
-call Print32
-
-.NoPrint07:
+call PrintIfConfigBits32
 push dword [kKernelStack]
 call MemAllocate
 pop eax
 mov ebx, [kKernelStack]
 add eax, ebx
 mov esp, eax
+; push a null to stop any traces which may attempt to analyze the stack later
+push 0x00000000
 
 
 
 ; set up our interrupt handlers and IDT
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint08
-
 push progressText08$
-call Print32
-
-.NoPrint08:
+call PrintIfConfigBits32
 call IDTInit
-call InterruptHandlerSetAddresses
+call ISRInitAll
 
 
 
 ; setup and remap both PICs
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint09
-
 push progressText09$
-call Print32
-
-.NoPrint09:
+call PrintIfConfigBits32
 call PICInit
 call PICDisableIRQs
 call PICUnmaskAll
@@ -230,15 +173,8 @@ call PITInit
 
 
 ; load system data into the info struct
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint0A
-
 push progressText0A$
-call Print32
-
-.NoPrint0A:
+call PrintIfConfigBits32
 call SetSystemRTC							; load the RTC values into the system struct
 call SetSystemCPUID							; set some info from the CPU into the system struct
 call SetSystemCPUSpeed						; write the CPU speed info to the system struct
@@ -246,57 +182,41 @@ call SetSystemCPUSpeed						; write the CPU speed info to the system struct
 
 
 ; setup that mickey!
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint0B
-
 push progressText0B$
-call Print32
-
-.NoPrint0B:
+call PrintIfConfigBits32
 call MouseInit
 
 
 
 ; setup keyboard
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint0C
-
 push progressText0C$
-call Print32
-
-.NoPrint0C:
+call PrintIfConfigBits32
 call KeyboardInit
 
 
 
-; let's get some interrupts firing!
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint0D
-
+; allocate the system lists
 push progressText0D$
-call Print32
+call PrintIfConfigBits32
+; the drives list will be 64 entries of 1024 bytes each
+push 1024
+push 64
+call LMListNew
+pop dword [tSystem.driveListAddress]
 
-.NoPrint0D:
+
+
+; let's get some interrupts firing!
+push progressText0E$
+call PrintIfConfigBits32
 sti
 
 
 
 ; find out how many PCI devices we have and save that info to the system struct
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint0E
-
-push progressText0E$
-call Print32
-
-.NoPrint0E:
+push progressText0F$
+call PrintIfConfigBits32
+push 0
 call PCIDetect
 pop eax
 cmp eax, [kTrue]
@@ -314,30 +234,272 @@ jmp .PCISkip
 
 
 ; load drivers for PCI devices
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint0F
+push progressText10$
+call PrintIfConfigBits32
+call PCILoadDrivers
 
-push progressText0F$
-call Print32
 
-.NoPrint0F:
-;call PCILoadDrivers
+
+
+; WELCOME TO THE CODE TESTING AREA
+; AUTHORIZED PERSONNEL ONLY
+; DISPLAY ID TAGS AT ALL TIMES
+; PLEASE ENJOY YOUR STAY
+
+; remaining for reentrancy: StringBuild()
+
+
+
+
+;; ATAPI sector read testing
+;push 0x200000
+;push 1
+;push 0x00000010
+;push 0
+;push 0x0170
+;call C01ATAPISectorReadPIO
+;
+;push 0x300000
+;push 1
+;push 0x00000011
+;push 0
+;push 0x0170
+;call C01ATAPISectorReadPIO
+;
+;
+;mov dword [0x200160], 0xcafebabe
+;
+;push 0x200000
+;push 1
+;push 303030
+;push 0
+;push 0x01F0
+;call C01SectorWriteLBA28PIO
+;
+;push 0x300000
+;push 1
+;push 303030
+;push 0
+;push 0x01F0
+;call C01SectorReadLBA28PIO
+;
+;push 3
+;push 0x200000
+;call PrintRAM32
+;
+;push 8
+;push 0x20023E
+;call PrintRAM32
+;
+;push 32
+;push 0x300000
+;call PrintRAM32
+;
+;
+;jmp $
+
+
+
+
+
+;; StringAppend/Prepend testing
+;push 65
+;push string$
+;call StringCharPrepend
+;
+;push 66
+;push string$
+;call StringCharPrepend
+;
+;push 67
+;push string$
+;call StringCharPrepend
+;
+;push string$
+;call Print32
+;
+;jmp $
+;
+;string$							db 'Four score and seven years ago', 0x00
+
+
+
+
+
+;; StringTruncate testing
+;push 13
+;push string$
+;call StringTruncateLeft
+;
+;push string$
+;call Print32
+;
+;jmp $
+;
+;string$							db 'Four score and seven years ago', 0x00
+
+
+
+
+
+;; StringPad testing
+;push 40
+;push 65
+;push string$
+;call StringPadLeft
+;
+;push string$
+;call Print32
+;
+;jmp $
+;
+;string$							db 'Four score and seven years ago', 0x00
+;buffer$							times 128 db 0x00
+
+
+
+
+
+;; StringFindFirstMatch testing
+;push matchlist$
+;push string$
+;call StringFindFirstMatch
+;pop eax
+;call PrintRegs32
+;jmp $
+;
+;string$							db 'Four score and seven years ago', 0x00
+;matchlist$							db 'xaeiou', 0x00
+
+
+
+
+
+;; GDT routine tests
+;push 0x0000000F
+;push 0x000000FA
+;push 0x00088888
+;push 0x01234567
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTBuild
+
+;push 0x12345678
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTSetBaseAddress
+;
+;push 0x95327
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTSetLimitAddress
+;
+;push 0x22
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTSetAccessFlags
+;
+;push 0x88
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTSetSizeFlags
+;
+;
+;
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTGetBaseAddress
+;pop eax
+;call PrintRegs32
+;
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTGetLimitAddress
+;pop eax
+;call PrintRegs32
+;
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTGetAccessFlags
+;pop eax
+;call PrintRegs32
+;
+;mov eax, GDTStart
+;add eax, 24
+;push eax
+;call GDTGetSizeFlags
+;pop eax
+;call PrintRegs32
+;jmp $
+
+
+
+
+;; GetWord testing
+;call ScreenClear32
+;
+;push stringA$
+;call Print32
+;
+;push stringB$
+;call Print32
+;
+;
+;push sep$
+;push string$
+;call StringWordCount
+;pop ecx
+;
+;call PrintRegs32
+;
+;mov edx, 0
+;.wordloop:
+;	inc edx
+;	pusha
+;
+;	push scratch$
+;	push edx
+;	push sep$
+;	push string$
+;	call StringWordGet
+;
+;	push 0x27
+;	push scratch$
+;	call StringCharPrepend
+;
+;	push 0x27
+;	push scratch$
+;	call StringCharAppend
+;
+;	push scratch$
+;	call Print32
+;
+;	popa
+;loop .wordloop
+;.done:
+;jmp $
+;string$							db 'Shopping list for dinner: oranges, grapes, apples, screwdrivers.', 0x00
+;sep$							db ', .:', 0x00
+;stringA$						db 'The string is: "Shopping list for dinner: oranges, grapes, apples, screwdrivers."', 0x00
+;stringB$						db 'The separator is: ", .:"', 0x00
+;scratch$						times 32 db 0x00
+
+
 
 
 
 ; clear the screen and start!
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000010b
-cmp eax, 000000000000000000000000000000010b
-jne .NoPrint10
-
-push progressText10$
-call Print32
-
-.NoPrint10:
-call ClearScreen32
+push 256
+call TimerWait
+call ScreenClear32
 
 
 
@@ -369,10 +531,10 @@ progressText09$									db 'Remaping PICs', 0x00
 progressText0A$									db 'Load system data to the info struct', 0x00
 progressText0B$									db 'MouseInit', 0x00
 progressText0C$									db 'KeyboardInit', 0x00
-progressText0D$									db 'Enabling interrupts', 0x00
-progressText0E$									db 'Initializing PCI bus', 0x00
-progressText0F$									db 'Loading drivers', 0x00
-progressText10$									db 'Setup complete', 0x00
+progressText0D$									db 'Allocating list space', 0x00
+progressText0E$									db 'Enabling interrupts', 0x00
+progressText0F$									db 'Initializing PCI bus', 0x00
+progressText10$									db 'Loading drivers', 0x00
 memE820Unsupported$								db 'Could not detect memory, function unsupported', 0x00
 PCIFailed$										db 'PCI Controller not detected', 0x00
 
@@ -397,5 +559,9 @@ PCIFailed$										db 'PCI Controller not detected', 0x00
 
 
 
+StartOfDriverSpace:
+
+
+
 ; includes for drivers
-%include "drivers/IDE Controller.asm"			; this should be obvious...
+%include "drivers/ATA Controller.asm"			; this should be obvious...

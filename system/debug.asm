@@ -16,6 +16,11 @@
 
 
 
+; 32-bit function listing:
+; DebugMenu						Implements the in-kernel debugging menu
+
+
+
 bits 32
 
 
@@ -28,6 +33,9 @@ DebugMenu:
 	;
 	;  output:
 	;   n/a
+
+	push ebp
+	mov ebp, esp
 
 	; create a new list to hold the PCI device labels if necessary
 	cmp byte [.flag], 1
@@ -214,7 +222,79 @@ DebugMenu:
 	call Print32
 
 	.DebugLoop:
+		push 0
 		call KeyGet
+
+
+
+		mov byte [cursorY], 17
+
+
+		; clear our print string
+		push dword 0
+		push dword 256
+		push kPrintText$
+		call MemFill
+
+		; do the ticks/seconds since boot string
+		push dword [tSystem.secondsSinceBoot]
+		push dword [tSystem.ticksSinceBoot]
+
+		push kPrintText$
+		push .ticksFormat$
+		call StringBuild
+
+		push kPrintText$
+		call Print32
+
+		; clear our print string
+		push dword 0
+		push dword 256
+		push kPrintText$
+		call MemFill
+
+		; do the date and time info string
+		mov eax, 0x00000000
+		mov al, byte [tSystem.year]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.century]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.day]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.month]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.ticks]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.seconds]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.minutes]
+		push eax
+
+		mov eax, 0x00000000
+		mov al, byte [tSystem.hours]
+		push eax
+
+		push kPrintText$
+		push .dateTimeFormat$
+		call StringBuild
+
+		push kPrintText$
+		call Print32
+
+
+
 		pop eax
 
 		cmp al, 0x30							; choice 0
@@ -277,6 +357,9 @@ DebugMenu:
 
 	jmp .DebugLoop
 	.Exit:
+
+	mov esp, ebp
+	pop ebp
 ret
 .flag											db 0x00
 .kDebugMenu$									db 'Kernel Debug Menu', 0x00
@@ -290,12 +373,14 @@ ret
 .kDebugText8$									db '8 - ', 0x00
 .kDebugText9$									db '9 - ', 0x00
 .kDebugText0$									db '0 - ', 0x00
+.ticksFormat$									db 'Ticks since boot: ^p10^d     Seconds since boot:^d', 0x00
+.dateTimeFormat$								db '^p2^d:^d:^d.^p3^d     ^p2^d/^d/^h^d', 0x00
 
 
 
 .SystemInfo:
 	; clear the screen first
-	call ClearScreen32
+	call ScreenClear32
 
 	; print the description of this page
 	mov byte [textColor], 7
@@ -329,87 +414,21 @@ ret
 	push tSystem.CPUIDBrand$
 	call Print32
 
-	inc byte [cursorY]
-
-	; clear our print string
-	push dword 0
-	push dword 256
-	push kPrintText$
-	call MemFill
-
-	; do the ticks/seconds since boot string
-	push dword [tSystem.secondsSinceBoot]
-	push dword [tSystem.ticksSinceBoot]
-
-	push kPrintText$
-	push .ticksFormat$
-	call StringBuild
-
-	push kPrintText$
-	call Print32
-
-	; clear our print string
-	push dword 0
-	push dword 256
-	push kPrintText$
-	call MemFill
-
-	; do the date and time info string
-	mov eax, 0x00000000
-	mov al, byte [tSystem.year]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.century]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.day]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.month]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.ticks]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.seconds]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.minutes]
-	push eax
-
-	mov eax, 0x00000000
-	mov al, byte [tSystem.hours]
-	push eax
-
-	push kPrintText$
-	push .dateTimeFormat$
-	call StringBuild
-
-	push kPrintText$
-	call Print32
-
 	; wait for a keypress before leaving
+	push 0
 	call KeyWait
 	pop eax
 
 	; clear the screen and exit!
-	call ClearScreen32
+	call ScreenClear32
 ret
 .systemInfoText$								db 'System Information', 0x00
 .versionFormat$									db 'Kernel version ^p2^h.^h', 0x00
-.ticksFormat$									db 'Ticks since boot: ^p10^d     Seconds since boot:^d', 0x00
-.dateTimeFormat$								db '^p2^d:^d:^d.^p3^d     ^p2^d/^d/^h^d', 0x00
 
 
 
 .PCIDevices:
-	call ClearScreen32
+	call ScreenClear32
 
 	mov byte [textColor], 7
 	mov byte [backColor], 0
@@ -547,6 +566,7 @@ ret
 	call PrintRAM32
 			
 	.GetInputLoop:
+		push 0
 		call KeyWait
 		pop eax
 	
@@ -582,7 +602,7 @@ ret
 	mov dword [.currentDevice], 0
 
 	; clear the screen and exit
-	call ClearScreen32
+	call ScreenClear32
 ret
 .PCIInfoText$									db 'PCI Devices', 0x00
 .PCIDeviceCountText$							db '^d PCI devices found', 0x00

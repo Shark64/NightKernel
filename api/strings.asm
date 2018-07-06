@@ -15,6 +15,38 @@
 ; See the included file <GPL License.txt> for the complete text of the GPL License by which this program is covered.
 
 
+; 16-bit function listing:
+; ConvertByteToHexString16		Translates the byte value specified to a hexadecimal number in a zero-padded 2 byte string in real mode
+; ConvertWordToHexString16		Translates the word value specified to a hexadecimal number in a zero-padded 4 byte string in real mode
+
+; 32-bit function listing:
+; StringBuild					Builds a string out of the specified arguments
+; StringCaseLower				Converts a string to lower case
+; StringCaseUpper				Converts a string to upper case
+; StringCharAppend				Appends a character onto the end of the string specified
+; StringCharDelete				Deletes the character at the location specified from the string
+; StringCharInsert				Inserts a character into the string at the location specified
+; StringCharPrepend				Prepends a character onto the beginning of the string specified
+; StringFill					Fills the entire string specified with the character specified
+; StringFromBinaryValue			Translates the value specified to a binary number in a zero-padded 32 byte string
+; StringFromDecimalValue		Translates the value specified to a decimal number in a zero-padded 10 byte string
+; StringFromHexValue			Translates the value specified to a hexadecimal number in a zero-padded 8 byte string
+; StringFromOctalValue			Translates the value specified to an octal number in a zero-padded 11 byte string
+; StringLength					Returns the length of the string specified
+; StringPadLeft					Pads the left side of the string specified with the character specified until it is the length specified
+; StringPadRight				Pads the right side of the string specified with the character specified until it is the length specified
+; StringReplaceChars			Replaces all occurrances of the specified character with another character specified
+; StringReplaceCharsInRange		Replaces any character within the range of ASCII codes specified with the specified character
+; StringSearchCharList			Returns the position in the string specified of the first match from a list of characters
+; StringTokenReplace			Finds the first occurrance of the token ^ character replaces it with a truncated binary number
+; StringTrimLeft				Trims any occurrances of the character specified off the left side of the string
+; StringTrimRight				Trims any occurrances of the character specified off the right side of the string
+; StringTruncateLeft			Truncates by removing the number of characters specified from the beginning of the string specified
+; StringTruncateRight			Truncates by removing the number of characters specified from the end of the string specified
+; StringWordCount				Counts the words in the string specified when viewed as a sentence separated by the byte specified
+; StringWordGet					Returns the word specified from the string specified when separated by the byte specified
+
+
 
 bits 16
 
@@ -29,36 +61,36 @@ ConvertByteToHexString16:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: al, cx, si, di
 
-	pop cx
-	pop si
-	pop di
-	push cx
+	push bp
+	mov bp, sp
+
+	mov si, [bp + 4]
+	mov di, [bp + 6]
 
 	; handle digit 1
 	mov cx, 0x00F0
 	and cx, si
 	shr cx, 4
 	add cx, kHexDigits
-	push si
 	mov si, cx
 	mov al, [si]
-	pop si
 	mov byte[di], al
 	inc di
+
+	mov si, [bp + 4]
 
 	; handle digit 2
 	mov cx, 0x000F
 	and cx, si
 	add cx, kHexDigits
-	push si
 	mov si, cx
 	mov al, [si]
-	pop si
 	mov byte[di], al
-ret
+
+	mov sp, bp
+	pop bp
+ret 4
 
 
 
@@ -71,288 +103,66 @@ ConvertWordToHexString16:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: al, cx, si, di
 
-	pop cx
-	pop si
-	pop di
-	push cx
+	push bp
+	mov bp, sp
+
+	mov si, [bp + 4]
+	mov di, [bp + 6]
+
 
 	; handle digit 1
 	mov cx, 0xF000
 	and cx, si
 	shr cx, 12
 	add cx, kHexDigits
-	push si
 	mov si, cx
 	mov al, [si]
-	pop si
 	mov byte[di], al
 	inc di
+
+	mov si, [bp + 4]
 
 	; handle digit 2
 	mov cx, 0x0F00
 	and cx, si
 	shr cx, 8
 	add cx, kHexDigits
-	push si
 	mov si, cx
 	mov al, [si]
-	pop si
 	mov byte[di], al
 	inc di
+
+	mov si, [bp + 4]
 
 	; handle digit 3
 	mov cx, 0x00F0
 	and cx, si
 	shr cx, 4
 	add cx, kHexDigits
-	push si
 	mov si, cx
 	mov al, [si]
-	pop si
 	mov byte[di], al
 	inc di
-
+	
+	mov si, [bp + 4]
+	
 	; handle digit 4
 	mov cx, 0x000F
 	and cx, si
 	add cx, kHexDigits
-	push si
 	mov si, cx
 	mov al, [si]
-	pop si
 	mov byte[di], al
 	inc di
-ret
+
+	mov sp, bp
+	pop bp
+ret 4
 
 
 
 bits 32
-
-
-
-ConvertToBinaryString:
-	; Translates the value specified to a binary number in a zero-padded 32 byte string
-	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!z
-	;       No terminating null is put on the end of the string - do that yourself.
-	;
-	;  input:
-	;   numeric value
-	;   string address
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, edx, esi
-
-	pop edx
-	pop eax
-	pop esi
-	push edx
-
-	; clear the string to all zeroes
-	pusha
-	push 48
-	push 32
-	push esi
-	call MemFill
-	popa
-
-	; add to the buffer since we start from the right (max possible length - 1)
-	add esi, 31
-	
-	; set the divisor
-	mov ebx, 2
-	.DecodeLoop:
-		mov edx, 0													; clear edx so we don't mess up the division
-		div ebx														; divide eax by 10
-		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
-		mov [esi], dl
-		dec esi														; move to the next position in the buffer
-		cmp eax, 0
-		jz .Exit													; if ax=0, end of the procedure
-		jmp .DecodeLoop												; else repeat
-	.Exit:
-ret
-
-
-
-ConvertToDecimalString:
-	; Translates the value specified to a decimal number in a zero-padded 10 byte string
-	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
-	;       No terminating null is put on the end of the string - do that yourself.
-	;
-	;  input:
-	;   numeric value
-	;   string address
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, edx, esi
-
-	pop edx
-	pop eax
-	pop esi
-	push edx
-
-	; clear the string to all zeroes
-	pusha
-	push 48
-	push 10
-	push esi
-	call MemFill
-	popa
-
-	; add to the buffer since we start from the right (max possible length - 1)
-	add esi, 9
-	
-	; set the divisor
-	mov ebx, 10
-	.DecodeLoop:
-		mov edx, 0													; clear edx so we don't mess up the division
-		div ebx														; divide eax by 10
-		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
-		mov [esi], dl
-		dec esi														; move to the next position in the buffer
-		cmp eax, 0
-		jz .Exit													; if ax=0, end of the procedure
-		jmp .DecodeLoop												; else repeat
-	.Exit:
-ret
-
-
-
-ConvertToHexString:
-	; Translates the value specified to a hexadecimal number in a zero-padded 8 byte string
-	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
-	;       No terminating null is put on the end of the string - do that yourself.
-	;
-	;  input:
-	;   numeric value
-	;   string address
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: al, ecx, esi, edi
-
-	pop ecx
-	pop esi
-	pop edi
-	push ecx
-
-	mov ecx, 0xF0000000
-	and ecx, esi
-	shr ecx, 28
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x0F000000
-	and ecx, esi
-	shr ecx, 24
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x00F00000
-	and ecx, esi
-	shr ecx, 20
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x000F0000
-	and ecx, esi
-	shr ecx, 16
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x0000F000
-	and ecx, esi
-	shr ecx, 12
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x00000F00
-	and ecx, esi
-	shr ecx, 8
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x000000F0
-	and ecx, esi
-	shr ecx, 4
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-
-	mov ecx, 0x0000000F
-	and ecx, esi
-	add ecx, kHexDigits
-	mov al, [ecx]
-	mov byte[edi], al
-	inc edi
-ret
-
-
-
-ConvertToOctalString:
-	; Translates the value specified to an octal number in a zero-padded 11 byte string
-	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
-	;       No terminating null is put on the end of the string - do that yourself.
-	;
-	;  input:
-	;   numeric value
-	;   string address
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, edx, esi
-
-	pop edx
-	pop eax
-	pop esi
-	push edx
-
-	; clear the string to all zeroes
-	pusha
-	push 48
-	push 11
-	push esi
-	call MemFill
-	popa
-
-	; add to the buffer since we start from the right (max possible length - 1)
-	add esi, 10
-	
-	; set the divisor
-	mov ebx, 8
-	.DecodeLoop:
-		mov edx, 0													; clear edx so we don't mess up the division
-		div ebx														; divide eax by 10
-		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
-		mov [esi], dl
-		dec esi														; move to the next position in the buffer
-		cmp eax, 0
-		jz .Exit													; if ax=0, end of the procedure
-		jmp .DecodeLoop												; else repeat
-	.Exit:
-ret
 
 
 
@@ -365,8 +175,6 @@ StringBuild:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes:
 
 	pop edx
 	pop esi
@@ -396,8 +204,67 @@ StringBuild:
 
 		; see if this is the "^" token
 		cmp al, 94
-		je .ProcessToken
+		jne .TokenSkip
 
+			; get the character after the token to see what we need to do
+			inc esi
+			mov al, [esi]
+
+			; b		Binary
+			cmp al, 98
+			je .TokenBinary
+
+			; B		Binary
+			cmp al, 66
+			je .TokenBinary
+
+			; d		Decimal
+			cmp al, 100
+			je .TokenDecimal
+
+			; D		Decimal
+			cmp al, 68
+			je .TokenDecimal
+
+			; h		Hexadecimal
+			cmp al, 104
+			je .TokenHexadecimal
+
+			; H		Hexadecimal
+			cmp al, 72
+			je .TokenHexadecimal
+
+			; o		Octal
+			cmp al, 111
+			je .TokenOctal
+
+			; O		Octal
+			cmp al, 79
+			je .TokenOctal
+
+			; s		String
+			cmp al, 115
+			je .TokenString
+
+			; S		String
+			cmp al, 83
+			je .TokenString
+
+			; p		set padding value
+			cmp al, 112
+			je .SetPaddingValue
+
+			; P		set padding value
+			cmp al, 80
+			je .SetPaddingValue
+
+			; if we get here, there was no token match. let's just put the character itself in instead
+			mov byte [edi], al
+			inc edi
+
+			jmp .TokenDone
+
+		.TokenSkip:
 		; it wasn't the token, so we just write the character directly
 		mov byte [edi], al
 		inc edi
@@ -424,65 +291,6 @@ ret
 .zero$											db '0', 0x00
 
 ; subroutines - remember, edx, esi and edi MUST BE PRESERVED to not screw up the routines above
-.ProcessToken:
-	; get the character after the token to see what we need to do
-	inc esi
-	mov al, [esi]
-
-	; b		Binary
-	cmp al, 98
-	je .TokenBinary
-
-	; B		Binary
-	cmp al, 66
-	je .TokenBinary
-
-	; d		Decimal
-	cmp al, 100
-	je .TokenDecimal
-
-	; D		Decimal
-	cmp al, 68
-	je .TokenDecimal
-
-	; h		Hexadecimal
-	cmp al, 104
-	je .TokenHexadecimal
-
-	; H		Hexadecimal
-	cmp al, 72
-	je .TokenHexadecimal
-
-	; o		Octal
-	cmp al, 111
-	je .TokenOctal
-
-	; O		Octal
-	cmp al, 79
-	je .TokenOctal
-
-	; s		String
-	cmp al, 115
-	je .TokenString
-
-	; S		String
-	cmp al, 83
-	je .TokenString
-
-	; p		set padding value
-	cmp al, 112
-	je .SetPaddingValue
-
-	; P		set padding value
-	cmp al, 80
-	je .SetPaddingValue
-
-	; if we get here, there was no token match. let's just put the character itself in instead
-	mov byte [edi], al
-	inc edi
-
-jmp .TokenDone
-
 .TokenBinary:
 	; get the number
 	pop eax
@@ -491,7 +299,7 @@ jmp .TokenDone
 	pusha
 	push .scratch$
 	push eax
-	call ConvertToBinaryString
+	call StringFromBinaryValue
 	popa
 jmp .TokenProcessing
 
@@ -503,7 +311,7 @@ jmp .TokenProcessing
 	pusha
 	push .scratch$
 	push eax
-	call ConvertToDecimalString
+	call StringFromDecimalValue
 	popa
 jmp .TokenProcessing
 
@@ -515,7 +323,7 @@ jmp .TokenProcessing
 	pusha
 	push .scratch$
 	push eax
-	call ConvertToHexString
+	call StringFromHexValue
 	popa
 jmp .TokenProcessing
 
@@ -527,7 +335,7 @@ jmp .TokenProcessing
 	pusha
 	push .scratch$
 	push eax
-	call ConvertToOctalString
+	call StringFromOctalValue
 	popa
 jmp .TokenProcessing
 
@@ -608,7 +416,7 @@ jmp .TokenDone
 		push 0
 		push edi
 		push esi
-		call StringInsert
+		call StringCharInsert
 
 		; get the resulting string length
 		push .scratch$
@@ -659,12 +467,11 @@ StringCaseLower:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ecx
 
-	pop eax
-	pop ecx
-	push eax
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	.StringLoop:
 		mov byte al, [ecx]
@@ -686,7 +493,10 @@ StringCaseLower:
 		inc ecx
 	jmp .StringLoop
 	.StringLoopDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 
@@ -698,12 +508,11 @@ StringCaseUpper:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ecx
 
-	pop edx
-	pop ecx
-	push edx
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
 
 	.StringLoop:
 		mov byte al, [ecx]
@@ -725,11 +534,47 @@ StringCaseUpper:
 		inc ecx
 	jmp .StringLoop
 	.StringLoopDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 
-StringDelete:
+StringCharAppend:
+	; Appends a character onto the end of the string specified
+	;
+	;  input:
+	;   string address
+	;   ASCII code of cahracter to add
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	; get the length of the string passed
+	push dword [ebp + 8]
+	call StringLength
+	pop edi
+	add edi, [ebp + 8]
+
+	; write the ASCII character
+	mov eax, [ebp + 12]
+	stosb
+
+	; write a null to terminate the string
+	mov al, 0
+	stosb
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringCharDelete:
 	; Deletes the character at the location specified from the string
 	;
 	;  input:
@@ -738,13 +583,12 @@ StringDelete:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: ecx, edx, esi
 
-	pop esi
-	pop ecx										; string starting address
-	pop edx										; character position to remove
-	push esi
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	mov edx, [ebp + 12]
 
 	; test for null string for efficiency
 	mov byte al, [ecx]
@@ -772,43 +616,13 @@ StringDelete:
 		inc ecx
 	jmp .StringShiftLoop
 	.StringTrimDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 8
 
 
-
-StringFill:
-	; Fills the entire string specified with the character specified
-	;
-	;  input:
-	;   string starting address
-	;   fill character
-	;
-	;  output:
-	;   n/a
-	;
-	; changes: eax, ebx, ecx
-
-	pop eax
-	pop ecx
-	pop ebx
-	push eax
-
-	.StringLoop:
-		mov byte al, [ecx]
-
-		cmp al, 0x00
-		je .StringLoopDone
-
-		mov [ecx], bl
-
-		inc ecx
-	jmp .StringLoop
-	.StringLoopDone:
-ret
-
-
-
-StringInsert:
+StringCharInsert:
 	; Inserts a character into the string at the location specified
 	;
 	;  input:
@@ -818,34 +632,29 @@ StringInsert:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ebx, ecx, edx, edi
 
-	pop edi
-	pop ecx										; main string address
-	pop edx										; insert string address
-	pop ebx										; position after which to insert the character
-	push edi
+	push ebp
+	mov ebp, esp
+	sub esp, 4
+	sub esp, 4
 
-	; we'll need these again later
-	push edx
-	push ecx
+	mov ecx, [ebp + 8]
+	mov edx, [ebp + 12]
+	mov ebx, [ebp + 16]
 
 	; get the length of the main string
 	pusha
 	push ecx
 	call StringLength
 	pop eax
-	mov [.mainLength], eax
+	mov [ebp - 4], eax
 	popa
 
 	; check insert position; writing AT the end of the string is okay, PAST it is not
-	mov eax, [.mainLength]
+	mov eax, [ebp - 4]
 	cmp ebx, eax
 	jbe .CheckOK
-	; if we get here the insert position is invalid, so get rid of the saved values on the stack and exit
-	pop eax
-	pop eax
+	; if we get here the insert position is invalid, so we exit
 	jmp .Exit
 	.CheckOK:
 
@@ -854,22 +663,22 @@ StringInsert:
 	push edx
 	call StringLength
 	pop eax
-	mov [.insertLength], eax
+	mov [ebp - 8], eax
 	popa
 
 	; set up a value to use later to check if the loop is over
 	mov edx, ecx
 	add edx, ebx
 
-	; calculate address of the first char in the section of chars to be shifted down
+	; calculate address of the first byte in the section of chars to be shifted down
 	add ecx, eax
 
-	; calculate the address of the last char of the resulting string
+	; calculate the address of the last byte of the resulting string
 	mov edi, ecx
-	add edi, [.insertLength]
+	add edi, [ebp - 8]
 
 	.StringShiftLoop:
-		; load a char from the source position
+		; copy a byte from source to destination
 		mov al, [ecx]
 		mov [edi], al
 
@@ -886,25 +695,346 @@ StringInsert:
 
 	.StringTrimDone:
 	; calculate the write address based on the location specified
-	pop ecx
+	mov ecx, [ebp + 8]
 	add ecx, ebx
 
 	; get the address of the insert string
-	pop edx
+	mov edx, [ebp + 12]
 
 	.StringWriteLoop:
-		mov al, [edx]							; get a byte from the insert string
-		cmp al, 0x00							; see if it's null
-		je .StringWriteDone						; if so, jump out of the loop - we're done!
-		mov [ecx], al							; if we get here, it's not the end yet
-		inc edx									; increment the pointers and start over
+		; get a byte from the insert string
+		mov al, [edx]
+		
+		; see if it's null
+		cmp al, 0x00
+		
+		; if so, jump out of the loop - we're done!
+		je .StringWriteDone						
+
+		; if we get here, it's not the end yet
+		mov [ecx], al
+
+		; increment the pointers and start over
+		inc edx
 		inc ecx
 	jmp .StringWriteLoop
 	.StringWriteDone:
-.Exit:
-ret
-.mainLength										dd 0x00000000
-.insertLength									dd 0x00000000
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 12
+
+
+
+StringCharPrepend:
+	; Prepends a character onto the beginning of the string specified
+	;
+	;  input:
+	;   string address
+	;   ASCII code of cahracter to add
+	;
+	;  output:
+	;   n/a
+
+
+	push ebp
+	mov ebp, esp
+
+	; get the length of the string passed
+	push dword [ebp + 8]
+	call StringLength
+	pop ecx
+	
+	; set up our string loop addresses
+	mov esi, [ebp + 8]
+	add esi, ecx
+	mov edi, esi
+	inc edi
+
+	; loop to shift bytes down by the number of characters being inserted, plus one to allow for the null
+	mov ecx, dword [ebp - 4]
+	inc ecx
+	pushf
+	std
+	.ShiftLoop:
+		lodsb
+		stosb
+	loop .ShiftLoop
+	popf
+
+	; write the ASCII character
+	mov eax, [ebp + 12]
+	stosb
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringFill:
+	; Fills the entire string specified with the character specified
+	;
+	;  input:
+	;   string starting address
+	;   fill character
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	mov ebx, [ebp + 12]
+
+	.StringLoop:
+		mov byte al, [ecx]
+
+		cmp al, 0x00
+		je .StringLoopDone
+
+		mov [ecx], bl
+
+		inc ecx
+	jmp .StringLoop
+	.StringLoopDone:
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringFromBinaryValue:
+	; Translates the value specified to a binary number in a zero-padded 32 byte string
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!z
+	;       No terminating null is put on the end of the string - do that yourself.
+	;
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov eax, [ebp + 8]
+	mov esi, [ebp + 12]
+
+	; clear the string to all zeroes
+	pusha
+	push 48
+	push 32
+	push esi
+	call MemFill
+	popa
+
+	; add to the buffer since we start from the right (max possible length - 1)
+	add esi, 31
+	
+	; set the divisor
+	mov ebx, 2
+	.DecodeLoop:
+		mov edx, 0													; clear edx so we don't mess up the division
+		div ebx														; divide eax by 10
+		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
+		mov [esi], dl
+		dec esi														; move to the next position in the buffer
+		cmp eax, 0
+		jz .Exit													; if ax=0, end of the procedure
+		jmp .DecodeLoop												; else repeat
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringFromDecimalValue:
+	; Translates the value specified to a decimal number in a zero-padded 10 byte string
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	;       No terminating null is put on the end of the string - do that yourself.
+	;
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov eax, [ebp + 8]
+	mov esi, [ebp + 12]
+
+	; clear the string to all zeroes
+	pusha
+	push 48
+	push 10
+	push esi
+	call MemFill
+	popa
+
+	; add to the buffer since we start from the right (max possible length - 1)
+	add esi, 9
+	
+	; set the divisor
+	mov ebx, 10
+	.DecodeLoop:
+		mov edx, 0													; clear edx so we don't mess up the division
+		div ebx														; divide eax by 10
+		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
+		mov [esi], dl
+		dec esi														; move to the next position in the buffer
+		cmp eax, 0
+		jz .Exit													; if ax=0, end of the procedure
+		jmp .DecodeLoop												; else repeat
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringFromHexValue:
+	; Translates the value specified to a hexadecimal number in a zero-padded 8 byte string
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	;       No terminating null is put on the end of the string - do that yourself.
+	;
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov esi, [ebp + 8]
+	mov edi, [ebp + 12]
+
+	mov ecx, 0xF0000000
+	and ecx, esi
+	shr ecx, 28
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x0F000000
+	and ecx, esi
+	shr ecx, 24
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x00F00000
+	and ecx, esi
+	shr ecx, 20
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x000F0000
+	and ecx, esi
+	shr ecx, 16
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x0000F000
+	and ecx, esi
+	shr ecx, 12
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x00000F00
+	and ecx, esi
+	shr ecx, 8
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x000000F0
+	and ecx, esi
+	shr ecx, 4
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov ecx, 0x0000000F
+	and ecx, esi
+	add ecx, kHexDigits
+	mov al, [ecx]
+	mov byte[edi], al
+	inc edi
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringFromOctalValue:
+	; Translates the value specified to an octal number in a zero-padded 11 byte string
+	; Note: No length checking is done on this string; make sure it's long enough to hold the converted number!
+	;       No terminating null is put on the end of the string - do that yourself.
+	;
+	;  input:
+	;   numeric value
+	;   string address
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	mov eax, [ebp + 8]
+	mov esi, [ebp + 12]
+
+	; clear the string to all zeroes
+	pusha
+	push 48
+	push 11
+	push esi
+	call MemFill
+	popa
+
+	; add to the buffer since we start from the right (max possible length - 1)
+	add esi, 10
+	
+	; set the divisor
+	mov ebx, 8
+	.DecodeLoop:
+		mov edx, 0													; clear edx so we don't mess up the division
+		div ebx														; divide eax by 10
+		add dx, 48													; add 48 to the remainder to give us an ASCII character for this number
+		mov [esi], dl
+		dec esi														; move to the next position in the buffer
+		cmp eax, 0
+		jz .Exit													; if ax=0, end of the procedure
+		jmp .DecodeLoop												; else repeat
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 8
 
 
 
@@ -916,27 +1046,141 @@ StringLength:
 	;
 	;  output:
 	;   string length
-	;
-	; changes: al, ebx, ecx, edx
 
-	pop edx
-	pop ecx
-	mov ebx, ecx
+	push ebp
+	mov ebp, esp
 
-	.StringLoop:
-		mov byte al, [ecx]
+	mov edi, [ebp + 8]
 
-		cmp al, 0x00
-		je .StringLoopDone
+	; set up the string scan
+	mov ecx, 0xFFFFFFFF
+	mov esi, edi
+	mov al, 0
+	repne scasb
+	sub edi, esi
+	dec edi
 
-		; if we get here, it wasn't the end
-		inc ecx
-	jmp .StringLoop
-	.StringLoopDone:
-	sub ecx, ebx
-	push ecx
-	push edx
+	; push the info and exit
+	mov dword [ebp + 8], edi
+
+	mov esp, ebp
+	pop ebp
 ret
+
+
+
+StringPadLeft:
+	; Pads the left side of the string specified with the character specified until it is the length specified
+	;
+	;  input:
+	;   string address
+	;   padding character
+	;   length to which the string will be extended
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+	sub esp, 4									; length of string specified
+
+	; get the length of the string
+	push dword [ebp + 8]
+	call StringLength
+	pop dword [ebp - 4]
+
+	; exit if the string specified is already greater than the length given
+	mov eax, dword [ebp + 16]
+	mov ebx, dword [ebp - 4]
+	cmp ebx, eax
+	jae .Exit
+
+	; calculate number of characters we need to add into eax and save it for later
+	sub eax, dword [ebp - 4]
+	push eax
+
+	; calculate source and dest addresses
+	mov esi, dword [ebp + 8]
+	add esi, dword [ebp - 4]
+	mov edi, esi
+	add edi, eax
+
+	; loop to shift bytes down by the number of characters being inserted, plus one to allow for the null
+	mov ecx, dword [ebp - 4]
+	inc ecx
+	pushf
+	std
+	.ShiftLoop:
+		lodsb
+		stosb
+	loop .ShiftLoop
+	popf
+
+	; MemFill the characters onto the beginning of the string
+	pop eax
+	push dword [ebp + 12]
+	push eax
+	push dword [ebp + 8]
+	call MemFill
+
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 12
+
+
+
+StringPadRight:
+	; Pads the right side of the string specified with the character specified until it is the length specified
+	;
+	;  input:
+	;   string address
+	;   padding character
+	;   length to which string will be extended
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+	sub esp, 4									; length of string specified
+
+	; get the length of the string
+	push dword [ebp + 8]
+	call StringLength
+	pop dword [ebp - 4]
+
+	; exit if the string specified is already greater than the length given
+	mov eax, dword [ebp + 16]
+	mov ebx, dword [ebp - 4]
+	cmp ebx, eax
+	jae .Exit
+
+	; calculate number of characters we need to add into eax
+	sub eax, dword [ebp - 4]
+
+	; calculate write address and save for later
+	mov ebx, dword [ebp + 8]
+	add ebx, dword [ebp - 4]
+	push ebx
+
+	; MemFill the characters onto the end of the string
+	push dword [ebp + 12]
+	push eax
+	push ebx
+	call MemFill
+
+	; write the null terminator
+	pop ebx
+	add ebx, dword [ebp + 16]
+	mov byte [ebx], 0
+
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 12
 
 
 
@@ -950,14 +1194,13 @@ StringReplaceChars:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: al, ebx, ecx, edx, esi
 
-	pop esi
-	pop ecx										; string starting address
-	pop ebx										; character to be replaced
-	pop edx										; replacement character
-	push esi
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	mov ebx, [ebp + 12]
+	mov edx, [ebp + 16]
 
 	.StringLoop:
 		mov byte al, [ecx]
@@ -975,7 +1218,10 @@ StringReplaceChars:
 		inc ecx
 	jmp .StringLoop
 	.StringLoopDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 12
 
 
 
@@ -990,15 +1236,14 @@ StringReplaceCharsInRange:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ebx, ecx, edx, esi
 
-	pop esi
-	pop ecx										; string starting address
-	pop eax										; start of range
-	pop ebx										; end of range
-	pop edx										; replacement character
-	push esi
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	mov eax, [ebp + 12]
+	mov ebx, [ebp + 16]
+	mov edx, [ebp + 20]
 
 	mov bh, al
 
@@ -1026,6 +1271,127 @@ StringReplaceCharsInRange:
 		inc ecx
 	jmp .StringLoop
 	.StringLoopDone:
+
+	mov esp, ebp
+	pop ebp
+ret 16
+
+
+
+StringSearchCharList:
+	; Returns the position in the string specified of the first match from a list of characters
+	;
+	;  input:
+	;   address of string to be scanned
+	;   address of character list string
+	;
+	;  output:
+	;   position of match, or zero if no match
+
+	push ebp
+	mov ebp, esp
+	sub esp, 4									; the length of the main string
+	sub esp, 4									; the length of the list string
+	sub esp, 4									; return value
+
+	; init return value to an absurdly high number 
+	mov dword [ebp - 12], 0xFFFFFFFF
+
+	; get length of the main string
+	push dword [ebp + 8]
+	call StringLength
+	pop eax
+
+	; exit if the string was null, save eax if not
+	cmp eax, 0
+	je .Exit
+	mov dword [ebp - 4], eax
+
+	; get length of the list string
+	push dword [ebp + 12]
+	call StringLength
+	pop eax
+
+	; exit if the string was null, save eax if not
+	cmp eax, 0
+	je .Exit
+	mov dword [ebp - 8], eax
+
+	; this loop cycles through all characters of the list string
+	mov ecx, dword [ebp - 8]
+	mov esi, [ebp + 12]
+	.scanLoop:
+
+		; get a byte from the list string
+		mov al, [esi]
+
+		; preserve ecx
+		mov ebx, ecx
+
+		; scan the main string for this character
+		mov ecx, dword [ebp - 4]
+		mov edi, [ebp + 8]
+		repne scasb
+
+		; if the zero flag is clear, there was a match
+		jnz .NextIteration
+		
+			; subtract the starting address of the string from edi
+			; this makes it now refer to the character within the string instead of the byte address
+			sub edi, [ebp + 8]
+
+			; compare to see if this value is lower (e.g. "nearer") than the last one
+			mov eax, dword [ebp - 12]
+			cmp edi, eax
+			jnb .NextIteration
+
+			; it was closer, so save this value
+			mov dword [ebp - 12], edi
+
+		.NextIteration:
+		; do the next pass through the loop
+		mov ecx, ebx
+		inc esi
+	loop .scanLoop
+	
+	.Exit:
+	; see if the return value is still 0xFFFFFFFF and make it zero if so
+	cmp dword [ebp - 12], 0xFFFFFFFF
+	jne .NoAdjust
+	mov dword [ebp - 12], 0
+
+	.NoAdjust:
+	mov eax, dword [ebp - 12]
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
+ret 4
+
+
+
+StringTokenReplace:
+	; Finds the first occurrance of the token ^ character replaces it with a truncated binary number
+	;
+	;  input:
+	;   string address
+	;   token value (to be interpreted differently depending on the token)
+	;	 ^b		Binary
+	;	 ^B		Binary
+	;	 ^d		Decimal
+	;	 ^D		Decimal
+	;	 ^h		Hexadecimal
+	;	 ^H		Hexadecimal
+	;	 ^o		Octal
+	;	 ^O		Octal
+	;	 ^s		String
+	;	 ^S		String
+	;	 ^p		set padding value
+	;	 ^P		set padding value
+	;
+	;  output:
+	;   n/a
+
 ret
 
 
@@ -1039,14 +1405,15 @@ StringTrimLeft:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: al, ebx, ecx, edx, esi
 
-	pop esi
-	pop ecx										; string starting address
-	pop ebx										; ASCII code of the character to be trimmed
-	push esi
-	mov edx, ecx								; save the string address for later
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	mov ebx, [ebp + 12]
+
+	; save the string address for later
+	mov edx, ecx
 
 	; see from where we have to start shifting
 	.StringLoop:
@@ -1083,7 +1450,10 @@ StringTrimLeft:
 		inc ecx
 	jmp .StringShiftLoop
 	.StringTrimDone:
-ret
+
+	mov esp, ebp
+	pop ebp
+ret 8
 
 
 
@@ -1096,24 +1466,22 @@ StringTrimRight:
 	;
 	;  output:
 	;   n/a
-	;
-	; changes: eax, ebx, ecx, esi
 
-	pop esi
-	pop ecx										; string starting address
-	pop ebx										; ASCII code of the character to be trimmed
-	push esi
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]
+	mov ebx, [ebp + 12]
 
 	; get the length of the string and use it to adjust the starting pointer of the string
-	pusha
 	push ecx
 	call StringLength
 	pop eax
-	mov [.tempEAX], eax
-	popa
-	mov eax, [.tempEAX]
+	mov ecx, [ebp + 8]
 	add ecx, eax
 	dec ecx
+
+	mov ebx, [ebp + 12]
 
 	.StringLoop:
 		mov byte al, [ecx]
@@ -1132,5 +1500,359 @@ StringTrimRight:
 	mov byte [ecx], 0
 
 	.StringTrimDone:
-ret
-.tempEAX										dd 0x00000000
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringTruncateLeft:
+	; Truncates the number of characters specified from the beginning of the string specified
+	;
+	;  input:
+	;   string starting address
+	;   length to which the string will be shortened
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	; get the length of the string
+	push dword [ebp + 8]
+	call StringLength
+	pop dword [ebp - 4]
+
+	; exit if the string specified is shorter than the length given
+	mov eax, dword [ebp + 12]
+	mov ebx, dword [ebp - 4]
+	cmp eax, ebx
+	jae .Exit
+
+	; MemCopy the part of the string to be preserved
+	; get the source address 
+	mov esi, [ebp + 8]
+	add esi, ebx
+	sub esi, eax
+
+	inc eax
+	push eax
+	push dword [ebp + 8]
+	push esi
+	call MemCopy
+
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringTruncateRight:
+	; Truncates the number of characters specified from the end of the string specified
+	;
+	;  input:
+	;   string starting address
+	;   length to which the string will be shortened
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+	sub esp, 4									; length of string specified
+
+	; get the length of the string
+	push dword [ebp + 8]
+	call StringLength
+	pop dword [ebp - 4]
+
+	; exit if the string specified is shorter than the length given
+	mov eax, dword [ebp + 12]
+	mov ebx, dword [ebp - 4]
+	cmp eax, ebx
+	jae .Exit
+
+	; add the new length of the string to it's starting address to get our write address
+	mov edi, [ebp + 8]
+	add edi, eax
+
+	; and write a null to truncate the string
+	mov eax, 0
+	stosb
+
+	.Exit:
+
+	mov esp, ebp
+	pop ebp
+ret 8
+
+
+
+StringWordCount:
+	; Counts the words in the string specified when viewed as a sentence separated by the byte specified
+	;
+	;  input:
+	;   string address
+	;   list of characters to be used as separators (cannot include nulls)
+	;
+	;  output:
+	;   word count
+
+	push ebp
+	mov ebp, esp
+	sub esp, 4									; the length of the main string
+	sub esp, 4									; the length of the list string
+	sub esp, 4									; wordCount
+	sub esp, 1									; lastType
+	sub esp, 2									; temporary string for current byte being tested
+
+	; get eax ready for writing to the return value in case we have to exit immediately
+	mov eax, 0
+
+	;;;;; IF inputText$ = "" THEN EXIT SUB
+	;;;;; IF seperatorChar$ = "" THEN EXIT SUB
+	; get length of the main string
+	push dword [ebp + 8]
+	call StringLength
+	pop ebx
+
+	; exit if the string was null, save eax if not
+	cmp ebx, 0
+	je .Exit
+	mov dword [ebp - 4], ebx
+
+	; get length of the list string
+	push dword [ebp + 12]
+	call StringLength
+	pop ebx
+
+	; exit if the string was null, save eax if not
+	cmp ebx, 0
+	je .Exit
+	mov dword [ebp - 8], ebx
+
+	;;;;; FOR a = 1 TO LEN(inputText$)
+	mov ecx, dword [ebp - 4]
+
+	; set up local variables here
+	;;;;; wordCount = 0
+	mov byte [ebp - 13], 0
+	mov word [ebp - 15], 0
+	mov dword [ebp - 12], 0
+	mov esi, dword [ebp + 8]
+
+	; loop to process the characters
+	.WordLoop:
+		;;;;; b$ = MID$(inputText$, a, 1)
+		; copy a byte from the string into al
+		lodsb
+
+		; save important stuff
+		push esi
+		push ecx
+
+		;;;;; IF b$ = seperatorChar$ THEN
+		; see if this byte is in the list of seperators
+		push dword [ebp + 12]
+		mov byte [ebp - 15], al
+		mov eax, ebp
+		sub eax, 15
+		push eax
+		call StringSearchCharList
+		pop edx
+
+		; restore important stuff
+		pop ecx
+		pop esi
+
+		; see if a match was found
+		cmp edx, 0
+		je .NotASeperator
+			;;;;; lastType = 2
+			; make a note that this character was a separator
+			mov byte [ebp - 13], 2
+			jmp .NextIteration
+		;;;;; ELSE
+		.NotASeperator:
+
+			;;;;; IF lastType <> 1 THEN wordCount = wordCount + 1
+			; see what the last character was
+			mov bl, byte [ebp - 13]
+
+			cmp bl, 1
+			je .SkipIncrement
+				inc dword [ebp - 12]
+			.SkipIncrement:
+
+			;;;;; lastType = 1
+			; make a note that this character was not a separator
+			mov byte [ebp - 13], 1
+
+		.NextIteration:
+		;;;;; END IF
+
+	;;;;; NEXT
+	loop .WordLoop
+
+	; get eax ready for writing the return value
+	mov eax, dword [ebp - 12]
+
+	.Exit:
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
+ret 4
+
+
+
+StringWordGet:
+	; Returns the word specified from the string specified when separated by the byte specified
+	;
+	;  input:
+	;   string starting address
+	;   list of characters to be used as separators (cannot include nulls)
+	;	word number which to return
+	;	address of string to hold the word requested
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+	sub esp, 4									; the length of the main string
+	sub esp, 4									; the length of the list string
+	sub esp, 4									; wordCount
+	sub esp, 1									; lastType
+	sub esp, 2									; temporary string for current byte being tested
+
+	; get eax ready for writing to the return value in case we have to exit immediately
+	mov eax, 0
+
+	;;;;; IF inputText$ = "" THEN EXIT SUB
+	;;;;; IF seperatorChar$ = "" THEN EXIT SUB
+	; get length of the main string
+	push dword [ebp + 8]
+	call StringLength
+	pop ebx
+
+	; exit if the string was null, save eax if not
+	cmp ebx, 0
+	je .Exit
+	mov dword [ebp - 4], ebx
+
+	; get length of the list string
+	push dword [ebp + 12]
+	call StringLength
+	pop ebx
+
+	; exit if the string was null, save eax if not
+	cmp ebx, 0
+	je .Exit
+	mov dword [ebp - 8], ebx
+
+	;;;;; FOR a = 1 TO LEN(inputText$)
+	mov ecx, dword [ebp - 4]
+
+	; set up local variables here
+	mov byte [ebp - 13], 0
+	mov word [ebp - 15], 0
+	;;;;; wordCount = 0
+	mov dword [ebp - 12], 0
+	mov esi, dword [ebp + 8]
+
+	; clear out the temp word string
+	mov edi, [ebp + 20]
+	mov al, 0
+	stosb
+
+	; loop to process the characters
+	.WordLoop:
+		;;;;; b$ = MID$(inputText$, a, 1)
+		; copy a byte from the string into al
+		lodsb
+
+		; save important stuff
+		push esi
+		push eax
+		push ecx
+
+		;;;;; IF b$ = seperatorChar$ THEN
+		; see if this byte is in the list of seperators
+		push dword [ebp + 12]
+		mov byte [ebp - 15], al
+		mov eax, ebp
+		sub eax, 15
+		push eax
+		call StringSearchCharList
+		pop edx
+
+		; restore important stuff
+		pop ecx
+		pop eax
+		pop esi
+
+		; see if a match was found
+		cmp edx, 0
+		je .NotASeperator
+			; see if we have the requested word
+			;;;;; 	IF wordCount = wordRequested THEN EXIT SUB
+			mov eax, [ebp + 16]
+			mov ebx, [ebp - 12]
+			cmp eax, ebx
+			je .WordFound
+
+			;;;;; 	wordReturned$ = ""
+			; clear out the temp word string
+			mov edi, [ebp + 20]
+			mov al, 0
+			stosb
+
+			;;;;; lastType = 2
+			; make a note that this character was a separator
+			mov byte [ebp - 13], 2
+			jmp .NextIteration
+		;;;;; ELSE
+		.NotASeperator:
+
+			;;;;; IF lastType <> 1 THEN wordCount = wordCount + 1
+			; see what the last character was
+			mov bl, byte [ebp - 13]
+
+			cmp bl, 1
+			je .SkipIncrement
+				inc dword [ebp - 12]
+			.SkipIncrement:
+
+			;;;;; lastType = 1
+			; make a note that this character was not a separator
+			mov byte [ebp - 13], 1
+
+			;;;;; wordReturned$ = wordReturned$ + b$
+			pusha
+			push eax
+			push dword [ebp + 20]
+			call StringCharAppend
+			popa
+
+
+		.NextIteration:
+		;;;;; END IF
+
+	;;;;; NEXT
+	loop .WordLoop
+
+	.WordFound:
+	; get eax ready for writing the return value
+	mov eax, dword [ebp - 12]
+
+	.Exit:
+	mov dword [ebp + 12], eax
+
+	mov esp, ebp
+	pop ebp
+ret 16

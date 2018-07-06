@@ -28,7 +28,7 @@ kPrintText$										times 256 db 0x00
 ; structures
 tSystem:
 	.versionMajor								db 0x00
-	.versionMinor								db 0x11
+	.versionMinor								db 0x12
 	.copyright$									db 'Night Kernel, copyright 1995 - 2018', 0x00
 	.memoryInstalledBytes						dd 0x00000000
 	.memoryInitialAvailableBytes				dd 0x00000000
@@ -73,6 +73,7 @@ tSystem:
 	.mousePacketByte2							db 0x00
 	.mousePacketByte3							db 0x00
 	.mousePacketByte4							db 0x00
+	.driveListAddress							dd 0x00000000
 	.configBitsHint$							db 'ConfigBits'
 	.configBits									dd 00000000000000000000000000000111b
 

@@ -16,6 +16,18 @@
 
 
 
+; 32-bit function listing:
+; SerialGetBaud					Returns the current baud rate of the specified serial port
+; KeyboardInit					Initializes the PS/2 keyboard
+; KeyboardNumLockSet			Handles the internals of turning on Num Lock - sets the flag and turns on the LED
+; KeyGet						Returns the oldest key in the key buffer, or null if it's empty
+; KeyWait						Waits until a key is pressed, then returns that key
+; MouseInit						Initializes the PS/2 mouse
+; PS2ControllerWaitDataRead		Reads data from the PS/2 controller
+; PS2ControllerWaitDataWrite	Waits with timeout until the PS/2 controller is ready to accept data, then returns
+
+
+
 bits 32
 
 
@@ -28,8 +40,9 @@ KeyboardInit:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, bx, ecx, edx
+
+	push ebp
+	mov ebp, esp
 
 	call PS2ControllerWaitDataWrite
 	mov al, 0xFF
@@ -157,6 +170,9 @@ KeyboardInit:
 
 	; enable num lock
 	call KeyboardNumLockSet
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -169,8 +185,9 @@ KeyboardNumLockSet:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al
+
+	push ebp
+	mov ebp, esp
 
 	; right now we just illuminate num lock
 	; once we figure out how the kernel keeps track of lock modifiers, that will get added in too
@@ -184,6 +201,9 @@ KeyboardNumLockSet:
 	out 0x60, al
 	call PS2ControllerWaitDataRead
 	in al, 0x60
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -192,12 +212,13 @@ KeyGet:
 	; Returns the oldest key in the key buffer, or null if it's empty
 	;
 	;  input:
-	;   n/a
+	;   dummy value
 	;
 	;  output:
 	;   key pressed in lowest byte of 32-bit value
-	;
-	;  changes: eax, ecx, edx, esi
+
+	push ebp
+	mov ebp, esp
 
 	mov eax, 0x00000000
 	mov ecx, 0x00000000
@@ -224,9 +245,10 @@ KeyGet:
 
 	.done:
 	; push the data we got onto the stack and exit
-	pop edx
-	push eax
-	push edx
+	mov dword [ebp + 8], eax
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -235,21 +257,24 @@ KeyWait:
 	; Waits until a key is pressed, then returns that key
 	;
 	;  input:
-	;   n/a
+	;   dummy value
 	;
 	;  output:
 	;   key code
-	;
-	;  changes: eax, ecx, edx, esi
+
+	push ebp
+	mov ebp, esp
 
 	.KeyLoop:
+		push 0
 		call KeyGet
 		pop eax
 		cmp al, 0x00
 	je .KeyLoop
-	pop ecx
-	push eax
-	push ecx
+
+	mov dword [ebp + 8], eax
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -262,11 +287,11 @@ MouseInit:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: ax, bx
+
+	push ebp
+	mov ebp, esp
 
 	; disable keyboard temporarily
-
 	call PS2ControllerWaitDataWrite
 	mov al, 0xAD
 	out 0x64, al
@@ -457,6 +482,9 @@ MouseInit:
 
 	; init mouse wheel index
 	mov word [tSystem.mouseZ], 0x7777
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -469,8 +497,9 @@ PS2ControllerWaitDataRead:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, ebx, ecx
+
+	push ebp
+	mov ebp, esp
 
 	mov dword [tSystem.lastError], 0x00000000
 
@@ -492,6 +521,9 @@ PS2ControllerWaitDataRead:
 	; if we get here, we've timed out
 	mov dword [tSystem.lastError], 0x0000FF00
 	.done:
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -505,8 +537,9 @@ PS2ControllerWaitDataWrite:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: ax, ebx, ecx
+
+	push ebp
+	mov ebp, esp
 
 	mov dword [tSystem.lastError], 0x00000000
 
@@ -529,6 +562,9 @@ PS2ControllerWaitDataWrite:
 	mov ax, 0xFF01
 	jmp .done
 	.done:
+
+	mov esp, ebp
+	pop ebp
 ret
 
 

@@ -16,6 +16,24 @@
 
 
 
+; 32-bit function listing:
+; PICDisableIRQs				Disables all IRQ lines across both PICs
+; PICInit						Init & remap both PICs to use int numbers 0x20 - 0x2f
+; PICIntComplete				Tells both PICs the interrupt has been handled
+; PICMaskAll					Masks all interrupts
+; PICMaskSet					Masks all interrupts
+; PICUnmaskAll					Unmasks all interrupts
+
+
+
+; defines
+%define PIC1CmdPort								0x0020
+%define PIC1DataPort							0x0021
+%define PIC2CmdPort								0x00a0
+%define PIC2DataPort							0x00a1
+
+
+
 bits 32
 
 
@@ -28,14 +46,18 @@ PICDisableIRQs:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, dx
+
+	push ebp
+	mov ebp, esp
 
 	mov al, 0xFF								; disable IRQs
-	mov dx, [PIC1DataPort]						; set up PIC 1
+	mov dx, PIC1DataPort						; set up PIC 1
 	out dx, al
-	mov dx, [PIC2DataPort]						; set up PIC 2
+	mov dx, PIC2DataPort						; set up PIC 2
 	out dx, al
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -48,50 +70,54 @@ PICInit:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, dx
+
+	push ebp
+	mov ebp, esp
 
 	mov al, 0x11								; set ICW1
-	mov dx, [PIC1CmdPort]						; set up PIC 1
+	mov dx, PIC1CmdPort							; set up PIC 1
 	out dx, al
-	mov dx, [PIC2CmdPort]						; set up PIC 2
+	mov dx, PIC2CmdPort							; set up PIC 2
 	out dx, al
 
 	mov al, 0x20								; set base interrupt to 0x20 (ICW2)
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	out dx, al
 
 	mov al, 0x28								; set base interrupt to 0x28 (ICW2)
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	out dx, al
 
 	mov al, 0x04								; set ICW3 to cascade PICs together
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	out dx, al
 	mov al, 0x02								; set ICW3 to cascade PICs together
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	out dx, al
 
 	mov al, 0x05								; set PIC 1 to x86 mode with ICW4
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	out dx, al
 
 	mov al, 0x01								; set PIC 2 to x86 mode with ICW4
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	out dx, al
 
 	mov al, 0									; zero the data register
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	out dx, al
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	out dx, al
 
 	mov al, 0xFD
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	out dx, al
 	mov al, 0xFF
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	out dx, al
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -104,15 +130,19 @@ PICIntComplete:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, dx
+
+	push ebp
+	mov ebp, esp
 
 	mov al, 0x20								; sets the interrupt complete bit
-	mov dx, [PIC1CmdPort]						; write bit to PIC 1
+	mov dx, PIC1CmdPort							; write bit to PIC 1
 	out dx, al
 
-	mov dx, [PIC2CmdPort]						; write bit to PIC 2
+	mov dx, PIC2CmdPort							; write bit to PIC 2
 	out dx, al
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -125,19 +155,22 @@ PICMaskAll:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, dx
 
+	push ebp
+	mov ebp, esp
 
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
 
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -150,19 +183,22 @@ PICMaskSet:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: al, dx
 
+	push ebp
+	mov ebp, esp
 
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
 
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -176,17 +212,16 @@ PICUnmaskAll:
 	;  output:
 	;   n/a
 
+	push ebp
+	mov ebp, esp
+
 	mov al, 0x00
-	mov dx, [PIC1DataPort]
+	mov dx, PIC1DataPort
 	out dx, al
 
-	mov dx, [PIC2DataPort]
+	mov dx, PIC2DataPort
 	out dx, al
+
+	mov esp, ebp
+	pop ebp
 ret
-
-
-
-PIC1CmdPort										dw 0x0020
-PIC1DataPort									dw 0x0021
-PIC2CmdPort										dw 0x00a0
-PIC2DataPort									dw 0x00a1

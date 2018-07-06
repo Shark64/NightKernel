@@ -16,7 +16,7 @@
 
 
 
-; function listing:
+; 32-bit function listing:
 ; LMItemAddAtSlot				Adds an item to the list specified at the list slot specified
 ; LMItemDelete					Deletes the item specified from the list specified
 ; LMItemGetAddress				Returns the address of the specified element in the list specified
@@ -46,21 +46,14 @@ LMItemAddAtSlot:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: eax, ebx, edx, esi, edi
 
-	pop eax
-	pop edi
-	pop edx
-	pop esi
-	pop ebx
-	push eax
+	push ebp
+	mov ebp, esp
 
-	; save the important stuff
-	mov dword [.listAddress], edi
-	mov dword [.destElement], edx
-	mov dword [.newItemAddress], esi
-	mov dword [.newItemSize], ebx
+	mov edi, [ebp + 8]
+	mov edx, [ebp + 12]
+	mov esi, [ebp + 16]
+	mov ebx, [ebp + 20]
 
 	; check list validity
 	mov eax, dword [edi]
@@ -68,55 +61,48 @@ LMItemAddAtSlot:
 	je .ListValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0003
+	mov ebp, 0xDEAD0003
 	jmp $
 
 	.ListValid:
 	; the list passed the data integrity check, so we proceed
 
 	; get the size of each element in this list
-	mov edi, dword [.listAddress]
+	mov edi, dword [ebp + 8]
 	push edi
 	call LMListGetElementSize
 	pop eax
 
-	; save this for later
-	mov dword [.listElementSize], eax
-
 	; now compare that to the given size of the new item
-	cmp dword [.newItemSize], eax
+	cmp dword [ebp + 20], eax
 	jle .SizeValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0004
+	mov ebp, 0xDEAD0004
 	jmp $
 
 	.SizeValid:
 	; if we get here, the size is ok, so we add it to the list!
-	
 	; calculate the new destination address
-	mov eax, dword [.listElementSize]
-	mov edx, dword [.destElement]
+	mov edx, dword [ebp + 12]
 	mul edx
-	mov edi, dword [.listAddress]
+	mov edi, dword [ebp + 8]
 	add eax, edi
 	add eax, 20
 
 	; prep the memory copy
-	mov esi, dword [.newItemAddress]
-	mov ebx, dword [.newItemSize]
+	mov esi, dword [ebp + 16]
+	mov ebx, dword [ebp + 20]
 
 	; copy the memory
 	push ebx
 	push eax
 	push esi
 	call MemCopy
-ret
-.listAddress									dd 0x00000000
-.destElement									dd 0x00000000
-.listElementSize								dd 0x00000000
-.newItemAddress									dd 0x00000000
-.newItemSize									dd 0x00000000
+
+	mov esp, ebp
+	pop ebp
+ret 16
 
 
 
@@ -128,8 +114,6 @@ LMItemDelete:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: 
 
 	
 ret
@@ -145,17 +129,12 @@ LMItemGetAddress:
 	;
 	;  output:
 	;   element address
-	;
-	;  changes: eax, ebx, ecx, edx, esi, edi, ebp
 
-	pop eax
-	pop edi
-	pop edx
-	push eax
+	push ebp
+	mov ebp, esp
 
-	; save the important stuff
-	mov dword [.listAddress], edi
-	mov dword [.destElement], edx
+	mov edi, [ebp + 8]
+	mov edx, [ebp + 12]
 
 	; check list validity
 	mov eax, dword [edi]
@@ -163,7 +142,7 @@ LMItemGetAddress:
 	je .ListValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0007
+	mov ebp, 0xDEAD0007
 	jmp $
 
 	.ListValid:
@@ -171,7 +150,7 @@ LMItemGetAddress:
 
 	; now we check that the element requested is within range
 	; so first we get the number of elements from the list itself
-	mov edi, dword [.listAddress]
+	mov edi, [ebp + 8]
 	push edi
 	call LMListGetElementCount
 	pop eax
@@ -180,42 +159,35 @@ LMItemGetAddress:
 	dec eax
 
 	; now compare the number of elements to what was requested
-	cmp [.destElement], eax
+	cmp [ebp + 12], eax
 	jbe .ElementInRange
 
 	; add error handling code here later
-	mov eax, 0xDEAD0008
+	mov ebp, 0xDEAD0008
 	jmp $
 
 	.ElementInRange:
 	; if we get here, the element was in range; let's proceed
 
 	; get the size of each element in this list
-	mov edi, dword [.listAddress]
+	mov edi, [ebp + 8]
 	push edi
 	call LMListGetElementSize
 	pop eax
 
-	; save this for later
-	mov dword [.listElementSize], eax
-
 	; calculate the new destination address
-	mov eax, dword [.listElementSize]
-	mov edx, dword [.destElement]
+	mov edx, [ebp + 12]
 	mul edx
-	mov edi, dword [.listAddress]
+	mov edi, [ebp + 8]
 	add eax, edi
 	add eax, 20
 
 	; push the value on the stack and we're done!
-	pop ebx
-	push eax
-	push ebx
+	mov dword [ebp + 12], eax
 
-ret
-.listAddress									dd 0x00000000
-.destElement									dd 0x00000000
-.listElementSize								dd 0x00000000
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 
@@ -227,8 +199,6 @@ LMListCompact:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: 
 
 	
 ret
@@ -243,8 +213,6 @@ LMListDelete:
 	;
 	;  output:
 	;   n/a
-	;
-	;  changes: 
 
 	
 ret
@@ -259,12 +227,11 @@ LMListFindFirstFreeSlot:
 	;
 	;  output:
 	;   element number of first free slot
-	;
-	;  changes: eax, bl, ecx, edx, esi, edi
 
-	pop edx
-	pop edi
-	push edx
+	push ebp
+	mov ebp, esp
+
+	mov edi, [ebp + 8]
 
 	; save the address
 	push edi
@@ -313,9 +280,10 @@ LMListFindFirstFreeSlot:
 
 	.Exit:
 	; set the stack and exit
-	pop edx
-	push esi
-	push edx
+	mov dword [ebp + 8], esi
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -328,12 +296,11 @@ LMListGetElementCount:
 	;
 	;  output:
 	;   number of total element slots in this list
-	;
-	;  changes: eax, bl, ecx, edx, esi, edi
 
-	pop ecx
-	pop edi
-	push ecx
+	push ebp
+	mov ebp, esp
+
+	mov edi, [ebp + 8]
 
 	; check list validity
 	mov eax, dword [edi]
@@ -341,7 +308,7 @@ LMListGetElementCount:
 	je .ListValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0006
+	mov ebp, 0xDEAD0006
 	jmp $
 
 	.ListValid:
@@ -351,9 +318,10 @@ LMListGetElementCount:
 	mov edx, [edi]
 
 	; fix the stack and exit
-	pop eax
-	push edx
-	push eax
+	mov dword [ebp + 8], edx
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -366,12 +334,11 @@ LMListGetElementSize:
 	;
 	;  output:
 	;   list element size
-	;
-	;  changes: eax, bl, ecx, edx, esi, edi
 
-	pop ecx
-	pop edi
-	push ecx
+	push ebp
+	mov ebp, esp
+
+	mov edi, [ebp + 8]
 
 	; check list validity
 	mov eax, dword [edi]
@@ -379,7 +346,7 @@ LMListGetElementSize:
 	je .ListValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0005
+	mov ebp, 0xDEAD0005
 	jmp $
 
 	.ListValid:
@@ -389,9 +356,10 @@ LMListGetElementSize:
 	mov edx, [edi]
 
 	; fix the stack and exit
-	pop eax
-	push edx
-	push eax
+	mov dword [ebp + 8], edx
+
+	mov esp, ebp
+	pop ebp
 ret
 
 
@@ -405,12 +373,12 @@ LMListNew:
 	;
 	;  output:
 	;   memory address of list
-	;
-	;  changes: eax, ebx, edx, esi, edi
 
-	pop esi
-	pop eax
-	pop ebx
+	push ebp
+	mov ebp, esp
+
+	mov eax, [ebp + 8]
+	mov ebx, [ebp + 12]
 
 	; save eax and ebx for later
 	push ebx
@@ -472,11 +440,11 @@ LMListNew:
 	sub edi, 16
 
 	; the memory address needs to be returned so the caller knows where the list is. duh.
-	push edi
+	mov dword [ebp + 12], edi
 
-	; restore our return vector and exit
-	push esi
-ret
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 
@@ -488,9 +456,6 @@ LMListSearch:
 	;
 	;  output:
 	;   memory address of list
-	;
-	;  changes: 
-
 
 ret
 
@@ -507,13 +472,12 @@ LMListSlotFreeTest:
 	;   result
 	;		kTrue - element empty
 	;		kFalse - element not empty
-	;
-	;  changes: eax, bl, ecx, edx, esi, edi
 
-	pop ecx
-	pop edi
-	pop edx
-	push ecx
+	push ebp
+	mov ebp, esp
+
+	mov edi, [ebp + 8]
+	mov edx, [ebp + 12]
 
 	; check list validity
 	mov eax, dword [edi]
@@ -521,7 +485,7 @@ LMListSlotFreeTest:
 	je .ListValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0001
+	mov ebp, 0xDEAD0001
 	jmp $
 
 	.ListValid:
@@ -538,7 +502,7 @@ LMListSlotFreeTest:
 	jle .ElementValid
 
 	; add error handling code here later
-	mov eax, 0xDEAD0002
+	mov ebp, 0xDEAD0002
 	jmp $
 
 	.ElementValid:
@@ -577,11 +541,12 @@ LMListSlotFreeTest:
 		.ByteEmpty:
 	loop .CheckElement
 
-	; fix the stack and exit
-	pop eax
-	push edx
-	push eax
-ret
+	; and exit
+	mov dword [ebp + 12], edx
+
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 

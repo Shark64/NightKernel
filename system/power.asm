@@ -16,7 +16,15 @@
 
 
 
-; none of this works yet. yeah, i know.
+; 16-bit function listing:
+; APMEnable						Activates the APM interface for all devices managed by the APM BIOS
+; APMDisable					Disables the APM interface for all devices managed by the APM BIOS
+
+; 32-bit function listing:
+; APMShutdown					Shuts down the PC via the APM intereface
+
+
+
 bits 16
 
 
@@ -30,11 +38,17 @@ APMEnable:
 	;  output:
 	;   n/a
 
+	;push bp
+	;mov bp, sp
+
 	;mov ax, 0x530D
 	;mov bx, 0x0001
 	;mov cx, 0x0001
 	;int 0x15
 	; add code to evaluate resulting code if there's an error
+
+	;mov sp, bp
+	;pop bp
 ret
 
 
@@ -48,11 +62,17 @@ APMDisable:
 	;  output:
 	;   n/a
 
+	push bp
+	mov bp, sp
+
 	mov ax, 0x530D
 	mov bx, 0x0001
 	mov cx, 0x0000
 	int 0x15
 	; add code to evaluate resulting code if there's an error
+
+	mov sp, bp
+	pop bp
 ret
 
 
@@ -70,6 +90,9 @@ APMShutdown:
 	;  output:
 	;   n/a
 
+	push ebp
+	mov ebp, esp
+
 	mov eax, cr0
 	and eax, 11111110b
 	mov cr0, eax
@@ -77,4 +100,7 @@ APMShutdown:
 	mov ax, 0x5301
 	mov bx, 0x0000
 	int 0x15
+
+	mov esp, ebp
+	pop ebp
 ret
