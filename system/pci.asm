@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; pci.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -38,8 +38,8 @@
 
 
 ; definesb
-%define PCIAddressPort							0x0CF8
-%define PCIDataPort								0x0CFC
+%define kPCIAddressPort							0x0CF8
+%define kPCIDataPort							0x0CFC
 
 
 
@@ -168,7 +168,7 @@ PCIDetect:
 	mov ebp, esp
 
 	; write a value to the port
-	mov dx, PCIAddressPort
+	mov dx, kPCIAddressPort
 	mov eax, 0x19801988
 	out dx, eax
 
@@ -608,11 +608,11 @@ PCILiveRead:
 	or eax, 0x80000000							; set bit 31 to enable configuration
 
 	; write the value we just built to select the proper target
-	mov dx, PCIAddressPort
+	mov dx, kPCIAddressPort
 	out dx, eax
 
 	; read the register back
-	mov dx, PCIDataPort
+	mov dx, kPCIDataPort
 	in eax, dx
 
 	;push the result
@@ -665,14 +665,14 @@ PCILiveWrite:
 	or eax, 0x80000000							; set bit 31 to enable configuration
 
 	; write the value we just built to select the proper target
-	mov dx, PCIAddressPort
+	mov dx, kPCIAddressPort
 	out dx, eax
 
 	; get the value to write from the stack
 	mov eax, [ebp + 24]
 
 	; write the data register
-	mov dx, PCIDataPort
+	mov dx, kPCIDataPort
 	out dx, eax
 
 	mov esp, ebp

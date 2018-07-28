@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; interrupts.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -17,6 +17,7 @@
 
 
 ; 32-bit function listing:
+; CriticalError					Handles the UI portion of traps and exceptions
 ; IDTInit						Initializes the kernel IDT
 ; InterruptHandlerSet			Formats the passed data and writes it to the IDT in the slot specified
 ; InterruptUnimplemented		A generic handler to run when an unimplemented interrupt is called
@@ -25,6 +26,109 @@
 
 
 bits 32
+
+
+
+CriticalError:
+	; Handles the UI portion of traps and exceptions
+	;
+	;  input:
+	;   address of error description string to print
+	;
+	;  output:
+	;   n/a
+
+	pop dword [.returnAddress]
+
+	mov byte [backColor], 0x01
+	mov byte [textColor], 0x07
+	call ScreenClear32
+
+	; clear the print string
+	push dword 0
+	push dword 256
+	push kPrintText$
+	call MemFill
+
+	; print the error message
+	pop eax
+	push dword [exceptionAddress]
+	push dword [exceptionSelector]
+	push kPrintText$
+	push eax
+	call StringBuild
+	push kPrintText$
+	call Print32
+
+	; dump the registers
+	inc byte [cursorY]
+	push .text1$
+	call Print32
+	popa
+	call PrintRegs32
+
+	; clear the print string
+	push dword 0
+	push dword 256
+	push kPrintText$
+	call MemFill
+
+	; print eflags
+	inc byte [cursorY]
+	push dword [exceptionFlags]
+	push dword [exceptionFlags]
+	push kPrintText$
+	push .format$
+	call StringBuild
+	push kPrintText$
+	call Print32
+
+	; print bytes at cs:eip
+	inc byte [cursorY]
+	push .text2$
+	call Print32
+	push 1
+	push dword [exceptionAddress]
+	call PrintRAM32
+
+	; print stack dump
+	inc byte [cursorY]
+	push .text3$
+	call Print32
+	push 16
+	mov eax, esp
+	add eax, 4
+	push eax
+	call PrintRAM32
+
+	; print stack dump
+	add byte [cursorY], 5
+	push .text4$
+	call Print32
+
+	; turn interrupts back on so we gan get keypresses again
+	sti
+
+	; wait for a ket to be pressed
+	call KeyWait
+	pop eax
+	
+	; disable those interrupts again before we hurt somebody
+	cli
+
+	; clear screen to black
+	mov byte [backColor], 0x00
+	mov byte [textColor], 0x07
+	call ScreenClear32
+
+	push dword [.returnAddress]
+ret
+.returnAddress									dd 0x00000000
+.format$										db ' Flags: ^b (0x^h)', 0x00
+.text1$											db ' Register contents:   (See stack dump for actual value of ESP at trap)',0x00
+.text2$											db ' Bytes at CS:EIP:',0x00
+.text3$											db ' Stack dump:',0x00
+.text4$											db ' Press any key to attempt resume.',0x00
 
 
 
@@ -465,678 +569,1012 @@ ret
 
 ISR00:
 	; Divide by Zero Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000000
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
+
 iretd
+.error$											db ' Divide by zero fault at ^p4^h:^p8^h ', 0x00
 
 
 
 ISR01:
 	; Debug Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000001
-	pop esi
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Debug trap at ^p4^h:^p8^h', 0x00
 
 
 
 ISR02:
-	push ebp
-	mov ebp, esp
-
 	; Nonmaskable Interrupt Exception
-	pusha
-	pushf
-	mov edx, 0x00000002
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
 
-	mov esp, ebp
-	pop ebp
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
+	pusha
+	push .error$
+	call CriticalError
+
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Non-maskable interrupt at ^p4^h:^p8^h', 0x00
 
 
 
 ISR03:
 	; Breakpoint Exception
-	; get the location of the bad instruction off the stack
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
 	pop dword [exceptionAddress]
 	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
 	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	push dword [exceptionAddress]
-	push dword [exceptionSelector]
-	push kPrintText$
-	push .format$
-	call StringBuild
+	push .error$
+	call CriticalError
 
-	; print the string we just built
-	mov byte [textColor], 14
-	mov byte [backColor], 7
-	push kPrintText$
-	call Print16
-
-	push 1
-	push dword [exceptionAddress]
-	call PrintRAM32
-
-	; print the error message
+	; acknowledge the PIC
 	call PICIntComplete
 
-	; restore the registers and dump thm to screen
-	popa
-	call PrintRegs32
-
-	; restore the return address
+	; increment the address to which we return
 	inc dword [exceptionAddress]
-	push dword [exceptionSelector]
-	push dword [exceptionAddress]	
 
-	mov esp, ebp
-	pop ebp
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
+
 iretd
-.format$										db ' Breakpoint at ^p4^h:^p8^h ', 0x00
+.error$											db ' Breakpoint trap at ^p4^h:^p8^h ', 0x00
 
 
 
 ISR04:
 	; Overflow Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000004
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Overflow trap at ^p4^h:^p8^h', 0x00
 
 
 
 ISR05:
 	; Bound Range Exceeded Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000005
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Bound range fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR06:
 	; Invalid Opcode Exception
-	push ebp
-	mov ebp, esp
 
 	; get the location of the bad instruction off the stack
 	pop dword [exceptionAddress]
 	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; BSOD!!!
 	pusha
-	push dword [exceptionAddress]
-	push dword [exceptionSelector]
-	push kPrintText$
-	push .format$
-	call StringBuild
+	push .error$
+	call CriticalError
 
-	; print the string we just built
-	mov byte [textColor], 4
-	mov byte [backColor], 7
-	push kPrintText$
-	call Print32
-
-	push 1
-	push dword [exceptionAddress]
-	call PrintRAM32
-
-	; print the error message
+	; acknowledge the PIC
 	call PICIntComplete
 
-	; dump the registers
-	popa
-	call PrintRegs32
+	; increment the address to which we return
+	inc dword [exceptionAddress]
 
-	jmp $ ; for debugging, makes sure the system hangs upon exception
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 
-	mov esp, ebp
-	pop ebp
 iretd
-.format$										db ' Invalid Opcode at ^p4^h:^p8^h ', 0x00
+.error$											db ' Invalid Opcode fault at ^p4^h:^p8^h ', 0x00
 
 
 
 ISR07:
-	push ebp
-	mov ebp, esp
-
 	; Device Not Available Exception
-	pusha
-	pushf
-	mov edx, 0x00000007
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
 
-	mov esp, ebp
-	pop ebp
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
+	pusha
+	push .error$
+	call CriticalError
+
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Device unavailable fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR08:
-	push ebp
-	mov ebp, esp
-
 	; Double Fault Exception
-	pusha
-	pushf
-	mov edx, 0x00000008
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
 
-	mov esp, ebp
-	pop ebp
+	; get the error code 
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
+	pusha
+	push .error$
+	call CriticalError
+
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Double fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR09:
-	push ebp
-	mov ebp, esp
-
 	; Former Coprocessor Segment Overrun Exception
-	pusha
-	pushf
-	mov edx, 0x00000009
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
 
-	mov esp, ebp
-	pop ebp
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
+	pusha
+	push .error$
+	call CriticalError
+
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Coprocessor segment fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR0A:
 	; Invalid TSS Exception
-	push ebp
-	mov ebp, esp
 
+	; get the error code 
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000000A
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Invalid TSS fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR0B:
 	; Segment Not Present Exception
-	push ebp
-	mov ebp, esp
 
+	; get the error code 
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000000B
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Segment not present fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR0C:
 	; Stack Segment Fault Exception
-	push ebp
-	mov ebp, esp
 
+	; get the error code 
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000000C
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Stack segment fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR0D:
 	; General Protection Fault
+
+	; get the error code off the stack
+	pop edx
+
 	; get the location of the bad instruction off the stack
-	push ebp
-	mov ebp, esp
-
 	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; BSOD!!!
 	pusha
-	push dword [exceptionAddress]
-	push kPrintText$
-	push .format$
-	call StringBuild
+	push .error$
+	call CriticalError
 
-	; print the string we just built
-	mov byte [textColor], 4
-	mov byte [backColor], 7
-	push kPrintText$
-	call Print32
-
-	push 1
-	push dword [exceptionAddress]
-	call PrintRAM32
-
-	; print the error message
+	; acknowledge the PIC
 	call PICIntComplete
 
-	; dump the registers
-	popa
-	call PrintRegs32
+	; increment the address to which we return
+	inc dword [exceptionAddress]
 
-	jmp $ ; for debugging, makes sure the system hangs upon exception
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 
-	mov esp, ebp
-	pop ebp
 iretd
-.format$										db ' General protection fault at ^p8^h ', 0x00
+.error$											db ' General protection fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR0E:
 	; Page Fault Exception
-	push ebp
-	mov ebp, esp
 
+	; get the error code 
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000000E
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Page fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR0F:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000000F
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x0F at ^p4^h:^p8^h', 0x00
 
 
 
 ISR10:
-	; x86 Floating Point Exception
-	push ebp
-	mov ebp, esp
+	; x87 Floating Point Exception
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000010
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Floating point (x87) fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR11:
 	; Alignment Check Exception
-	push ebp
-	mov ebp, esp
 
+	; get the error code 
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000011
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Alignment fault at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR12:
 	; Machine Check Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000012
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Machine check fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR13:
 	; SIMD Floating Point Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000013
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Floating point (SIMD) fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR14:
 	; Virtualization Exception
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000014
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Virtualization fault at ^p4^h:^p8^h', 0x00
 
 
 
 ISR15:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000015
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x15 at ^p4^h:^p8^h', 0x00
 
 
 
 ISR16:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000016
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x16 at ^p4^h:^p8^h', 0x00
 
 
 
 ISR17:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000017
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x17 at ^p4^h:^p8^h', 0x00
 
 
 
 ISR18:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000018
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x18 at ^p4^h:^p8^h', 0x00
 
 
 
 ISR19:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x00000019
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x19 at ^p4^h:^p8^h', 0x00
 
 
 
 ISR1A:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000001A
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x1A at ^p4^h:^p8^h', 0x00
 
 
 
 ISR1B:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000001B
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x1B at ^p4^h:^p8^h', 0x00
 
 
 
 ISR1C:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000001C
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x1C at ^p4^h:^p8^h', 0x00
 
 
 
 ISR1D:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000001D
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x1D at ^p4^h:^p8^h', 0x00
 
 
 
 ISR1E:
 	; Security Exception
-	push ebp
-	mov ebp, esp
 
+	; get error code
+	pop edx
+
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000001E
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Security exception at ^p4^h:^p8^h (Error code in EDX)', 0x00
 
 
 
 ISR1F:
 	; Reserved
-	push ebp
-	mov ebp, esp
 
+	; get the location of the bad instruction off the stack
+	pop dword [exceptionAddress]
+	pop dword [exceptionSelector]
+	pop dword [exceptionFlags]
+
+	; adjustment to point to the actual break address
+	dec dword [exceptionAddress]
+
+	; BSOD!!!
 	pusha
-	pushf
-	mov edx, 0x0000001F
-	jmp $ ; for debugging, makes sure the system hangs upon exception
-	call PICIntComplete
-	popf
-	popa
+	push .error$
+	call CriticalError
 
-	mov esp, ebp
-	pop ebp
+	; acknowledge the PIC
+	call PICIntComplete
+
+	; increment the address to which we return
+	inc dword [exceptionAddress]
+
+	; push stuff on the stack for return
+	push dword [exceptionFlags]
+	push dword [exceptionSelector]
+	push dword [exceptionAddress]
 iretd
+.error$											db ' Exception 0x1F at ^p4^h:^p8^h', 0x00
 
 
 
@@ -1319,10 +1757,9 @@ ISR26:
 	push ebp
 	mov ebp, esp
 
+	; the kernel does nothing directly with the floppy drives, so we can simply exit here
 	pusha
 	pushf
-	mov edx, 0x00000026
-	jmp $ ; for debugging, makes sure the system hangs upon exception
 	call PICIntComplete
 	popf
 	popa
@@ -1629,4 +2066,5 @@ iretd
 kUnsupportedInt$								db 'An unsupported interrupt has been called', 0x00
 exceptionSelector								dd 0x00000000
 exceptionAddress								dd 0x00000000
+exceptionFlags									dd 0x00000000
 kIDTPtr											dd 0x00000000

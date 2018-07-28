@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; screen.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -333,10 +333,21 @@ ScreenClear16:
 	mov cx, 0xB800
 	mov gs, cx
 	mov si, 0
+
+	; set up the word we're writing
+	xor ax, ax
+	mov ah, byte [backColor]
+	shl ah, 4
+
+	; set up the loop value
 	mov cx, word [kBytesPerScreen]
+
+	; divide by 2 since we're writing words
+	shl ecx, 1
+
 	.aloop:
-		mov byte [gs:si], 0
-		inc si
+		mov word [gs:si], ax
+		add si, 2
 	loop .aloop
 
 	; reset the cursor position
@@ -770,11 +781,23 @@ ScreenClear32:
 	push ebp
 	mov ebp, esp
 
+	; see how many bytes make up this screen mode
 	mov cx, word [kBytesPerScreen]
+
+	; load the write address
 	mov esi, 0xB8000
+
+	; divide by 2 since we're writing words
+	shl ecx, 1
+
+	; set up the word we're writing
+	xor ax, ax
+	mov ah, byte [backColor]
+	shl ah, 4
+
 	.aloop:
-		mov byte [esi], 0
-		inc esi
+		mov word [esi], ax
+		add esi, 2
 	loop .aloop, cx
 
 	; reset the cursor position

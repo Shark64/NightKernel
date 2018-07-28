@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; pic.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -27,10 +27,10 @@
 
 
 ; defines
-%define PIC1CmdPort								0x0020
-%define PIC1DataPort							0x0021
-%define PIC2CmdPort								0x00a0
-%define PIC2DataPort							0x00a1
+%define kPIC1CmdPort							0x0020
+%define kPIC1DataPort							0x0021
+%define kPIC2CmdPort							0x00a0
+%define kPIC2DataPort							0x00a1
 
 
 
@@ -51,9 +51,9 @@ PICDisableIRQs:
 	mov ebp, esp
 
 	mov al, 0xFF								; disable IRQs
-	mov dx, PIC1DataPort						; set up PIC 1
+	mov dx, kPIC1DataPort						; set up PIC 1
 	out dx, al
-	mov dx, PIC2DataPort						; set up PIC 2
+	mov dx, kPIC2DataPort						; set up PIC 2
 	out dx, al
 
 	mov esp, ebp
@@ -75,45 +75,45 @@ PICInit:
 	mov ebp, esp
 
 	mov al, 0x11								; set ICW1
-	mov dx, PIC1CmdPort							; set up PIC 1
+	mov dx, kPIC1CmdPort						; set up PIC 1
 	out dx, al
-	mov dx, PIC2CmdPort							; set up PIC 2
+	mov dx, kPIC2CmdPort						; set up PIC 2
 	out dx, al
 
 	mov al, 0x20								; set base interrupt to 0x20 (ICW2)
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	out dx, al
 
 	mov al, 0x28								; set base interrupt to 0x28 (ICW2)
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	out dx, al
 
 	mov al, 0x04								; set ICW3 to cascade PICs together
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	out dx, al
 	mov al, 0x02								; set ICW3 to cascade PICs together
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	out dx, al
 
 	mov al, 0x05								; set PIC 1 to x86 mode with ICW4
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	out dx, al
 
 	mov al, 0x01								; set PIC 2 to x86 mode with ICW4
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	out dx, al
 
 	mov al, 0									; zero the data register
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	out dx, al
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	out dx, al
 
 	mov al, 0xFD
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	out dx, al
 	mov al, 0xFF
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	out dx, al
 
 	mov esp, ebp
@@ -135,10 +135,10 @@ PICIntComplete:
 	mov ebp, esp
 
 	mov al, 0x20								; sets the interrupt complete bit
-	mov dx, PIC1CmdPort							; write bit to PIC 1
+	mov dx, kPIC1CmdPort							; write bit to PIC 1
 	out dx, al
 
-	mov dx, PIC2CmdPort							; write bit to PIC 2
+	mov dx, kPIC2CmdPort							; write bit to PIC 2
 	out dx, al
 
 	mov esp, ebp
@@ -159,12 +159,12 @@ PICMaskAll:
 	push ebp
 	mov ebp, esp
 
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
 
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
@@ -187,12 +187,12 @@ PICMaskSet:
 	push ebp
 	mov ebp, esp
 
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
 
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	in al, dx
 	and al, 0xff
 	out dx, al
@@ -216,10 +216,10 @@ PICUnmaskAll:
 	mov ebp, esp
 
 	mov al, 0x00
-	mov dx, PIC1DataPort
+	mov dx, kPIC1DataPort
 	out dx, al
 
-	mov dx, PIC2DataPort
+	mov dx, kPIC2DataPort
 	out dx, al
 
 	mov esp, ebp

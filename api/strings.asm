@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; strings.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -1613,8 +1613,6 @@ StringWordCount:
 	; get eax ready for writing to the return value in case we have to exit immediately
 	mov eax, 0
 
-	;;;;; IF inputText$ = "" THEN EXIT SUB
-	;;;;; IF seperatorChar$ = "" THEN EXIT SUB
 	; get length of the main string
 	push dword [ebp + 8]
 	call StringLength
@@ -1635,11 +1633,10 @@ StringWordCount:
 	je .Exit
 	mov dword [ebp - 8], ebx
 
-	;;;;; FOR a = 1 TO LEN(inputText$)
+	; set up loop value
 	mov ecx, dword [ebp - 4]
 
 	; set up local variables here
-	;;;;; wordCount = 0
 	mov byte [ebp - 13], 0
 	mov word [ebp - 15], 0
 	mov dword [ebp - 12], 0
@@ -1647,7 +1644,6 @@ StringWordCount:
 
 	; loop to process the characters
 	.WordLoop:
-		;;;;; b$ = MID$(inputText$, a, 1)
 		; copy a byte from the string into al
 		lodsb
 
@@ -1655,7 +1651,6 @@ StringWordCount:
 		push esi
 		push ecx
 
-		;;;;; IF b$ = seperatorChar$ THEN
 		; see if this byte is in the list of seperators
 		push dword [ebp + 12]
 		mov byte [ebp - 15], al
@@ -1672,15 +1667,13 @@ StringWordCount:
 		; see if a match was found
 		cmp edx, 0
 		je .NotASeperator
-			;;;;; lastType = 2
 			; make a note that this character was a separator
 			mov byte [ebp - 13], 2
 			jmp .NextIteration
-		;;;;; ELSE
+
 		.NotASeperator:
 
-			;;;;; IF lastType <> 1 THEN wordCount = wordCount + 1
-			; see what the last character was
+			; if the last character wasn't a separator, increment wordCount
 			mov bl, byte [ebp - 13]
 
 			cmp bl, 1
@@ -1688,14 +1681,11 @@ StringWordCount:
 				inc dword [ebp - 12]
 			.SkipIncrement:
 
-			;;;;; lastType = 1
 			; make a note that this character was not a separator
 			mov byte [ebp - 13], 1
 
 		.NextIteration:
-		;;;;; END IF
 
-	;;;;; NEXT
 	loop .WordLoop
 
 	; get eax ready for writing the return value
@@ -1733,8 +1723,6 @@ StringWordGet:
 	; get eax ready for writing to the return value in case we have to exit immediately
 	mov eax, 0
 
-	;;;;; IF inputText$ = "" THEN EXIT SUB
-	;;;;; IF seperatorChar$ = "" THEN EXIT SUB
 	; get length of the main string
 	push dword [ebp + 8]
 	call StringLength
@@ -1755,13 +1743,12 @@ StringWordGet:
 	je .Exit
 	mov dword [ebp - 8], ebx
 
-	;;;;; FOR a = 1 TO LEN(inputText$)
+	; set up our loop value
 	mov ecx, dword [ebp - 4]
 
 	; set up local variables here
 	mov byte [ebp - 13], 0
 	mov word [ebp - 15], 0
-	;;;;; wordCount = 0
 	mov dword [ebp - 12], 0
 	mov esi, dword [ebp + 8]
 
@@ -1772,7 +1759,6 @@ StringWordGet:
 
 	; loop to process the characters
 	.WordLoop:
-		;;;;; b$ = MID$(inputText$, a, 1)
 		; copy a byte from the string into al
 		lodsb
 
@@ -1781,7 +1767,6 @@ StringWordGet:
 		push eax
 		push ecx
 
-		;;;;; IF b$ = seperatorChar$ THEN
 		; see if this byte is in the list of seperators
 		push dword [ebp + 12]
 		mov byte [ebp - 15], al
@@ -1799,28 +1784,24 @@ StringWordGet:
 		; see if a match was found
 		cmp edx, 0
 		je .NotASeperator
-			; see if we have the requested word
-			;;;;; 	IF wordCount = wordRequested THEN EXIT SUB
+			; see if we have the requested word and exit if so
 			mov eax, [ebp + 16]
 			mov ebx, [ebp - 12]
 			cmp eax, ebx
 			je .WordFound
 
-			;;;;; 	wordReturned$ = ""
-			; clear out the temp word string
+			; clear out wordReturned$
 			mov edi, [ebp + 20]
 			mov al, 0
 			stosb
 
-			;;;;; lastType = 2
 			; make a note that this character was a separator
 			mov byte [ebp - 13], 2
 			jmp .NextIteration
-		;;;;; ELSE
+
 		.NotASeperator:
 
-			;;;;; IF lastType <> 1 THEN wordCount = wordCount + 1
-			; see what the last character was
+			; if the last character wasn't a separator, increment wordCount
 			mov bl, byte [ebp - 13]
 
 			cmp bl, 1
@@ -1828,11 +1809,10 @@ StringWordGet:
 				inc dword [ebp - 12]
 			.SkipIncrement:
 
-			;;;;; lastType = 1
 			; make a note that this character was not a separator
 			mov byte [ebp - 13], 1
 
-			;;;;; wordReturned$ = wordReturned$ + b$
+			; add this character to wordReturned$
 			pusha
 			push eax
 			push dword [ebp + 20]
@@ -1841,9 +1821,7 @@ StringWordGet:
 
 
 		.NextIteration:
-		;;;;; END IF
 
-	;;;;; NEXT
 	loop .WordLoop
 
 	.WordFound:

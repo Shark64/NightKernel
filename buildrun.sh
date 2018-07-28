@@ -3,18 +3,21 @@
 # first we have to compile the kernel
 nasm -f bin -o builds/kernel.sys kernel.asm
 
-# now we mount the existing floppy image
-mkdir floppy
-sudo mount "builds/images/night.img" -o umask=0 ./floppy
+# now we mount the existing drive image to the folder VBoxDisk using a loop device to help
+mkdir VBoxDisk
+sudo losetup /dev/loop0 ./builds/Night.vdi -o 2129408
+sudo mount /dev/loop0 ./VBoxDisk
 
 # here we delete the old kernel image and copy the newly made one to the virtual floppy
-rm ./floppy/kernel.sys
-cp "builds/kernel.sys" "./floppy/kernel.sys"
+sudo rm ./VBoxDisk/kernel.sys
+sudo cp "builds/kernel.sys" "./VBoxDisk/kernel.sys"
 
-#finally we unmount the newly modified floppy image
-sudo umount ./floppy
-rmdir floppy
+# finally we unmount the newly modified floppy image
+sudo umount ./VBoxDisk
+sudo rmdir VBoxDisk
 
-#fun! all done! ready to run, son!
-imagepath=$(pwd)"/builds/images/night.img"
-virtualbox --startvm "Night" --fda "$imagepath" --debug-command-line --start-running
+# destroy the loop device we set up
+sudo losetup -d /dev/loop0
+
+# fun! all done! ready to run, son!
+virtualbox --startvm "Night" --debug-command-line --start-running

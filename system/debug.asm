@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; debug.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -18,6 +18,7 @@
 
 ; 32-bit function listing:
 ; DebugMenu						Implements the in-kernel debugging menu
+; DebugVBOXLogWrite				Writes a string specidfied to the VirtualBOX guest log
 
 
 
@@ -613,6 +614,49 @@ ret
 .PCIDevice										dd 0x00000000
 .PCIFunction									dd 0x00000000
 .currentDevice									dd 0x00000000
+
+
+
+DebugVBoxLogWrite:
+	; Writes a string specidfied to the VirtualBOX guest log
+	;
+	;  input:
+	;   string address
+	;
+	;  output:
+	;   n/a
+
+	push ebp
+	mov ebp, esp
+
+	; get the address of the string
+	mov esi, [ebp + 8]
+	
+	; get the string's length
+	push esi
+	call StringLength
+	pop ecx
+
+	; save the length for later
+	mov ebx, ecx
+	
+	; write to the log
+	mov dx, 0x0504
+	rep outsb
+
+	; VirtualBox seems to buffer all output to the log and only flush on every 512th byte, as long as it's not null
+	; we allow for this behaviour here
+	mov ecx, 511
+	sub ecx, ebx
+	.hoop:
+		mov dx, 0x504
+		mov al, 0
+		out dx, al
+	loop .hoop
+
+	mov esp, ebp
+	pop ebp
+ret 4
 
 
 
