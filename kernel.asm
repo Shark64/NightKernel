@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; Kernel.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -54,10 +54,8 @@ mov al, 0x03
 int 0x10
 
 ; check the configbits to see if we should use 50 lines
-mov eax, [tSystem.configBits]
-and eax, 000000000000000000000000000000100b
-cmp eax, 000000000000000000000000000000100b
-jne .stickWith25
+test dword [tSystem.configBits], 000000000000000000000000000000100b
+jz .stickWith25
 
 	; if we get here, we should shift to 50-line mode
 	; first we update the constants
@@ -251,23 +249,26 @@ call PCILoadDrivers
 
 
 
-;; ATAPI sector read testing
+
+;; FAT testing
 ;push 0x200000
 ;push 1
-;push 0x00000010
 ;push 0
-;push 0x0170
-;call C01ATAPISectorReadPIO
-;
-;push 0x300000
-;push 1
-;push 0x00000011
 ;push 0
-;push 0x0170
-;call C01ATAPISectorReadPIO
+;push 0x01F0
+;call C01ATASectorReadLBA28PIO
 ;
+;push 32
+;push 0x200000
+;call PrintRAM32
 ;
-;mov dword [0x200160], 0xcafebabe
+;jmp $
+
+
+
+
+
+;; ATA sector testing
 ;
 ;push 0x200000
 ;push 1
@@ -298,6 +299,24 @@ call PCILoadDrivers
 ;
 ;jmp $
 
+
+
+
+
+;; ATAPI sector read testing
+;push 0x200000
+;push 1
+;push 0x00000010
+;push 0
+;push 0x0170
+;call C01ATAPISectorReadPIO
+;
+;push 0x300000
+;push 1
+;push 0x00000011
+;push 0
+;push 0x0170
+;call C01ATAPISectorReadPIO
 
 
 
@@ -541,21 +560,22 @@ PCIFailed$										db 'PCI Controller not detected', 0x00
 
 
 ; includes for system routines
-%include "api/misc.asm"							; implements the kernel Application Programming Interface
-%include "api/lists.asm"						; list manager routines
-%include "api/strings.asm"						; string manipulation routines
-%include "io/ps2.asm"							; PS/2 keyboard and mouse routines
-%include "io/serial.asm"						; serial communication routines
-%include "system/debug.asm"						; implements the debugging menu
-%include "system/gdt.asm"						; Global Descriptor Table code
-%include "system/globals.asm"					; global variable setup
-%include "system/hardware.asm"					; routines for other miscellaneous hardware
-%include "system/interrupts.asm"				; IDT routines and interrupt handlers
-%include "system/memory.asm"					; memory manager
-%include "system/pci.asm"						; PCI support
-%include "system/pic.asm"						; Programmable Interrupt Controller routines
-%include "system/power.asm"						; Power Management (APM & ACPI) routines
-%include "video/screen.asm"						; screen printing routine
+%include "api/misc.asm"
+%include "api/lists.asm"
+%include "api/strings.asm"
+%include "io/ps2.asm"
+%include "io/serial.asm"
+%include "system/cmos.asm"
+%include "system/debug.asm"
+%include "system/gdt.asm"
+%include "system/globals.asm"
+%include "system/hardware.asm"
+%include "system/interrupts.asm"
+%include "system/memory.asm"
+%include "system/pci.asm"
+%include "system/pic.asm"
+%include "system/power.asm"
+%include "video/screen.asm"
 
 
 
@@ -564,4 +584,5 @@ StartOfDriverSpace:
 
 
 ; includes for drivers
-%include "drivers/ATA Controller.asm"			; this should be obvious...
+%include "drivers/ATA Controller.asm"
+

@@ -1,5 +1,5 @@
 ; Night Kernel
-; Copyright 1995 - 2018 by mercury0x000d
+; Copyright 1995 - 2018 by mercury0x0d
 ; ATA Controller.asm is a part of the Night Kernel
 
 ; The Night Kernel is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
@@ -19,8 +19,8 @@
 ; 32-bit function listing:
 ; C01Init						Performs any necessary setup of the driver
 ; C01ATAPISectorReadPIO
-; C01ATASectorReadLBA28			Reads sectors from disk using LBA48
-; C01ATASectorWriteLBA28		Writes sectors to disk using LBA48
+; C01ATASectorReadLBA28			Reads sectors from disk using LBA28
+; C01ATASectorWriteLBA28		Writes sectors to disk using LBA28
 ; C01DetectChannelDevices		Checks both of the device spots on the ATA channel specified and saves their data to the drives list
 ; C01DriveIdentify				Returns identifying information about the device specified
 ; C01WaitForReady				Waits for bit 7 of the passed port value to go clear, then returns
@@ -28,79 +28,80 @@
 ; InternalDriveFoundPrint		Prints data about the drive discovered by C01DriveIdentify()
 
 
+
 bits 32
 
 
 
 ; defines
-%define ATAChannelPrimary						0x00
-%define ATAChannelSecondary						0x01
+%define kATAChannelPrimary						0x0
+%define kATAChannelSecondary					0x1
 
-%define ATACommandReadPIO						0x20
-%define ATACommandReadPIOExt					0x24
-%define ATACommandReadDMAExt					0x25
-%define ATACommandWritePIO						0x30
-%define ATACommandWritePIOExt					0x34
-%define ATACommandWriteDMAExt					0x35
-%define	ATACommandRead_Verify					0x40
-%define	ATACommandDoDiagnostics					0x90
-%define ATACommandPacket						0xA0
-%define ATACommandIdentifyPacket				0xA1
-%define ATACommandReadDMA						0xC8
-%define ATACommandWriteDMA						0xCA
-%define	ATACommandStandbyImmediate				0xE0
-%define	ATACommandIdleImmediate					0xE1
-%define	ATACommandStandby						0xE2
-%define	ATACommandIdle							0xE3
-%define	ATACommandCheckPowerMode				0xE5
-%define	ATACommandSetSleepMode					0xE6
-%define ATACommandCacheFlush					0xE7
-%define ATACommandCacheFlushExt					0xEA
-%define ATACommandIdentify						0xEC
+%define kATACommandReadPIO						0x20
+%define kATACommandReadPIOExt					0x24
+%define kATACommandReadDMAExt					0x25
+%define kATACommandWritePIO						0x30
+%define kATACommandWritePIOExt					0x34
+%define kATACommandWriteDMAExt					0x35
+%define	kATACommandRead_Verify					0x40
+%define	kATACommandDoDiagnostics				0x90
+%define kATACommandPacket						0xA0
+%define kATACommandIdentifyPacket				0xA1
+%define kATACommandReadDMA						0xC8
+%define kATACommandWriteDMA						0xCA
+%define	kATACommandStandbyImmediate				0xE0
+%define	kATACommandIdleImmediate				0xE1
+%define	kATACommandStandby						0xE2
+%define	kATACommandIdle							0xE3
+%define	kATACommandCheckPowerMode				0xE5
+%define	kATACommandSetSleepMode					0xE6
+%define kATACommandCacheFlush					0xE7
+%define kATACommandCacheFlushExt				0xEA
+%define kATACommandIdentify						0xEC
 
-%define ATADirectionRead						0x00
-%define ATADirectionWrite						0x01
+%define kATADirectionRead						0x0
+%define kATADirectionWrite						0x1
 
-%define ATAErrorNoAddressMark					0x01
-%define ATAErrorTrackZeroNotFound				0x02
-%define ATAErrorCommandAborted					0x04
-%define ATAErrorMediaChangeRequest				0x08
-%define ATAErrorIDMarkNotFound					0x10
-%define ATAErrorMediaChanged					0x20
-%define ATAErrorUncorrectableData				0x40
-%define ATAErrorBadBlock						0x80
+%define kATAErrorNoAddressMark					0x01
+%define kATAErrorTrackZeroNotFound				0x02
+%define kATAErrorCommandAborted					0x04
+%define kATAErrorMediaChangeRequest				0x08
+%define kATAErrorIDMarkNotFound					0x10
+%define kATAErrorMediaChanged					0x20
+%define kATAErrorUncorrectableData				0x40
+%define kATAErrorBadBlock						0x80
 
-%define ATARegisterData							0x00	; read/write
-%define ATARegisterError						0x01	; read only
-%define ATARegisterFeatures						0x01	; write only
-%define ATARegisterSecCount0					0x02	; read/write
-%define ATARegisterLBA0							0x03	; read/write
-%define ATARegisterLBA1							0x04	; read/write
-%define ATARegisterLBA2							0x05	; read/write
-%define ATARegisterLBA3							0x03	; read/write?
-%define ATARegisterLBA4							0x04	; read/write?
-%define ATARegisterLBA5							0x05	; read/write?
-%define ATARegisterHDDevSel						0x06	; read/write
-%define ATARegisterCommand						0x07	; write only
-%define ATARegisterStatus						0x07	; read only
-%define ATARegisterSecCount1					0x08	; read/write?
-%define ATARegisterControl						0x0C	; write only
-%define ATARegisterAltStatus					0x0C	; read only
-%define ATARegisterDeviceAddress				0x0D	; ?
+%define kATARegisterData						0x0		; read/write
+%define kATARegisterError						0x1		; read only
+%define kATARegisterFeatures					0x1		; write only
+%define kATARegisterSecCount0					0x2		; read/write
+%define kATARegisterLBA0						0x3		; read/write
+%define kATARegisterLBA1						0x4		; read/write
+%define kATARegisterLBA2						0x5		; read/write
+%define kATARegisterLBA3						0x3		; read/write?
+%define kATARegisterLBA4						0x4		; read/write?
+%define kATARegisterLBA5						0x5		; read/write?
+%define kATARegisterHDDevSel					0x6		; read/write
+%define kATARegisterCommand						0x7		; write only
+%define kATARegisterStatus						0x7		; read only
+%define kATARegisterSecCount1					0x8		; read/write?
+%define kATARegisterControl						0xC		; write only
+%define kATARegisterAltStatus					0xC		; read only
+%define kATARegisterDeviceAddress				0xD		; ?
 
-%define	ATAResultOK								0x00
-%define	ATAResultNoDrive						0x01
-%define	ATAResultError							0x02
-%define	ATAResultTimeout						0x03
+%define	kATAResultOK							0x0
+%define	kATAResultNoDrive						0x1
+%define	kATAResultError							0x2
+%define	kATAResultTimeout						0x3
 
-%define ATAStatusError							0x01
-%define ATAStatusIndex							0x02
-%define ATAStatusCorrectedData					0x04
-%define ATAStatusDataRequestReady				0x08
-%define ATAStatusDriveSeekComplete				0x10
-%define ATAStatusDriveWriteFault				0x20
-%define ATAStatusDriveReady						0x40
-%define ATAStatusBusy							0x80
+%define kATAStatusError							0x01
+%define kATAStatusIndex							0x02
+%define kATAStatusCorrectedData					0x04
+%define kATAStatusDataRequestReady				0x08
+%define kATAStatusDriveSeekComplete				0x10
+%define kATAStatusDriveWriteFault				0x20
+%define kATAStatusDriveReady					0x40
+%define kATAStatusBusy							0x80
 
 
 
@@ -272,42 +273,42 @@ C01ATAPISectorReadPIO:
 
 	; choose the drive in LBA mode
 	mov dx, bx
-	add dx, ATARegisterHDDevSel
+	add dx, kATARegisterHDDevSel
 	out dx, al
 
 	; wait for the drive to be ready
 	mov dx, bx
-	add dx, ATARegisterStatus
+	add dx, kATARegisterStatus
 	push edx
 	call C01WaitForReady
 
 	; set PIO mode
 	mov dx, bx
-	add dx, ATARegisterFeatures
+	add dx, kATARegisterFeatures
 	mov al, 0
 	out dx, al
 
 	; send maximum number of bytes we want back
 	; seems to not matter, since the device will send back the number of sectors specified anyway
 	mov dx, bx
-	add dx, ATARegisterLBA1
+	add dx, kATARegisterLBA1
 	mov al, 0x00;lower byte of the value "512"
 	out dx, al
 
 	mov dx, bx
-	add dx, ATARegisterLBA2
+	add dx, kATARegisterLBA2
 	mov al, 0x02;upper byte of the value "512"
 	out dx, al
 
 	; send the packet command
 	mov dx, bx
-	add dx, ATARegisterCommand
-	mov al, ATACommandPacket
+	add dx, kATARegisterCommand
+	mov al, kATACommandPacket
 	out dx, al
 
 	; wait for the drive to be ready
 	mov dx, bx
-	add dx, ATARegisterStatus
+	add dx, kATARegisterStatus
 	push edx
 	call C01WaitForReady
 
@@ -326,41 +327,41 @@ C01ATAPISectorReadPIO:
 
 	; send the packet command
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov ax, 0x00A8
 	out dx, ax
 
 	; send the LBA value
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov eax, [ebp + 16]
 	shr eax, 16
 	xchg ah, al
 	out dx, ax
 
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov eax, [ebp + 16]
 	xchg ah, al
 	out dx, ax
 
 	; send the sector count
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov eax, [ebp + 20]
 	shr eax, 16
 	xchg ah, al
 	out dx, ax
 
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov eax, [ebp + 20]
 	xchg ah, al
 	out dx, ax
 
 	; the last segment isn't used by this driver... for now
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov ax, 0x0000
 	out dx, ax
 
@@ -388,7 +389,7 @@ ret 20
 	; read 2KiB of returned data
 	; this will need modified later to check the sector size and act accordingly instead of assuming 2 KiB sectors
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov ecx, 1024
 	.ReadLoop:
 		in ax, dx
@@ -401,7 +402,7 @@ ret 20
 	
 	; acknowledge the interrupt at the ATA device by reading the status register
 	mov dx, bx
-	add dx, ATARegisterStatus
+	add dx, kATARegisterStatus
 	in al, dx
 
 	popf
@@ -445,17 +446,20 @@ C01ATASectorReadLBA28PIO:
 
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
+
 	; select device and bits 24:27 of the LBA address
-	add edx, ATARegisterHDDevSel
+	add edx, kATARegisterHDDevSel
+
 	; move bits 24:27 of the LBA address into al
 	shr eax, 24
+
 	; perform a logical or to properly set the selected device
 	or al, cl
 	out dx, al
 
 	; set sector count
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterSecCount0
+	add edx, kATARegisterSecCount0
 	mov ecx, dword [ebp + 20]
 	mov al, cl
 	out dx, al
@@ -463,27 +467,27 @@ C01ATASectorReadLBA28PIO:
 	; set bits 0:7 of the LBA address
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterLBA0
+	add edx, kATARegisterLBA0
 	out dx, al
 
 	; set bit 8:15 of the LBA address
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterLBA1
+	add edx, kATARegisterLBA1
 	shr eax, 8
 	out dx, al
 
 	; set bits 16:23 of the LBA address
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterLBA2
+	add edx, kATARegisterLBA2
 	shr eax, 16
 	out dx, al
 
 	; and finally, execute the command!
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterCommand
-	mov al, ATACommandReadPIO
+	add edx, kATARegisterCommand
+	mov al, kATACommandReadPIO
 	out dx, al
 
 	; wait for the device to respond
@@ -540,16 +544,19 @@ C01ATASectorWriteLBA28PIO:
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
 	; select device and bits 24:27 of the LBA address
-	add edx, ATARegisterHDDevSel
+
+	add edx, kATARegisterHDDevSel
+
 	; move bits 24:27 of the LBA address into al
 	shr eax, 24
+
 	; perform a logical or to properly set the selected device
 	or al, cl
 	out dx, al
 
 	; set sector count
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterSecCount0
+	add edx, kATARegisterSecCount0
 	mov ecx, dword [ebp + 20]
 	mov al, cl
 	out dx, al
@@ -557,27 +564,27 @@ C01ATASectorWriteLBA28PIO:
 	; set bits 0:7 of the LBA address
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterLBA0
+	add edx, kATARegisterLBA0
 	out dx, al
 
 	; set bit 8:15 of the LBA address
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterLBA1
+	add edx, kATARegisterLBA1
 	shr eax, 8
 	out dx, al
 
 	; set bits 16:23 of the LBA address
 	mov eax, dword [ebp + 16]
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterLBA2
+	add edx, kATARegisterLBA2
 	shr eax, 16
 	out dx, al
 
 	; and finally, execute the command!
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterCommand
-	mov al, ATACommandWritePIO
+	add edx, kATARegisterCommand
+	mov al, kATACommandWritePIO
 	out dx, al
 
 	; wait for the device to respond
@@ -594,8 +601,8 @@ C01ATASectorWriteLBA28PIO:
 
 	; clear out the cache
 	mov edx, dword [ebp + 8]
-	add edx, ATARegisterCommand
-	mov al, ATACommandCacheFlush
+	add edx, kATARegisterCommand
+	mov al, kATACommandCacheFlush
 	out dx, al
 
 	; wait for the device to be ready
@@ -730,36 +737,36 @@ C01DriveIdentify:
 
 	; choose the drive in LBA mode
 	mov dx, bx
-	add dx, ATARegisterHDDevSel
+	add dx, kATARegisterHDDevSel
 	out dx, al
 
 	; clear the sector count and LBA registers to put them at a known good state
 	xor al, al
 	mov dx, bx
-	add dx, ATARegisterSecCount0
+	add dx, kATARegisterSecCount0
 	out dx, al
 
 	mov dx, bx
-	add dx, ATARegisterLBA0
+	add dx, kATARegisterLBA0
 	out dx, al
 
 	mov dx, bx
-	add dx, ATARegisterLBA1
+	add dx, kATARegisterLBA1
 	out dx, al
 
 	mov dx, bx
-	add dx, ATARegisterLBA2
+	add dx, kATARegisterLBA2
 	out dx, al
 
 	; send the drive identify command
 	mov dx, bx
-	add dx, ATARegisterCommand
-	mov al, ATACommandIdentify
+	add dx, kATARegisterCommand
+	mov al, kATACommandIdentify
 	out dx, al
 
 	; check the response from the port
 	mov dx, bx
-	add dx, ATARegisterStatus
+	add dx, kATARegisterStatus
 	in al, dx
 
 	; if al = 0xFF, there's no controller here
@@ -790,7 +797,7 @@ C01DriveIdentify:
 	; wait until the drive is ready
 	xor edx, edx
 	mov dx, bx
-	add dx, ATARegisterStatus
+	add dx, kATARegisterStatus
 	push edx
 	call C01WaitForReady
 
@@ -800,22 +807,22 @@ C01DriveIdentify:
 
 	; see what drive type was returned
 	mov dx, bx
-	add dx, ATARegisterSecCount0
+	add dx, kATARegisterSecCount0
 	in al, dx
 	shl eax, 8
 
 	mov dx, bx
-	add dx, ATARegisterLBA0
+	add dx, kATARegisterLBA0
 	in al, dx
 	shl eax, 8
 
 	mov dx, bx
-	add dx, ATARegisterLBA1
+	add dx, kATARegisterLBA1
 	in al, dx
 	shl eax, 8
 
 	mov dx, bx
-	add dx, ATARegisterLBA2
+	add dx, kATARegisterLBA2
 	in al, dx
 
 	; set up our drive type return code
@@ -848,14 +855,14 @@ C01DriveIdentify:
 
 		; send the Identify Packed Device command
 		mov dx, bx
-		add dx, ATARegisterCommand
-		mov al, ATACommandIdentifyPacket
+		add dx, kATARegisterCommand
+		mov al, kATACommandIdentifyPacket
 		out dx, al
 
 		; wait until the drive is ready
 		xor edx, edx
 		mov dx, bx
-		add dx, ATARegisterStatus
+		add dx, kATARegisterStatus
 		push edx
 		call C01WaitForReady
 
@@ -866,7 +873,7 @@ C01DriveIdentify:
 
 	; read returned data from the Identify command
 	mov dx, bx
-	add dx, ATARegisterData
+	add dx, kATARegisterData
 	mov ecx, 256
 	push edi
 	.ReadLoop:
@@ -954,13 +961,15 @@ C01InterruptHandlerPrimary:
 	;  output:
 	;   n/a
 
-	; acknowledge the interrupt to the PIC
 	push ebp
 	mov ebp, esp
 
 	pusha
 	pushf
+
+	; acknowledge the interrupt to the PIC
 	call PICIntComplete
+
 	popf
 	popa
 
@@ -978,13 +987,15 @@ C01InterruptHandlerSecondary:
 	;  output:
 	;   n/a
 
-	; acknowledge the interrupt to the PIC
 	push ebp
 	mov ebp, esp
 
 	pusha
 	pushf
+
+	; acknowledge the interrupt to the PIC
 	call PICIntComplete
+
 	popf
 	popa
 
